@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { Pencil, Trash2 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface TaskItemProps {
   task: Task;
@@ -27,24 +28,35 @@ export function TaskItem({ task, onToggleTask, onDeleteTask, onEditTask }: TaskI
   };
 
   return (
-    <div className="group flex items-center gap-3 rounded-lg bg-secondary/50 p-3 transition-colors hover:bg-secondary">
+    <div className="group relative flex items-center gap-3 rounded-lg bg-secondary/50 p-3 transition-colors hover:bg-secondary overflow-hidden">
+       <AnimatePresence>
+        {task.completed && (
+          <motion.div
+            initial={{ scaleX: 0 }}
+            animate={{ scaleX: 1 }}
+            exit={{ scaleX: 0 }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
+            className="absolute inset-0 bg-green-500/20 origin-left"
+          />
+        )}
+      </AnimatePresence>
       <Checkbox
         id={`task-${task.id}`}
         checked={task.completed}
         onCheckedChange={() => onToggleTask(task.id)}
         aria-label={`Mark task "${task.text}" as ${task.completed ? 'incomplete' : 'complete'}`}
-        className="data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500"
+        className="data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500 relative z-10"
       />
       <label
         htmlFor={`task-${task.id}`}
         className={cn(
-          "flex-1 cursor-pointer text-sm font-medium transition-colors",
+          "flex-1 cursor-pointer text-sm font-medium transition-colors relative z-10",
           task.completed && "text-muted-foreground line-through"
         )}
       >
         {task.text}
       </label>
-      <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+      <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100 relative z-10">
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
           <DialogTrigger asChild>
             <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-500 hover:text-blue-600" aria-label={`Edit task "${task.text}"`}>
