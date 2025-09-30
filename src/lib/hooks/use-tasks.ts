@@ -63,10 +63,11 @@ export function useTasks() {
     const newTaskData = {
       text: text.trim(),
       completed: false,
+      createdAt: new Date(),
     };
     try {
         const newDocId = await addTaskToFirestore(user.uid, newTaskData);
-        const newTask: Task = { id: newDocId, ...newTaskData };
+        const newTask: Task = { id: newDocId, ...newTaskData, createdAt: newTaskData.createdAt.toString() };
         setTasks((prevTasks) => [...prevTasks, newTask]);
     } catch(error) {
         console.error("Error adding task:", error);
@@ -156,6 +157,15 @@ export function useTasks() {
 
   }, [tasks, user, toast]);
 
+  const sortedTasks = useMemo(
+    () => tasks.sort((a, b) => {
+        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return dateA - dateB;
+    }),
+    [tasks]
+  );
+
   const completedTasks = useMemo(
     () => tasks.filter((task) => task.completed).length,
     [tasks]
@@ -163,7 +173,7 @@ export function useTasks() {
   const totalTasks = tasks.length;
 
   return {
-    tasks,
+    tasks: sortedTasks,
     loading: authLoading || loading,
     addTask,
     toggleTask,

@@ -13,6 +13,8 @@ import {
   updateDoc,
   setDoc,
   getDoc,
+  orderBy,
+  Timestamp,
 } from 'firebase/firestore';
 import type { Task, UserProfile } from '@/lib/types';
 import { app } from './config';
@@ -27,11 +29,17 @@ export async function getTasks(userId: string): Promise<Task[]> {
   }
   try {
     const tasksCol = collection(db, 'users', userId, 'tasks');
-    const taskSnapshot = await getDocs(tasksCol);
-    const tasks = taskSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-    })) as Task[];
+    const q = query(tasksCol, orderBy('createdAt', 'asc'));
+    const taskSnapshot = await getDocs(q);
+    const tasks = taskSnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+            id: doc.id,
+            text: data.text,
+            completed: data.completed,
+            createdAt: (data.createdAt as Timestamp)?.toDate().toISOString() || new Date().toISOString(),
+        }
+    }) as Task[];
     return tasks;
   } catch (error) {
     console.error('Error fetching tasks from Firestore:', error);
@@ -39,12 +47,15 @@ export async function getTasks(userId: string): Promise<Task[]> {
   }
 }
 
-export async function addTaskToFirestore(userId: string, task: Omit<Task, 'id'>): Promise<string> {
+export async function addTaskToFirestore(userId: string, task: Omit<Task, 'id' | 'createdAt'> & { createdAt: Date }): Promise<string> {
   if (!userId) {
     throw new Error('User ID is required to add a task.');
   }
   const tasksCol = collection(db, 'users', userId, 'tasks');
-  const docRef = await addDoc(tasksCol, task);
+  const docRef = await addDoc(tasksCol, {
+    ...task,
+    createdAt: Timestamp.fromDate(task.createdAt),
+  });
   return docRef.id;
 }
 
