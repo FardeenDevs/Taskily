@@ -33,6 +33,7 @@ export function TaskItem({ task, onToggleTask, onDeleteTask, onEditTask }: TaskI
         checked={task.completed}
         onCheckedChange={() => onToggleTask(task.id)}
         aria-label={`Mark task "${task.text}" as ${task.completed ? 'incomplete' : 'complete'}`}
+        className="data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500"
       />
       <label
         htmlFor={`task-${task.id}`}
@@ -46,7 +47,7 @@ export function TaskItem({ task, onToggleTask, onDeleteTask, onEditTask }: TaskI
       <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
           <DialogTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8" aria-label={`Edit task "${task.text}"`}>
+            <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-500 hover:text-blue-600" aria-label={`Edit task "${task.text}"`}>
               <Pencil className="h-4 w-4" />
             </Button>
           </DialogTrigger>
@@ -76,7 +77,7 @@ export function TaskItem({ task, onToggleTask, onDeleteTask, onEditTask }: TaskI
         <Button
           variant="ghost"
           size="icon"
-          className="h-8 w-8 text-destructive hover:text-destructive"
+          className="h-8 w-8 text-red-500 hover:text-red-600"
           onClick={() => onDeleteTask(task.id)}
           aria-label={`Delete task "${task.text}"`}
         >

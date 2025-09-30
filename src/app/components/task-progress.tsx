@@ -18,14 +18,14 @@ export function TaskProgress({ completed, total }: TaskProgressProps) {
 
   return (
     <div className="space-y-2">
-      <div className="flex justify-between items-center text-sm font-medium text-muted-foreground">
+      <div className="flex justify-between items-center text-sm font-medium text-green-600">
         <p>Progress</p>
         <p>
           {total > 0 && `${Math.round(progress)}% | `}
           {completed} / {total}
         </p>
       </div>
-      <Progress value={progress} className="h-2" />
+      <Progress value={progress} className="h-3 [&>div]:bg-green-500" />
     </div>
   );
 }
