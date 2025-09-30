@@ -47,12 +47,15 @@ export async function getTasks(userId: string): Promise<Task[]> {
   }
 }
 
-export async function addTaskToFirestore(userId: string, task: Omit<Task, 'id' | 'createdAt'> & { createdAt: Timestamp }): Promise<string> {
+export async function addTaskToFirestore(userId: string, task: Omit<Task, 'id' | 'createdAt'>): Promise<string> {
   if (!userId) {
     throw new Error('User ID is required to add a task.');
   }
   const tasksCol = collection(db, 'users', userId, 'tasks');
-  const docRef = await addDoc(tasksCol, task);
+  const docRef = await addDoc(tasksCol, {
+    ...task,
+    createdAt: Timestamp.now(),
+  });
   return docRef.id;
 }
 

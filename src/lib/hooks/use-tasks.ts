@@ -5,7 +5,6 @@ import { type Task } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { getTasks, addTaskToFirestore, updateTaskInFirestore, deleteTaskFromFirestore } from "@/lib/firebase/firestore";
-import { Timestamp } from "firebase/firestore";
 
 const FIRST_TIME_KEY = "taskily-first-time";
 
@@ -61,22 +60,32 @@ export function useTasks() {
       });
       return;
     }
+    
+    const createdAt = new Date().toISOString();
     const newTaskData = {
       text: text.trim(),
       completed: false,
-      createdAt: new Date(),
     };
+
     try {
-        const newDocId = await addTaskToFirestore(user.uid, {
-          text: newTaskData.text,
-          completed: newTaskData.completed,
-          createdAt: Timestamp.fromDate(newTaskData.createdAt),
-        });
-        const newTask: Task = { id: newDocId, ...newTaskData, createdAt: newTaskData.createdAt.toISOString() };
-        setTasks((prevTasks) => [...prevTasks, newTask]);
+        // Optimistically update the UI with a temporary ID and the current date
+        const tempId = `temp-${Date.now()}`;
+        const optimisticTask: Task = { id: tempId, ...newTaskData, createdAt };
+        setTasks((prevTasks) => [...prevTasks, optimisticTask]);
+
+        const newDocId = await addTaskToFirestore(user.uid, newTaskData);
+        
+        // Replace the temporary task with the real one from the server
+        setTasks((prevTasks) =>
+          prevTasks.map((task) =>
+            task.id === tempId ? { ...task, id: newDocId } : task
+          )
+        );
     } catch(error) {
         console.error("Error adding task:", error);
         toast({ title: "Failed to add task", variant: "destructive"});
+        // Revert optimistic update on failure
+        setTasks((prevTasks) => prevTasks.filter(task => !task.id.startsWith('temp-')));
     }
 
   }, [tasks, user, toast]);
