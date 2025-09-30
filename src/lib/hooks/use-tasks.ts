@@ -2,11 +2,13 @@
 
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { type Task } from "@/lib/types";
+import { useToast } from "@/hooks/use-toast";
 
 const STORAGE_KEY = "taskily-tasks";
 
 export function useTasks() {
   const [tasks, setTasks] = useState<Task[]>([]);
+  const { toast } = useToast();
 
   useEffect(() => {
     try {
@@ -29,13 +31,22 @@ export function useTasks() {
 
   const addTask = useCallback((text: string) => {
     if (text.trim() === "") return;
+    const normalizedText = text.trim().toLowerCase();
+    if (tasks.some(task => task.text.toLowerCase() === normalizedText)) {
+      toast({
+        variant: "destructive",
+        title: "Duplicate Task",
+        description: "A task with this name already exists.",
+      });
+      return;
+    }
     const newTask: Task = {
       id: crypto.randomUUID(),
       text: text.trim(),
       completed: false,
     };
     setTasks((prevTasks) => [...prevTasks, newTask]);
-  }, []);
+  }, [tasks, toast]);
 
   const toggleTask = useCallback((id: string) => {
     setTasks((prevTasks) =>
@@ -51,12 +62,22 @@ export function useTasks() {
 
   const editTask = useCallback((id: string, newText: string) => {
     if (newText.trim() === "") return;
+    const normalizedText = newText.trim().toLowerCase();
+    const existingTask = tasks.find(task => task.text.toLowerCase() === normalizedText);
+    if (existingTask && existingTask.id !== id) {
+        toast({
+            variant: "destructive",
+            title: "Duplicate Task",
+            description: "A task with this name already exists.",
+        });
+        return;
+    }
     setTasks((prevTasks) =>
       prevTasks.map((task) =>
         task.id === id ? { ...task, text: newText.trim() } : task
       )
     );
-  }, []);
+  }, [tasks, toast]);
 
   const completedTasks = useMemo(
     () => tasks.filter((task) => task.completed).length,

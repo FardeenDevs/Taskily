@@ -6,7 +6,7 @@ import { TaskProgress } from "@/app/components/task-progress";
 import { TaskInput } from "@/app/components/task-input";
 import { TaskList } from "@/app/components/task-list";
 import { TaskSuggestions } from "@/app/components/task-suggestions";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 
 export default function Home() {
   const {
@@ -22,8 +22,7 @@ export default function Home() {
   return (
     <main className="flex min-h-screen w-full flex-col items-center justify-center bg-background p-4 sm:p-8">
       <div className="w-full max-w-2xl">
-        <AnimatePresence>
-          <motion.div layout>
+        <motion.div layout transition={{ type: 'spring', stiffness: 300, damping: 30 }}>
             <Card className="border-2 border-border/50 shadow-2xl shadow-primary/5">
               <CardHeader>
                 <CardTitle className="font-headline text-4xl font-bold tracking-tight text-foreground">
@@ -47,8 +46,7 @@ export default function Home() {
                 <TaskSuggestions currentTasks={tasks} onAddTask={addTask} />
               </CardFooter>
             </Card>
-          </motion.div>
-        </AnimatePresence>
+        </motion.div>
       </div>
     </main>
   );
