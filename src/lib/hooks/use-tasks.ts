@@ -5,6 +5,7 @@ import { type Task } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { getTasks, addTaskToFirestore, updateTaskInFirestore, deleteTaskFromFirestore } from "@/lib/firebase/firestore";
+import { Timestamp } from "firebase/firestore";
 
 const FIRST_TIME_KEY = "taskily-first-time";
 
@@ -66,8 +67,12 @@ export function useTasks() {
       createdAt: new Date(),
     };
     try {
-        const newDocId = await addTaskToFirestore(user.uid, newTaskData);
-        const newTask: Task = { id: newDocId, ...newTaskData, createdAt: newTaskData.createdAt.toString() };
+        const newDocId = await addTaskToFirestore(user.uid, {
+          text: newTaskData.text,
+          completed: newTaskData.completed,
+          createdAt: Timestamp.fromDate(newTaskData.createdAt),
+        });
+        const newTask: Task = { id: newDocId, ...newTaskData, createdAt: newTaskData.createdAt.toISOString() };
         setTasks((prevTasks) => [...prevTasks, newTask]);
     } catch(error) {
         console.error("Error adding task:", error);
