@@ -11,12 +11,15 @@ import {
   addDoc,
   deleteDoc,
   updateDoc,
+  setDoc,
+  getDoc,
 } from 'firebase/firestore';
-import type { Task } from '@/lib/types';
+import type { Task, UserProfile } from '@/lib/types';
 import { app } from './config';
 
 const db = getFirestore(app);
 
+// Task Functions
 export async function getTasks(userId: string): Promise<Task[]> {
   if (!userId) {
     console.error('User ID is required to fetch tasks.');
@@ -59,4 +62,27 @@ export async function deleteTaskFromFirestore(userId: string, taskId: string): P
   }
   const taskRef = doc(db, 'users', userId, 'tasks', taskId);
   await deleteDoc(taskRef);
+}
+
+// User Profile Functions
+export async function createUserProfile(userId: string, data: UserProfile): Promise<void> {
+  if (!userId) {
+    throw new Error('User ID is required to create a user profile.');
+  }
+  const userRef = doc(db, 'users', userId);
+  await setDoc(userRef, data);
+}
+
+export async function getUserProfile(userId: string): Promise<UserProfile | null> {
+  if (!userId) {
+    return null;
+  }
+  const userRef = doc(db, 'users', userId);
+  const userSnap = await getDoc(userRef);
+
+  if (userSnap.exists()) {
+    return userSnap.data() as UserProfile;
+  } else {
+    return null;
+  }
 }
