@@ -42,7 +42,11 @@ export function TaskInput({ onAddTask }: TaskInputProps) {
           render={({ field }) => (
             <FormItem className="flex-1">
               <FormControl>
-                <Input placeholder="Add a new task..." {...field} />
+                <Input 
+                  placeholder="Add a new task..." 
+                  {...field} 
+                  className="focus-visible:ring-green-500 focus-visible:ring-offset-2 focus-visible:ring-offset-background transition-shadow duration-300 focus-visible:shadow-[0_0_0_2px_rgba(34,197,94,0.4)]"
+                />
               </FormControl>
               <FormMessage />
             </FormItem>

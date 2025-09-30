@@ -5,9 +5,11 @@ import { type Task } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 
 const STORAGE_KEY = "taskily-tasks";
+const FIRST_TIME_KEY = "taskily-first-time";
 
 export function useTasks() {
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [isFirstTime, setIsFirstTime] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -16,6 +18,13 @@ export function useTasks() {
       if (storedTasks) {
         setTasks(JSON.parse(storedTasks));
       }
+
+      const firstTime = localStorage.getItem(FIRST_TIME_KEY);
+      if (firstTime === null) {
+        setIsFirstTime(true);
+        localStorage.setItem(FIRST_TIME_KEY, "false");
+      }
+
     } catch (error) {
       console.error("Failed to parse tasks from localStorage", error);
     }
@@ -93,5 +102,7 @@ export function useTasks() {
     editTask,
     completedTasks,
     totalTasks,
+    isFirstTime,
+    setIsFirstTime,
   };
 }
