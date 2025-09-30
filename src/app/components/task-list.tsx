@@ -2,6 +2,7 @@
 
 import { type Task } from "@/lib/types";
 import { TaskItem } from "@/app/components/task-item";
+import { AnimatePresence, motion } from "framer-motion";
 
 interface TaskListProps {
   tasks: Task[];
@@ -22,15 +23,24 @@ export function TaskList({ tasks, onToggleTask, onDeleteTask, onEditTask }: Task
 
   return (
     <div className="space-y-2">
-      {tasks.map((task) => (
-        <TaskItem
-          key={task.id}
-          task={task}
-          onToggleTask={onToggleTask}
-          onDeleteTask={onDeleteTask}
-          onEditTask={onEditTask}
-        />
-      ))}
+      <AnimatePresence>
+        {tasks.map((task) => (
+          <motion.div
+            key={task.id}
+            layout
+            initial={{ opacity: 0, y: -20, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.2 } }}
+          >
+            <TaskItem
+              task={task}
+              onToggleTask={onToggleTask}
+              onDeleteTask={onDeleteTask}
+              onEditTask={onEditTask}
+            />
+          </motion.div>
+        ))}
+      </AnimatePresence>
     </div>
   );
 }

@@ -48,7 +48,7 @@ export function TaskInput({ onAddTask }: TaskInputProps) {
             </FormItem>
           )}
         />
-        <Button type="submit" size="icon" aria-label="Add task">
+        <Button type="submit" size="icon" aria-label="Add task" className="bg-green-500 hover:bg-green-600 text-white">
           <Plus />
         </Button>
       </form>
