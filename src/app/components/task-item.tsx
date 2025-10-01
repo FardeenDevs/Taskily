@@ -59,7 +59,7 @@ export function TaskItem({ task, onToggleTask, onDeleteTask, onEditTask }: TaskI
       <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100 relative z-10">
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
           <DialogTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8 hover:!text-white hover:!bg-gradient-to-br from-blue-500 to-blue-600" aria-label={`Edit task "${task.text}"`}>
+            <Button variant="editIcon" size="icon" className="h-8 w-8" aria-label={`Edit task "${task.text}"`}>
               <Pencil className="h-4 w-4" />
             </Button>
           </DialogTrigger>
@@ -87,9 +87,9 @@ export function TaskItem({ task, onToggleTask, onDeleteTask, onEditTask }: TaskI
           </DialogContent>
         </Dialog>
         <Button
-          variant="ghost"
+          variant="destructiveIcon"
           size="icon"
-          className="h-8 w-8 hover:!text-white hover:!bg-gradient-to-br from-red-500 to-red-600"
+          className="h-8 w-8"
           onClick={() => onDeleteTask(task.id)}
           aria-label={`Delete task "${task.text}"`}
         >

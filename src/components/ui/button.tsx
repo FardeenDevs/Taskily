@@ -21,6 +21,8 @@ const buttonVariants = cva(
         gradient: "bg-gradient-to-r from-primary-gradient-start to-primary-gradient-end text-primary-foreground shadow-lg hover:opacity-90 transition-opacity",
         destructiveGradient: "bg-gradient-to-r from-destructive-gradient-start to-destructive-gradient-end text-destructive-foreground shadow-lg hover:opacity-90 transition-opacity",
         edit: "bg-gradient-to-r from-edit-gradient-start to-edit-gradient-end text-white shadow-lg hover:opacity-90 transition-opacity",
+        editIcon: "hover:!text-white hover:!bg-gradient-to-br from-blue-500 to-blue-600",
+        destructiveIcon: "hover:!text-white hover:!bg-gradient-to-br from-red-500 to-red-600",
       },
       size: {
         default: "h-10 px-4 py-2",
