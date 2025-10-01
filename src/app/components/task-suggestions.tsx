@@ -59,7 +59,11 @@ export function TaskSuggestions({ currentTasks, onAddTask }: TaskSuggestionsProp
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" onClick={handleFetchSuggestions}>
+        <Button 
+          variant="outline" 
+          onClick={handleFetchSuggestions}
+          disabled={currentTasks.length === 0}
+        >
           <Sparkles className="mr-2 h-4 w-4" />
           Suggest Tasks
         </Button>

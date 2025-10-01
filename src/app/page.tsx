@@ -124,7 +124,7 @@ function AppContent({
                   <CardFooter className="flex items-center justify-between">
                      <AlertDialog>
                         <AlertDialogTrigger asChild>
-                           <Button variant="outline" size="sm" disabled={tasks.length === 0}>
+                           <Button variant="destructive" size="sm" disabled={tasks.length === 0}>
                                 <Trash2 className="mr-2 h-4 w-4"/>
                                 Clear All Tasks
                             </Button>
