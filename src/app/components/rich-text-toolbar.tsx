@@ -2,7 +2,7 @@
 "use client";
 
 import { type Editor } from '@tiptap/react';
-import { Bold, Italic, Underline, List } from 'lucide-react';
+import { Bold, Italic, Underline, List, Strikethrough, ListOrdered } from 'lucide-react';
 import { Toggle } from '@/components/ui/toggle';
 
 interface RichTextToolbarProps {
@@ -42,11 +42,27 @@ export function RichTextToolbar({ editor }: RichTextToolbarProps) {
       </Toggle>
       <Toggle
         size="sm"
+        pressed={editor.isActive('strike')}
+        onPressedChange={() => editor.chain().focus().toggleStrike().run()}
+        disabled={!editor.can().chain().focus().toggleStrike().run()}
+      >
+        <Strikethrough className="h-4 w-4" />
+      </Toggle>
+      <Toggle
+        size="sm"
         pressed={editor.isActive('bulletList')}
         onPressedChange={() => editor.chain().focus().toggleBulletList().run()}
         disabled={!editor.can().chain().focus().toggleBulletList().run()}
       >
         <List className="h-4 w-4" />
+      </Toggle>
+      <Toggle
+        size="sm"
+        pressed={editor.isActive('orderedList')}
+        onPressedChange={() => editor.chain().focus().toggleOrderedList().run()}
+        disabled={!editor.can().chain().focus().toggleOrderedList().run()}
+      >
+        <ListOrdered className="h-4 w-4" />
       </Toggle>
     </div>
   );
