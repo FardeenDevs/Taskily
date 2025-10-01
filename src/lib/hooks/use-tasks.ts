@@ -66,27 +66,18 @@ export function useTasks() {
       completed: false,
     };
 
-    const optimisticTask: Task = {
-        id: `temp-${Date.now()}`,
-        ...newTaskData,
-        createdAt: new Date().toISOString(),
-    };
-
-    setTasks((prevTasks) => [...prevTasks, optimisticTask]);
-
     try {
         const newDocId = await addTaskToFirestore(user.uid, newTaskData);
-        // Replace the temporary task with the real one from the server
-        setTasks((prevTasks) =>
-          prevTasks.map((task) =>
-            task.id === optimisticTask.id ? { ...task, id: newDocId } : task
-          )
-        );
+        const newTask: Task = {
+            id: newDocId,
+            ...newTaskData,
+            createdAt: new Date().toISOString(),
+        };
+        // Update state after successful creation
+        setTasks((prevTasks) => [...prevTasks, newTask]);
     } catch(error) {
         console.error("Error adding task:", error);
         toast({ title: "Failed to add task", variant: "destructive"});
-        // Revert optimistic update on failure
-        setTasks((prevTasks) => prevTasks.filter(task => task.id !== optimisticTask.id));
     }
 
   }, [tasks, user, toast]);
@@ -98,6 +89,7 @@ export function useTasks() {
 
     const newCompletedState = !task.completed;
     
+    // Optimistic update
     setTasks((prevTasks) =>
       prevTasks.map((t) =>
         t.id === id ? { ...t, completed: newCompletedState } : t
@@ -122,7 +114,8 @@ export function useTasks() {
     if (!user) return;
     const taskToDelete = tasks.find(t => t.id === id);
     if (!taskToDelete) return;
-
+    
+    // Optimistic update
     setTasks((prevTasks) => prevTasks.filter((task) => task.id !== id));
 
     try {
@@ -151,6 +144,8 @@ export function useTasks() {
     }
     
     const originalText = tasks.find(t => t.id === id)?.text || '';
+
+    // Optimistic update
     setTasks((prevTasks) =>
       prevTasks.map((task) =>
         task.id === id ? { ...task, text: newText.trim() } : task
