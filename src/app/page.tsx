@@ -86,7 +86,7 @@ const AppContent = memo(function AppContent({
            <div className="absolute top-4 left-4">
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground hover:text-foreground">
+                        <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground hover:text-foreground md:hidden">
                             <Menu className="h-5 w-5" />
                         </Button>
                     </DropdownMenuTrigger>
@@ -101,6 +101,9 @@ const AppContent = memo(function AppContent({
                         </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
+                 <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground hover:text-foreground hidden md:flex" onClick={() => setSidebarOpen(true)}>
+                    <Menu className="h-5 w-5" />
+                </Button>
             </div>
           <WelcomeDialog open={isFirstTime} onOpenChange={setIsFirstTime} />
           <SettingsDialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen} onClearAll={clearAllWorkspaces} />
