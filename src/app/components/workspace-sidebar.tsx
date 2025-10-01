@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, MoreVertical, Pencil, Trash2 } from "lucide-react";
+import { Plus, MoreVertical, Pencil, Trash2, LayoutGrid } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -61,7 +61,10 @@ export function WorkspaceSidebar({ tasksHook }: WorkspaceSidebarProps) {
       <AlertDialog>
         <Sidebar>
           <SidebarHeader>
-            <h2 className="text-xl font-semibold px-2">Listspaces</h2>
+             <div className="flex items-center justify-center gap-2">
+                <LayoutGrid className="h-5 w-5" />
+                <h2 className="text-xl font-semibold">Listspaces</h2>
+            </div>
           </SidebarHeader>
           <SidebarContent>
             <SidebarMenu>
@@ -91,7 +94,7 @@ export function WorkspaceSidebar({ tasksHook }: WorkspaceSidebarProps) {
                         </DropdownMenuItem>
                       </DialogTrigger>
                       <AlertDialogTrigger asChild>
-                        <DropdownMenuItem onSelect={() => setSelectedWorkspaceId(workspace.id)} className="text-destructive focus:text-destructive focus:bg-destructive/10">
+                        <DropdownMenuItem onSelect={() => setSelectedWorkspaceId(workspace.id)} className="text-destructive hover:bg-destructive/10 focus:text-destructive focus:bg-destructive/10">
                           <Trash2 className="mr-2 h-4 w-4" />
                           <span>Delete</span>
                         </DropdownMenuItem>
