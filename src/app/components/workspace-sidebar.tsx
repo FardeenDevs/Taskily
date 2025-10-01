@@ -69,6 +69,7 @@ export const WorkspaceSidebar = memo(function WorkspaceSidebar({
               <SidebarMenuButton
                 isActive={ws.id === activeWorkspace?.id}
                 onClick={() => onSwitchWorkspace(ws.id)}
+                className="p-4 rounded-lg"
               >
                 <span>{ws.name}</span>
               </SidebarMenuButton>
@@ -130,5 +131,3 @@ export const WorkspaceSidebar = memo(function WorkspaceSidebar({
     </>
   );
 });
-
-    
