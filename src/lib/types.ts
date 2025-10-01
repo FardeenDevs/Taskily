@@ -16,3 +16,11 @@ export interface Workspace {
     name: string;
     createdAt: string;
 }
+
+export interface Note {
+  id: string;
+  title: string;
+  content: string;
+  createdAt: string;
+  workspaceId: string;
+}

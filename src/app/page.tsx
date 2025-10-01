@@ -3,10 +3,12 @@
 
 import { useTasks } from "@/lib/hooks/use-tasks";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TaskProgress } from "@/app/components/task-progress";
 import { TaskInput } from "@/app/components/task-input";
 import { TaskList } from "@/app/components/task-list";
 import { TaskSuggestions } from "@/app/components/task-suggestions";
+import { NotesSection } from "@/app/components/notes-section";
 import { WelcomeDialog } from "@/app/components/welcome-dialog";
 import { AnimatePresence, motion } from "framer-motion";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -31,11 +33,15 @@ const AppContent = memo(function AppContent({ tasksHook }: AppContentProps) {
 
   const {
     tasks,
+    notes,
     loading,
     addTask,
     toggleTask,
     deleteTask,
     editTask,
+    addNote,
+    editNote,
+    deleteNote,
     completedTasks,
     totalTasks,
     activeWorkspace,
@@ -115,14 +121,30 @@ const AppContent = memo(function AppContent({ tasksHook }: AppContentProps) {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-8">
-                  <TaskProgress completed={completedTasks} total={totalTasks} />
-                  <TaskInput onAddTask={addTask} />
-                  <TaskList
-                    tasks={tasks}
-                    onToggleTask={toggleTask}
-                    onDeleteTask={deleteTask}
-                    onEditTask={editTask}
-                  />
+                   <Tabs defaultValue="progress" className="w-full">
+                    <TabsList className="grid w-full grid-cols-2">
+                      <TabsTrigger value="progress">Progress</TabsTrigger>
+                      <TabsTrigger value="notes">Notes</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="progress" className="mt-6 space-y-6">
+                      <TaskProgress completed={completedTasks} total={totalTasks} />
+                      <TaskInput onAddTask={addTask} />
+                      <TaskList
+                        tasks={tasks}
+                        onToggleTask={toggleTask}
+                        onDeleteTask={deleteTask}
+                        onEditTask={editTask}
+                      />
+                    </TabsContent>
+                    <TabsContent value="notes" className="mt-6">
+                       <NotesSection
+                        notes={notes}
+                        onAddNote={addNote}
+                        onEditNote={editNote}
+                        onDeleteNote={deleteNote}
+                       />
+                    </TabsContent>
+                  </Tabs>
                 </CardContent>
                 <CardFooter className="flex items-center justify-between">
                    <AlertDialog>

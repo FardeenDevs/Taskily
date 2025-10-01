@@ -2,7 +2,7 @@
 
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Check, Edit, Plus, Trash2, Sparkles } from 'lucide-react';
+import { Check, Edit, Plus, Trash2, Sparkles, Notebook, Rows3 } from 'lucide-react';
 
 interface WelcomeDialogProps {
   open: boolean;
@@ -20,13 +20,22 @@ export function WelcomeDialog({ open, onOpenChange }: WelcomeDialogProps) {
           </DialogDescription>
         </DialogHeader>
         <div className="mt-4 space-y-4 text-sm">
+           <div className="flex items-start gap-4">
+            <div className="flex h-8 w-8 items-center justify-center rounded-md text-primary">
+                <Rows3 className="h-5 w-5" />
+            </div>
+            <div>
+              <h4 className="font-semibold">Progress & Notes</h4>
+              <p className="text-muted-foreground">Switch between your task list and a notes section using the tabs at the top of the card.</p>
+            </div>
+          </div>
           <div className="flex items-start gap-4">
             <div className="flex h-8 w-8 items-center justify-center rounded-md text-primary">
                 <Plus className="h-5 w-5" />
             </div>
             <div>
-              <h4 className="font-semibold">Add Tasks</h4>
-              <p className="text-muted-foreground">Type a task in the input field and press Enter or click the plus button to add it to your list.</p>
+              <h4 className="font-semibold">Add Items</h4>
+              <p className="text-muted-foreground">Add new tasks in the "Progress" tab or create new notes in the "Notes" tab.</p>
             </div>
           </div>
           <div className="flex items-start gap-4">
@@ -35,7 +44,7 @@ export function WelcomeDialog({ open, onOpenChange }: WelcomeDialogProps) {
             </div>
             <div>
               <h4 className="font-semibold">Complete Tasks</h4>
-              <p className="text-muted-foreground">Click the checkbox next to a task to mark it as complete. Your progress will update automatically.</p>
+              <p className="text-muted-foreground">In the "Progress" tab, click the checkbox to mark a task as complete. Your progress bar will update.</p>
             </div>
           </div>
           <div className="flex items-start gap-4">
@@ -43,17 +52,8 @@ export function WelcomeDialog({ open, onOpenChange }: WelcomeDialogProps) {
                 <Edit className="h-5 w-5" />
             </div>
             <div>
-              <h4 className="font-semibold">Edit Tasks</h4>
-              <p className="text-muted-foreground">Hover over a task and click the pencil icon to edit its name.</p>
-            </div>
-          </div>
-          <div className="flex items-start gap-4">
-            <div className="flex h-8 w-8 items-center justify-center rounded-md text-destructive">
-                <Trash2 className="h-5 w-5" />
-            </div>
-            <div>
-              <h4 className="font-semibold">Delete Tasks</h4>
-              <p className="text-muted-foreground">Hover over a task and click the trash icon to permanently delete it.</p>
+              <h4 className="font-semibold">Edit Items</h4>
+              <p className="text-muted-foreground">Hover over any task or note and click the pencil icon to edit its content.</p>
             </div>
           </div>
            <div className="flex items-start gap-4">
@@ -62,7 +62,7 @@ export function WelcomeDialog({ open, onOpenChange }: WelcomeDialogProps) {
             </div>
             <div>
               <h4 className="font-semibold">Get AI Suggestions</h4>
-              <p className="text-muted-foreground">Click the "Suggest Tasks" button to get AI-powered recommendations based on your current task list.</p>
+              <p className="text-muted-foreground">In the "Progress" tab, click "Suggest Tasks" to get AI-powered recommendations.</p>
             </div>
           </div>
         </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { type Task, type Workspace, type Priority, type Effort } from "@/lib/types";
+import { type Task, type Workspace, type Priority, type Effort, type Note } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 
 const DATA_KEY = "listily-data-workspaces";
@@ -9,6 +9,7 @@ const FIRST_TIME_KEY = "listily-first-time-workspaces";
 
 interface AppData {
   tasks: Task[];
+  notes: Note[];
   workspaces: Workspace[];
   activeWorkspaceId: string | null;
 }
@@ -18,6 +19,7 @@ const DEFAULT_WORKSPACE_ID = "default";
 export function useTasks() {
   const [data, setData] = useState<AppData>({
     tasks: [],
+    notes: [],
     workspaces: [],
     activeWorkspaceId: null,
   });
@@ -33,9 +35,10 @@ export function useTasks() {
       if (storedData) {
         setData(JSON.parse(storedData));
       } else {
-        const defaultWorkspace: Workspace = { id: DEFAULT_WORKSPACE_ID, name: "My Tasks", createdAt: new Date().toISOString() };
+        const defaultWorkspace: Workspace = { id: DEFAULT_WORKSPACE_ID, name: "My List", createdAt: new Date().toISOString() };
         setData({
           tasks: [],
+          notes: [],
           workspaces: [defaultWorkspace],
           activeWorkspaceId: defaultWorkspace.id,
         });
@@ -46,9 +49,10 @@ export function useTasks() {
       }
     } catch (error) {
       console.error("Failed to load data from localStorage", error);
-      const defaultWorkspace: Workspace = { id: DEFAULT_WORKSPACE_ID, name: "My Tasks", createdAt: new Date().toISOString() };
+      const defaultWorkspace: Workspace = { id: DEFAULT_WORKSPACE_ID, name: "My List", createdAt: new Date().toISOString() };
       setData({
         tasks: [],
+        notes: [],
         workspaces: [defaultWorkspace],
         activeWorkspaceId: defaultWorkspace.id,
       });
@@ -56,14 +60,15 @@ export function useTasks() {
     setLoading(false);
   }, []);
 
-  const updateAndSave = useCallback((newData: AppData) => {
-    setData(newData);
+  const updateAndSave = useCallback((newData: Partial<AppData>) => {
+    const updatedData = { ...data, ...newData };
+    setData(updatedData);
     try {
-      localStorage.setItem(DATA_KEY, JSON.stringify(newData));
+      localStorage.setItem(DATA_KEY, JSON.stringify(updatedData));
     } catch (error) {
       console.error("Failed to save data to localStorage", error);
     }
-  }, []);
+  }, [data]);
 
   const activeWorkspace = useMemo(() => {
     return data.workspaces.find(ws => ws.id === data.activeWorkspaceId);
@@ -74,6 +79,12 @@ export function useTasks() {
       .filter(task => task.workspaceId === data.activeWorkspaceId)
       .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
   }, [data.tasks, data.activeWorkspaceId]);
+
+  const filteredNotes = useMemo(() => {
+    return data.notes
+        .filter(note => note.workspaceId === data.activeWorkspaceId)
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }, [data.notes, data.activeWorkspaceId]);
 
   const completedTasks = useMemo(() => {
     return filteredTasks.filter(task => task.completed).length;
@@ -102,19 +113,19 @@ export function useTasks() {
       effort,
     };
 
-    updateAndSave({ ...data, tasks: [...data.tasks, newTask] });
+    updateAndSave({ tasks: [...data.tasks, newTask] });
   }, [data, filteredTasks, updateAndSave, toast]);
 
   const toggleTask = useCallback((id: string) => {
     const updatedTasks = data.tasks.map(task =>
       task.id === id ? { ...task, completed: !task.completed } : task
     );
-    updateAndSave({ ...data, tasks: updatedTasks });
+    updateAndSave({ tasks: updatedTasks });
   }, [data, updateAndSave]);
 
   const deleteTask = useCallback((id: string) => {
     const updatedTasks = data.tasks.filter(task => task.id !== id);
-    updateAndSave({ ...data, tasks: updatedTasks });
+    updateAndSave({ tasks: updatedTasks });
   }, [data, updateAndSave]);
 
   const editTask = useCallback((id: string, newText: string, newPriority: Priority | null, newEffort: Effort | null) => {
@@ -134,24 +145,53 @@ export function useTasks() {
     const updatedTasks = data.tasks.map(task =>
       task.id === id ? { ...task, text: newText.trim(), priority: newPriority, effort: newEffort } : task
     );
-    updateAndSave({ ...data, tasks: updatedTasks });
+    updateAndSave({ tasks: updatedTasks });
   }, [data, filteredTasks, updateAndSave, toast]);
 
   const clearTasks = useCallback((workspaceId: string) => {
     const workspace = data.workspaces.find(ws => ws.id === workspaceId);
     if (!workspace) return;
     const tasksToKeep = data.tasks.filter(task => task.workspaceId !== workspaceId);
-    updateAndSave({ ...data, tasks: tasksToKeep });
+    updateAndSave({ tasks: tasksToKeep });
     toast({
       title: "Tasks Cleared",
       description: `All tasks in "${workspace.name}" have been deleted.`,
     });
   }, [data, updateAndSave, toast]);
 
+  // --- Note Management ---
+
+  const addNote = useCallback((title: string, content: string) => {
+    if (title.trim() === "" || !data.activeWorkspaceId) return;
+
+    const newNote: Note = {
+        id: crypto.randomUUID(),
+        title: title.trim(),
+        content: content,
+        createdAt: new Date().toISOString(),
+        workspaceId: data.activeWorkspaceId,
+    };
+    updateAndSave({ notes: [...data.notes, newNote] });
+  }, [data, updateAndSave]);
+
+  const editNote = useCallback((id: string, newTitle: string, newContent: string) => {
+    if (newTitle.trim() === "") return;
+    const updatedNotes = data.notes.map(note =>
+        note.id === id ? { ...note, title: newTitle.trim(), content: newContent } : note
+    );
+    updateAndSave({ notes: updatedNotes });
+  }, [data, updateAndSave]);
+
+  const deleteNote = useCallback((id: string) => {
+    const updatedNotes = data.notes.filter(note => note.id !== id);
+    updateAndSave({ notes: updatedNotes });
+  }, [data, updateAndSave]);
+
   const resetApp = useCallback(() => {
-    const defaultWorkspace: Workspace = { id: DEFAULT_WORKSPACE_ID, name: "My Tasks", createdAt: new Date().toISOString() };
+    const defaultWorkspace: Workspace = { id: DEFAULT_WORKSPACE_ID, name: "My List", createdAt: new Date().toISOString() };
     const newData = {
       tasks: [],
+      notes: [],
       workspaces: [defaultWorkspace],
       activeWorkspaceId: defaultWorkspace.id,
     };
@@ -182,7 +222,6 @@ export function useTasks() {
       createdAt: new Date().toISOString(),
     };
     updateAndSave({
-      ...data,
       workspaces: [...data.workspaces, newWorkspace],
       activeWorkspaceId: newWorkspace.id,
     });
@@ -199,12 +238,13 @@ export function useTasks() {
     }
     const workspaces = data.workspaces.filter(ws => ws.id !== id);
     const tasks = data.tasks.filter(task => task.workspaceId !== id);
+    const notes = data.notes.filter(note => note.workspaceId !== id);
     const activeWorkspaceId = id === data.activeWorkspaceId ? workspaces[0].id : data.activeWorkspaceId;
     
-    updateAndSave({ workspaces, tasks, activeWorkspaceId });
+    updateAndSave({ workspaces, tasks, notes, activeWorkspaceId });
     toast({
       title: "Listspace Deleted",
-      description: "The Listspace and all its tasks have been removed.",
+      description: "The Listspace and all its items have been removed.",
     });
   }, [data, updateAndSave, toast]);
 
@@ -224,16 +264,17 @@ export function useTasks() {
     const workspaces = data.workspaces.map(ws =>
       ws.id === id ? { ...ws, name: newName.trim() } : ws
     );
-    updateAndSave({ ...data, workspaces });
+    updateAndSave({ workspaces });
   }, [data, updateAndSave, toast]);
 
   const switchWorkspace = useCallback((id: string) => {
     if (id === data.activeWorkspaceId) return;
-    updateAndSave({ ...data, activeWorkspaceId: id });
+    updateAndSave({ activeWorkspaceId: id });
   }, [data, updateAndSave]);
 
   return {
     tasks: filteredTasks,
+    notes: filteredNotes,
     workspaces: data.workspaces.sort((a,b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()),
     activeWorkspace,
     activeWorkspaceId: data.activeWorkspaceId,
@@ -248,6 +289,11 @@ export function useTasks() {
     deleteTask,
     editTask,
     clearTasks,
+    
+    addNote,
+    editNote,
+    deleteNote,
+    
     resetApp,
 
     addWorkspace,
