@@ -120,11 +120,11 @@ export function TaskItem({ task, onToggleTask, onDeleteTask, onEditTask }: TaskI
                         <SelectValue placeholder="Set effort" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="E1">Effort 1 (XS)</SelectItem>
-                        <SelectItem value="E2">Effort 2 (S)</SelectItem>
-                        <SelectItem value="E3">Effort 3 (M)</SelectItem>
-                        <SelectItem value="E4">Effort 4 (L)</SelectItem>
-                        <SelectItem value="E5">Effort 5 (XL)</SelectItem>
+                        <SelectItem value="E1">Effort 1 (Very Easy)</SelectItem>
+                        <SelectItem value="E2">Effort 2 (Easy)</SelectItem>
+                        <SelectItem value="E3">Effort 3 (Medium)</SelectItem>
+                        <SelectItem value="E4">Effort 4 (Hard)</SelectItem>
+                        <SelectItem value="E5">Effort 5 (Very Hard)</SelectItem>
                       </SelectContent>
                     </Select>
               </div>
