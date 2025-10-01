@@ -14,20 +14,19 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { LayoutGrid, Menu, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { SettingsDialog } from "@/app/components/settings-dialog";
 import { ThemeProvider } from "@/app/components/theme-provider";
+import { type Task, type Workspace } from "@/lib/types";
 
 function AppContent() {
   const {
-    tasks,
+    tasks: allTasks,
     loading,
     addTask,
     toggleTask,
     deleteTask,
     editTask,
-    completedTasks,
-    totalTasks,
     isFirstTime,
     setIsFirstTime,
     workspaces,
@@ -40,6 +39,22 @@ function AppContent() {
 
   const { setOpenMobile: setSidebarOpen } = useSidebar();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [currentTasks, setCurrentTasks] = useState<Task[]>([]);
+
+  useEffect(() => {
+    if (activeWorkspace) {
+      setCurrentTasks(allTasks.filter(t => activeWorkspace.tasks.some(wt => wt.id === t.id)));
+    } else {
+      setCurrentTasks([]);
+    }
+  }, [activeWorkspace, allTasks]);
+  
+  const completedTasks = useMemo(
+    () => currentTasks.filter((task) => task.completed).length,
+    [currentTasks]
+  );
+  
+  const totalTasks = useMemo(() => currentTasks.length, [currentTasks]);
 
 
   if (loading) {
@@ -92,14 +107,14 @@ function AppContent() {
                     <TaskProgress completed={completedTasks} total={totalTasks} />
                     <TaskInput onAddTask={addTask} />
                     <TaskList
-                      tasks={tasks}
+                      tasks={currentTasks}
                       onToggleTask={toggleTask}
                       onDeleteTask={deleteTask}
                       onEditTask={editTask}
                     />
                   </CardContent>
                   <CardFooter className="flex justify-end">
-                    <TaskSuggestions currentTasks={tasks} onAddTask={addTask} />
+                    <TaskSuggestions currentTasks={currentTasks} onAddTask={addTask} />
                   </CardFooter>
                 </Card>
               </motion.div>

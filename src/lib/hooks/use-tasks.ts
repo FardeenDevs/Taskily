@@ -62,14 +62,14 @@ export function useTasks() {
   }, []);
 
   const saveData = (newWorkspaces: Workspace[], newActiveId: string | null) => {
-    setWorkspaces(newWorkspaces);
-    setActiveWorkspaceId(newActiveId);
     try {
       const dataToStore = {
         workspaces: newWorkspaces,
         activeWorkspaceId: newActiveId,
       };
       localStorage.setItem(DATA_KEY, JSON.stringify(dataToStore));
+      setWorkspaces(newWorkspaces);
+      setActiveWorkspaceId(newActiveId);
     } catch (error) {
       console.error("Failed to save data to localStorage", error);
     }
@@ -79,7 +79,9 @@ export function useTasks() {
     return workspaces.find(ws => ws.id === activeWorkspaceId) || null;
   }, [workspaces, activeWorkspaceId]);
 
-  const tasks = useMemo(() => activeWorkspace?.tasks || [], [activeWorkspace]);
+  const tasks = useMemo(() => {
+    return activeWorkspace ? activeWorkspace.tasks : [];
+  }, [activeWorkspace]);
   
   const sortedTasks = useMemo(
     () => [...tasks].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()),
@@ -104,8 +106,9 @@ export function useTasks() {
     if (!activeWorkspaceId) return;
     if (text.trim() === "") return;
 
+    const currentTasks = activeWorkspace?.tasks || [];
     const normalizedText = text.trim().toLowerCase();
-    if (tasks.some(task => task.text.toLowerCase() === normalizedText)) {
+    if (currentTasks.some(task => task.text.toLowerCase() === normalizedText)) {
       toast({
         variant: "destructive",
         title: "Duplicate Task",
@@ -121,31 +124,32 @@ export function useTasks() {
       createdAt: new Date().toISOString(),
     };
     
-    const updatedTasks = [...tasks, newTask];
+    const updatedTasks = [...currentTasks, newTask];
     updateTasksInWorkspace(activeWorkspaceId, updatedTasks);
 
-  }, [tasks, activeWorkspaceId, workspaces, toast]);
+  }, [activeWorkspace, activeWorkspaceId, workspaces, toast]);
 
   const toggleTask = useCallback((id: string) => {
-    if (!activeWorkspaceId) return;
-    const updatedTasks = tasks.map((task) =>
+    if (!activeWorkspaceId || !activeWorkspace) return;
+    const updatedTasks = activeWorkspace.tasks.map((task) =>
       task.id === id ? { ...task, completed: !task.completed } : task
     );
     updateTasksInWorkspace(activeWorkspaceId, updatedTasks);
-  }, [tasks, activeWorkspaceId, workspaces]);
+  }, [activeWorkspace, activeWorkspaceId, workspaces]);
 
   const deleteTask = useCallback((id: string) => {
-    if (!activeWorkspaceId) return;
-    const updatedTasks = tasks.filter((task) => task.id !== id);
+    if (!activeWorkspaceId || !activeWorkspace) return;
+    const updatedTasks = activeWorkspace.tasks.filter((task) => task.id !== id);
     updateTasksInWorkspace(activeWorkspaceId, updatedTasks);
-  }, [tasks, activeWorkspaceId, workspaces]);
+  }, [activeWorkspace, activeWorkspaceId, workspaces]);
 
   const editTask = useCallback((id: string, newText: string) => {
-    if (!activeWorkspaceId) return;
+    if (!activeWorkspaceId || !activeWorkspace) return;
     if (newText.trim() === "") return;
 
+    const currentTasks = activeWorkspace.tasks;
     const normalizedText = newText.trim().toLowerCase();
-    const existingTask = tasks.find(task => task.text.toLowerCase() === normalizedText);
+    const existingTask = currentTasks.find(task => task.text.toLowerCase() === normalizedText);
     if (existingTask && existingTask.id !== id) {
         toast({
             variant: "destructive",
@@ -155,11 +159,11 @@ export function useTasks() {
         return;
     }
 
-    const updatedTasks = tasks.map((task) =>
+    const updatedTasks = currentTasks.map((task) =>
       task.id === id ? { ...task, text: newText.trim() } : task
     );
     updateTasksInWorkspace(activeWorkspaceId, updatedTasks);
-  }, [tasks, activeWorkspaceId, workspaces, toast]);
+  }, [activeWorkspace, activeWorkspaceId, workspaces, toast]);
 
   const addWorkspace = (name: string) => {
     if (name.trim() === "") return;
