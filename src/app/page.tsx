@@ -92,12 +92,12 @@ const AppContent = memo(function AppContent({
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="start">
                         <DropdownMenuItem onSelect={() => setSidebarOpen(true)}>
-                            <LayoutGrid className="mr-2"/>
-                            Listspaces
+                            <LayoutGrid className="mr-2 h-4 w-4"/>
+                            <span>Listspaces</span>
                         </DropdownMenuItem>
                          <DropdownMenuItem onSelect={() => setIsSettingsOpen(true)}>
-                            <Settings className="mr-2"/>
-                            Settings
+                            <Settings className="mr-2 h-4 w-4"/>
+                            <span>Settings</span>
                         </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
