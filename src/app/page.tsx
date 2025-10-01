@@ -11,7 +11,7 @@ import { SidebarProvider, Sidebar, SidebarInset, useSidebar } from "@/components
 import { WorkspaceSidebar } from "@/app/components/workspace-sidebar";
 import { AnimatePresence, motion } from "framer-motion";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Trash2, LayoutGrid, Settings } from "lucide-react";
+import { Trash2, PanelLeft, Settings } from "lucide-react";
 import { useState, memo } from "react";
 import { SettingsDialog } from "@/app/components/settings-dialog";
 import { ThemeProvider } from "@/app/components/theme-provider";
@@ -83,7 +83,7 @@ const AppContent = memo(function AppContent({
         </div>
          <div className="absolute top-4 left-4 z-50 md:hidden">
           <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground hover:text-foreground" onClick={() => setSidebarOpen(true)}>
-              <LayoutGrid className="h-5 w-5" />
+              <PanelLeft className="h-5 w-5" />
           </Button>
         </div>
         <main className="flex min-h-screen w-full flex-col items-center justify-center p-4 sm:p-8">
