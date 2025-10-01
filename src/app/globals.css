@@ -22,6 +22,10 @@
     --accent-foreground: 355.7 100% 97.3%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
+    --destructive-gradient-start: 0 84.2% 60.2%;
+    --destructive-gradient-end: 0 90% 65%;
+    --edit-gradient-start: 221.2 83.2% 53.3%;
+    --edit-gradient-end: 221.2 83.2% 58.3%;
     --border: 212 20% 88%;
     --input: 212 20% 88%;
     --ring: 142.1 76.2% 36.3%;
@@ -60,6 +64,10 @@
     --accent-foreground: 355.7 100% 97.3%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
+    --destructive-gradient-start: 0 70% 40%;
+    --destructive-gradient-end: 0 80% 45%;
+    --edit-gradient-start: 221.2 83.2% 53.3%;
+    --edit-gradient-end: 221.2 83.2% 58.3%;
     --border: 220 15% 25%;
     --input: 220 15% 25%;
     --ring: 142.1 70.6% 45.3%;

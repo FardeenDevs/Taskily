@@ -62,7 +62,8 @@ export const TaskSuggestions = memo(function TaskSuggestions({ currentTasks, onA
         <Button 
           variant="outline" 
           onClick={handleFetchSuggestions}
-          disabled={currentTasks.length === 0}
+          disabled={currentTasks.filter(t => !t.completed).length === 0}
+          className="disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
         >
           <Sparkles className="mr-2 h-4 w-4" />
           Suggest Tasks
@@ -103,5 +104,3 @@ export const TaskSuggestions = memo(function TaskSuggestions({ currentTasks, onA
     </Dialog>
   );
 });
-
-    

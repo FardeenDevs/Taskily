@@ -46,6 +46,12 @@ export default {
         destructive: {
           DEFAULT: 'hsl(var(--destructive))',
           foreground: 'hsl(var(--destructive-foreground))',
+          'gradient-start': 'hsl(var(--destructive-gradient-start))',
+          'gradient-end': 'hsl(var(--destructive-gradient-end))',
+        },
+        edit: {
+          'gradient-start': 'hsl(var(--edit-gradient-start))',
+          'gradient-end': 'hsl(var(--edit-gradient-end))',
         },
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',

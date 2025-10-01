@@ -29,9 +29,7 @@ export const TaskProgress = memo(function TaskProgress({ completed, total }: Tas
           {completed} / {total}
         </p>
       </div>
-      <Progress value={progress} className="h-3" />
+      <Progress value={progress} className="h-3 [&>div]:bg-gradient-to-r from-primary-gradient-start to-primary-gradient-end" />
     </div>
   );
 });
-
-    
