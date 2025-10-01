@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { type Note } from '@/lib/types';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 import { RichTextEditor } from './rich-text-editor';
 import { RichTextToolbar } from './rich-text-toolbar';
@@ -76,6 +76,7 @@ export function NoteDialog({ open, onOpenChange, note, onSave }: NoteDialogProps
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className={cn("w-screen h-screen max-w-none rounded-none flex flex-col p-8 sm:p-12")}>
+        <DialogTitle className="sr-only">{title || 'Note'}</DialogTitle>
         <Input
             id="note-title"
             placeholder="Note Title..."
