@@ -10,6 +10,7 @@ import { RichTextToolbar } from './rich-text-toolbar';
 import { useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
+import { Input } from '@/components/ui/input';
 
 interface NoteDialogProps {
   open: boolean;
@@ -18,19 +19,8 @@ interface NoteDialogProps {
   onSave: (id: string | null, title: string, content: string) => void;
 }
 
-function getTitleFromContent(content: string): string {
-    if (!content) return "New Note";
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = content;
-    const firstP = tempDiv.querySelector('p');
-    if (firstP && firstP.textContent) {
-      return firstP.textContent.trim().substring(0, 50) || "New Note";
-    }
-    const textContent = tempDiv.textContent || "";
-    return textContent.trim().substring(0, 50) || "New Note";
-}
-
 export function NoteDialog({ open, onOpenChange, note, onSave }: NoteDialogProps) {
+  const [title, setTitle] = useState('');
   const contentRef = useRef<string>('');
 
   const editor = useEditor({
@@ -62,16 +52,18 @@ export function NoteDialog({ open, onOpenChange, note, onSave }: NoteDialogProps
 
   useEffect(() => {
     if (open && editor) {
+      const noteTitle = note?.title || 'New Note';
       const content = note?.content || '';
+      setTitle(noteTitle);
       contentRef.current = content;
       editor.commands.setContent(content);
+      // Move focus to the end of the content
       editor.commands.focus('end');
     }
   }, [note, open, editor]);
-
+  
   const handleSave = () => {
-    const newTitle = getTitleFromContent(contentRef.current);
-    onSave(note?.id ?? null, newTitle, contentRef.current);
+    onSave(note?.id ?? null, title || "New Note", contentRef.current);
   };
 
   const handleOpenChange = (isOpen: boolean) => {
@@ -84,6 +76,13 @@ export function NoteDialog({ open, onOpenChange, note, onSave }: NoteDialogProps
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className={cn("w-screen h-screen max-w-none rounded-none flex flex-col p-8 sm:p-12")}>
+        <Input
+            id="note-title"
+            placeholder="Note Title..."
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            className="text-4xl font-extrabold border-0 shadow-none focus-visible:ring-0 px-0 h-auto mb-4"
+        />
         <div className="flex-grow pt-4 overflow-y-auto">
            <RichTextEditor editor={editor} />
         </div>
