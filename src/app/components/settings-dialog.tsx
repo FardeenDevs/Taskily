@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { memo, useState } from "react"
 import { useTheme } from "next-themes"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
@@ -25,7 +25,7 @@ interface SettingsDialogProps {
   onClearAll: () => void
 }
 
-export function SettingsDialog({ open, onOpenChange, onClearAll }: SettingsDialogProps) {
+export const SettingsDialog = memo(function SettingsDialog({ open, onOpenChange, onClearAll }: SettingsDialogProps) {
   const { theme, setTheme } = useTheme()
   const [isDark, setIsDark] = useState(theme === 'dark');
 
@@ -101,4 +101,6 @@ export function SettingsDialog({ open, onOpenChange, onClearAll }: SettingsDialo
       </DialogContent>
     </Dialog>
   )
-}
+});
+
+    

@@ -3,6 +3,7 @@
 import { type Task } from "@/lib/types";
 import { TaskItem } from "@/app/components/task-item";
 import { AnimatePresence, motion } from "framer-motion";
+import { memo } from "react";
 
 interface TaskListProps {
   tasks: Task[];
@@ -11,7 +12,7 @@ interface TaskListProps {
   onEditTask: (id: string, newText: string) => void;
 }
 
-export function TaskList({ tasks, onToggleTask, onDeleteTask, onEditTask }: TaskListProps) {
+export const TaskList = memo(function TaskList({ tasks, onToggleTask, onDeleteTask, onEditTask }: TaskListProps) {
   if (tasks.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/30 bg-muted/50 p-12 text-center">
@@ -43,4 +44,6 @@ export function TaskList({ tasks, onToggleTask, onDeleteTask, onEditTask }: Task
       </AnimatePresence>
     </div>
   );
-}
+});
+
+    

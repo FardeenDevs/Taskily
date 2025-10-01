@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { Plus } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, memo } from "react";
 
 const formSchema = z.object({
   task: z.string().min(1, {
@@ -21,7 +21,7 @@ interface TaskInputProps {
   onAddTask: (text: string) => void;
 }
 
-export function TaskInput({ onAddTask }: TaskInputProps) {
+export const TaskInput = memo(function TaskInput({ onAddTask }: TaskInputProps) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -75,4 +75,6 @@ export function TaskInput({ onAddTask }: TaskInputProps) {
       </form>
     </Form>
   );
-}
+});
+
+    

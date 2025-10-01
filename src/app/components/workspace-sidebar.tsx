@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { memo, useState } from "react"
 import { type Workspace } from "@/lib/types"
 import { SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarFooter, useSidebar } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
@@ -28,7 +28,7 @@ interface WorkspaceSidebarProps {
   onDeleteWorkspace: (id: string) => void;
 }
 
-export function WorkspaceSidebar({
+export const WorkspaceSidebar = memo(function WorkspaceSidebar({
   workspaces,
   activeWorkspace,
   onAddWorkspace,
@@ -41,9 +41,11 @@ export function WorkspaceSidebar({
 
 
   const handleAddWorkspace = () => {
-    onAddWorkspace(newWorkspaceName);
-    setNewWorkspaceName("");
-    setIsAddDialogOpen(false);
+    if (newWorkspaceName.trim()) {
+      onAddWorkspace(newWorkspaceName);
+      setNewWorkspaceName("");
+      setIsAddDialogOpen(false);
+    }
   }
 
   return (
@@ -127,4 +129,6 @@ export function WorkspaceSidebar({
       </SidebarFooter>
     </>
   );
-}
+});
+
+    

@@ -1,7 +1,7 @@
 "use client";
 
 import { Progress } from "@/components/ui/progress";
-import { useEffect, useState } from "react";
+import { useEffect, useState, memo } from "react";
 import { cn } from "@/lib/utils";
 
 interface TaskProgressProps {
@@ -9,7 +9,7 @@ interface TaskProgressProps {
   total: number;
 }
 
-export function TaskProgress({ completed, total }: TaskProgressProps) {
+export const TaskProgress = memo(function TaskProgress({ completed, total }: TaskProgressProps) {
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
@@ -32,4 +32,6 @@ export function TaskProgress({ completed, total }: TaskProgressProps) {
       <Progress value={progress} className="h-3" />
     </div>
   );
-}
+});
+
+    

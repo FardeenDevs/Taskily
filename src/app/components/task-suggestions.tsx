@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, memo } from "react";
 import { type Task } from "@/lib/types";
 import { getTaskSuggestions } from "@/app/actions";
 import { Button } from "@/components/ui/button";
@@ -13,7 +13,7 @@ interface TaskSuggestionsProps {
   onAddTask: (text: string) => void;
 }
 
-export function TaskSuggestions({ currentTasks, onAddTask }: TaskSuggestionsProps) {
+export const TaskSuggestions = memo(function TaskSuggestions({ currentTasks, onAddTask }: TaskSuggestionsProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
@@ -102,4 +102,6 @@ export function TaskSuggestions({ currentTasks, onAddTask }: TaskSuggestionsProp
       </DialogContent>
     </Dialog>
   );
-}
+});
+
+    

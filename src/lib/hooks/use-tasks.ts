@@ -7,19 +7,19 @@ import { useToast } from "@/hooks/use-toast";
 const DATA_KEY = "taskily-data";
 const FIRST_TIME_KEY = "taskily-first-time";
 
-const createDefaultWorkspace = (): Workspace => ({
-  id: crypto.randomUUID(),
-  name: "General",
-  tasks: [],
-  createdAt: new Date().toISOString(),
-});
-
 export function useTasks() {
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [activeWorkspaceId, setActiveWorkspaceId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [isFirstTime, setIsFirstTime] = useState(false);
   const { toast } = useToast();
+
+  const createDefaultWorkspace = useCallback((): Workspace => ({
+    id: crypto.randomUUID(),
+    name: "General",
+    tasks: [],
+    createdAt: new Date().toISOString(),
+  }), []);
 
   useEffect(() => {
     try {
@@ -58,7 +58,7 @@ export function useTasks() {
         setActiveWorkspaceId(defaultWorkspace.id);
     }
     setLoading(false);
-  }, []);
+  }, [createDefaultWorkspace]);
 
   const saveData = useCallback((newWorkspaces: Workspace[], newActiveId: string | null) => {
     try {
@@ -221,7 +221,7 @@ export function useTasks() {
         title: "App Reset",
         description: `All Taskspaces and tasks have been deleted.`,
     });
-  }, [updateAndSave, toast]);
+  }, [updateAndSave, toast, createDefaultWorkspace]);
 
   return {
     workspaces,
@@ -243,3 +243,5 @@ export function useTasks() {
     clearAllWorkspaces,
   };
 }
+
+    
