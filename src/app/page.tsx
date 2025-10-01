@@ -7,21 +7,13 @@ import { TaskInput } from "@/app/components/task-input";
 import { TaskList } from "@/app/components/task-list";
 import { TaskSuggestions } from "@/app/components/task-suggestions";
 import { WelcomeDialog } from "@/app/components/welcome-dialog";
-import { SidebarProvider, Sidebar, SidebarInset, useSidebar } from "@/components/ui/sidebar";
-import { WorkspaceSidebar } from "@/app/components/workspace-sidebar";
 import { AnimatePresence, motion } from "framer-motion";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Trash2, PanelLeft, Settings, LayoutGrid } from "lucide-react";
+import { Trash2, Settings } from "lucide-react";
 import { useState, memo } from "react";
 import { SettingsDialog } from "@/app/components/settings-dialog";
 import { ThemeProvider } from "@/app/components/theme-provider";
-import { type Task, type Workspace } from "@/lib/types";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { type Task } from "@/lib/types";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -44,11 +36,10 @@ interface AppContentProps {
   editTask: (id: string, newText: string) => void;
   isFirstTime: boolean;
   setIsFirstTime: (value: boolean) => void;
-  activeWorkspace: Workspace | null;
   clearTasks: () => void;
   completedTasks: number;
   totalTasks: number;
-  clearAllWorkspaces: () => void;
+  resetApp: () => void;
 }
 
 
@@ -61,13 +52,11 @@ const AppContent = memo(function AppContent({
   editTask,
   isFirstTime,
   setIsFirstTime,
-  activeWorkspace,
   clearTasks,
   completedTasks,
   totalTasks,
-  clearAllWorkspaces
+  resetApp
 }: AppContentProps) {
-  const { setOpen: setSidebarOpen } = useSidebar();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   
   if (loading) {
@@ -81,41 +70,22 @@ const AppContent = memo(function AppContent({
   }
 
   return (
-      <SidebarInset>
-         <div className="absolute top-4 left-4 z-50 md:hidden">
-           <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground hover:text-foreground">
-                  <PanelLeft className="h-5 w-5" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start">
-                <DropdownMenuItem onSelect={() => setSidebarOpen(true)}>
-                  <LayoutGrid className="mr-2 h-4 w-4" />
-                  <span>Listspaces</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => setIsSettingsOpen(true)}>
-                  <Settings className="mr-2 h-4 w-4" />
-                  <span>Settings</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-        </div>
-         <div className="absolute top-4 right-4 z-50 hidden md:block">
+      <>
+         <div className="absolute top-4 right-4 z-50">
              <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground hover:text-foreground" onClick={() => setIsSettingsOpen(true)}>
                   <Settings className="h-5 w-5" />
               </Button>
           </div>
         <main className="flex min-h-screen w-full flex-col items-center justify-center p-4 sm:p-8">
           <WelcomeDialog open={isFirstTime} onOpenChange={setIsFirstTime} />
-          <SettingsDialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen} onClearAll={clearAllWorkspaces} />
+          <SettingsDialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen} onClearAll={resetApp} />
           <div className="w-full max-w-2xl">
               <AnimatePresence>
                 <motion.div layout transition={{ type: 'spring', stiffness: 300, damping: 30 }}>
                   <Card className="border-2 border-border/50 shadow-2xl shadow-primary/5 overflow-hidden">
                     <CardHeader>
                        <CardTitle className="font-headline text-4xl font-bold tracking-tight text-foreground text-center">
-                          {activeWorkspace?.name || "General"}
+                          Listily
                       </CardTitle>
                       <CardDescription className="text-center">
                           Get things done, one task at a time.
@@ -143,7 +113,7 @@ const AppContent = memo(function AppContent({
                               <AlertDialogHeader>
                                   <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                                   <AlertDialogDescription>
-                                      This will permanently delete all tasks in the "{activeWorkspace?.name}" Listspace. This action cannot be undone.
+                                      This will permanently delete all tasks. This action cannot be undone.
                                   </AlertDialogDescription>
                               </AlertDialogHeader>
                               <AlertDialogFooter>
@@ -161,7 +131,7 @@ const AppContent = memo(function AppContent({
               </AnimatePresence>
           </div>
         </main>
-      </SidebarInset>
+      </>
   );
 });
 
@@ -171,34 +141,20 @@ export default function Home() {
 
     return (
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-            <SidebarProvider>
-                <Sidebar>
-                    {tasksState.workspaces && (
-                         <WorkspaceSidebar 
-                            workspaces={tasksState.workspaces}
-                            activeWorkspace={tasksState.activeWorkspace}
-                            onAddWorkspace={tasksState.addWorkspace}
-                            onSwitchWorkspace={tasksState.switchWorkspace}
-                            onDeleteWorkspace={tasksState.deleteWorkspace}
-                        />
-                    )}
-                </Sidebar>
-                <AppContent 
-                    tasks={tasksState.tasks}
-                    loading={tasksState.loading}
-                    addTask={tasksState.addTask}
-                    toggleTask={tasksState.toggleTask}
-                    deleteTask={tasksState.deleteTask}
-                    editTask={tasksState.editTask}
-                    isFirstTime={tasksState.isFirstTime}
-                    setIsFirstTime={tasksState.setIsFirstTime}
-                    activeWorkspace={tasksState.activeWorkspace}
-                    clearTasks={tasksState.clearTasks}
-                    clearAllWorkspaces={tasksState.clearAllWorkspaces}
-                    completedTasks={tasksState.completedTasks}
-                    totalTasks={tasksState.totalTasks}
-                />
-            </SidebarProvider>
+            <AppContent 
+                tasks={tasksState.tasks}
+                loading={tasksState.loading}
+                addTask={tasksState.addTask}
+                toggleTask={tasksState.toggleTask}
+                deleteTask={tasksState.deleteTask}
+                editTask={tasksState.editTask}
+                isFirstTime={tasksState.isFirstTime}
+                setIsFirstTime={tasksState.setIsFirstTime}
+                clearTasks={tasksState.clearTasks}
+                resetApp={tasksState.resetApp}
+                completedTasks={tasksState.completedTasks}
+                totalTasks={tasksState.totalTasks}
+            />
         </ThemeProvider>
     );
 }

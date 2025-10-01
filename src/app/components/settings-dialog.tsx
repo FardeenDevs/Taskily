@@ -81,7 +81,7 @@ export const SettingsDialog = memo(function SettingsDialog({ open, onOpenChange,
                         <AlertDialogHeader>
                             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                             <AlertDialogDescription>
-                                This will permanently delete all Listspaces and tasks. This action cannot be undone.
+                                This will permanently delete all tasks. This action cannot be undone.
                             </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
