@@ -29,6 +29,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 
 interface AppContentProps {
@@ -48,7 +49,7 @@ interface AppContentProps {
 }
 
 
-function AppContent({
+const AppContent = memo(function AppContent({
   tasks,
   loading,
   addTask,
@@ -154,7 +155,7 @@ function AppContent({
         </main>
       </SidebarInset>
   );
-}
+});
 
 
 export default function Home() {
