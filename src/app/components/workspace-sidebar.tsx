@@ -2,11 +2,11 @@
 
 import { useState } from "react"
 import { type Workspace } from "@/lib/types"
-import { SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarFooter } from "@/components/ui/sidebar"
+import { SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarFooter, useSidebar } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
-import { Plus, Trash2, LayoutGrid } from "lucide-react"
+import { Plus, Trash2, LayoutGrid, X } from "lucide-react"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,6 +37,8 @@ export function WorkspaceSidebar({
 }: WorkspaceSidebarProps) {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [newWorkspaceName, setNewWorkspaceName] = useState("");
+  const { setOpen } = useSidebar();
+
 
   const handleAddWorkspace = () => {
     onAddWorkspace(newWorkspaceName);
@@ -53,6 +55,9 @@ export function WorkspaceSidebar({
             </div>
             <h2 className="text-lg font-semibold tracking-tight text-sidebar-foreground">Taskspaces</h2>
         </div>
+         <Button variant="ghost" size="icon" className="h-8 w-8 md:flex hidden" onClick={() => setOpen(false)}>
+            <X className="h-5 w-5"/>
+        </Button>
       </SidebarHeader>
 
       <SidebarContent>
