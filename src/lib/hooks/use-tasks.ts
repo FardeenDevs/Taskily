@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
@@ -29,11 +30,16 @@ export function useTasks() {
 
   useEffect(() => {
     try {
-      const storedData = localStorage.getItem(DATA_KEY);
+      const storedDataString = localStorage.getItem(DATA_KEY);
       const firstTime = localStorage.getItem(FIRST_TIME_KEY);
       
-      if (storedData) {
-        setData(JSON.parse(storedData));
+      if (storedDataString) {
+        const storedData = JSON.parse(storedDataString);
+        // Backwards compatibility for users from before notes were added
+        if (!storedData.notes) {
+            storedData.notes = [];
+        }
+        setData(storedData);
       } else {
         const defaultWorkspace: Workspace = { id: DEFAULT_WORKSPACE_ID, name: "My List", createdAt: new Date().toISOString() };
         setData({
@@ -81,7 +87,7 @@ export function useTasks() {
   }, [data.tasks, data.activeWorkspaceId]);
 
   const filteredNotes = useMemo(() => {
-    return data.notes
+    return (data.notes || [])
         .filter(note => note.workspaceId === data.activeWorkspaceId)
         .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }, [data.notes, data.activeWorkspaceId]);
@@ -171,19 +177,19 @@ export function useTasks() {
         createdAt: new Date().toISOString(),
         workspaceId: data.activeWorkspaceId,
     };
-    updateAndSave({ notes: [...data.notes, newNote] });
+    updateAndSave({ notes: [...(data.notes || []), newNote] });
   }, [data, updateAndSave]);
 
   const editNote = useCallback((id: string, newTitle: string, newContent: string) => {
     if (newTitle.trim() === "") return;
-    const updatedNotes = data.notes.map(note =>
+    const updatedNotes = (data.notes || []).map(note =>
         note.id === id ? { ...note, title: newTitle.trim(), content: newContent } : note
     );
     updateAndSave({ notes: updatedNotes });
   }, [data, updateAndSave]);
 
   const deleteNote = useCallback((id: string) => {
-    const updatedNotes = data.notes.filter(note => note.id !== id);
+    const updatedNotes = (data.notes || []).filter(note => note.id !== id);
     updateAndSave({ notes: updatedNotes });
   }, [data, updateAndSave]);
 
@@ -238,7 +244,7 @@ export function useTasks() {
     }
     const workspaces = data.workspaces.filter(ws => ws.id !== id);
     const tasks = data.tasks.filter(task => task.workspaceId !== id);
-    const notes = data.notes.filter(note => note.workspaceId !== id);
+    const notes = (data.notes || []).filter(note => note.workspaceId !== id);
     const activeWorkspaceId = id === data.activeWorkspaceId ? workspaces[0].id : data.activeWorkspaceId;
     
     updateAndSave({ workspaces, tasks, notes, activeWorkspaceId });
