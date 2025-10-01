@@ -76,7 +76,7 @@ const AppContent = memo(function AppContent({
 
   return (
       <SidebarInset>
-        <div className="absolute top-4 left-4 z-20 md:hidden">
+        <div className="absolute top-4 left-4 z-50 md:hidden">
           <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground hover:text-foreground" onClick={() => setSidebarOpen(true)}>
               <LayoutGrid className="h-5 w-5" />
           </Button>
