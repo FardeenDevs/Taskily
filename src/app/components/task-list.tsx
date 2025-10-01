@@ -1,6 +1,6 @@
 "use client";
 
-import { type Task } from "@/lib/types";
+import { type Task, type Priority, type Effort } from "@/lib/types";
 import { TaskItem } from "@/app/components/task-item";
 import { AnimatePresence, motion } from "framer-motion";
 import { memo } from "react";
@@ -9,7 +9,7 @@ interface TaskListProps {
   tasks: Task[];
   onToggleTask: (id: string) => void;
   onDeleteTask: (id: string) => void;
-  onEditTask: (id: string, newText: string) => void;
+  onEditTask: (id: string, newText: string, newPriority: Priority | null, newEffort: Effort | null) => void;
 }
 
 export const TaskList = memo(function TaskList({ tasks, onToggleTask, onDeleteTask, onEditTask }: TaskListProps) {

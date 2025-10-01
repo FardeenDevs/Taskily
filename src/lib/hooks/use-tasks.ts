@@ -1,8 +1,7 @@
-
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { type Task, type Workspace } from "@/lib/types";
+import { type Task, type Workspace, type Priority, type Effort } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 
 const DATA_KEY = "listily-data-workspaces";
@@ -80,7 +79,7 @@ export function useTasks() {
     return filteredTasks.filter(task => task.completed).length;
   }, [filteredTasks]);
 
-  const addTask = useCallback((text: string) => {
+  const addTask = useCallback((text: string, priority: Priority | null, effort: Effort | null) => {
     if (text.trim() === "" || !data.activeWorkspaceId) return;
 
     const normalizedText = text.trim().toLowerCase();
@@ -99,6 +98,8 @@ export function useTasks() {
       completed: false,
       createdAt: new Date().toISOString(),
       workspaceId: data.activeWorkspaceId,
+      priority,
+      effort,
     };
 
     updateAndSave({ ...data, tasks: [...data.tasks, newTask] });
@@ -116,7 +117,7 @@ export function useTasks() {
     updateAndSave({ ...data, tasks: updatedTasks });
   }, [data, updateAndSave]);
 
-  const editTask = useCallback((id: string, newText: string) => {
+  const editTask = useCallback((id: string, newText: string, newPriority: Priority | null, newEffort: Effort | null) => {
     if (newText.trim() === "") return;
 
     const normalizedText = newText.trim().toLowerCase();
@@ -131,7 +132,7 @@ export function useTasks() {
     }
 
     const updatedTasks = data.tasks.map(task =>
-      task.id === id ? { ...task, text: newText.trim() } : task
+      task.id === id ? { ...task, text: newText.trim(), priority: newPriority, effort: newEffort } : task
     );
     updateAndSave({ ...data, tasks: updatedTasks });
   }, [data, filteredTasks, updateAndSave, toast]);
@@ -255,5 +256,3 @@ export function useTasks() {
     switchWorkspace,
   };
 }
-
-    

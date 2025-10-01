@@ -147,7 +147,7 @@ const AppContent = memo(function AppContent({ tasksHook }: AppContentProps) {
                         </AlertDialogFooter>
                       </AlertDialogContent>
                     </AlertDialog>
-                  <TaskSuggestions currentTasks={tasks} onAddTask={addTask} />
+                  <TaskSuggestions currentTasks={tasks} onAddTask={(text) => addTask(text, null, null)} />
                 </CardFooter>
               </Card>
             </motion.div>
