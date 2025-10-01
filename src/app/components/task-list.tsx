@@ -29,7 +29,7 @@ export const TaskList = memo(function TaskList({ tasks, onToggleTask, onDeleteTa
           <motion.div
             key={task.id}
             layout
-            initial={{ opacity: 0, x: -50, scale: 0.95 }}
+            initial={{ opacity: 0, x: -20, scale: 0.98 }}
             animate={{ opacity: 1, x: 0, scale: 1 }}
             exit={{ opacity: 0, scale: 0.9, x: 50, transition: { duration: 0.2 } }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
