@@ -94,7 +94,7 @@ export function WorkspaceSidebar({ tasksHook }: WorkspaceSidebarProps) {
                         </DropdownMenuItem>
                       </DialogTrigger>
                       <AlertDialogTrigger asChild>
-                        <DropdownMenuItem onSelect={() => setSelectedWorkspaceId(workspace.id)} className="text-destructive hover:bg-destructive/10 focus:text-destructive focus:bg-destructive/10">
+                        <DropdownMenuItem onSelect={() => setSelectedWorkspaceId(workspace.id)} className="text-destructive hover:!text-destructive-foreground hover:!bg-destructive focus:text-destructive focus:bg-destructive/10">
                           <Trash2 className="mr-2 h-4 w-4" />
                           <span>Delete</span>
                         </DropdownMenuItem>

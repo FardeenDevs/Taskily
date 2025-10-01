@@ -9,7 +9,7 @@ import { TaskSuggestions } from "@/app/components/task-suggestions";
 import { WelcomeDialog } from "@/app/components/welcome-dialog";
 import { AnimatePresence, motion } from "framer-motion";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Settings, PanelLeft, LayoutGrid } from "lucide-react";
+import { Settings, LayoutGrid } from "lucide-react";
 import { useState, memo } from "react";
 import { SettingsDialog } from "@/app/components/settings-dialog";
 import { ThemeProvider } from "@/app/components/theme-provider";
@@ -81,7 +81,7 @@ const AppContent = memo(function AppContent({ tasksHook }: AppContentProps) {
       
         <div className="absolute top-4 left-4 z-50 hidden md:block">
            <Button variant="ghost" size="icon" onClick={toggleSidebar}>
-              <PanelLeft className="h-5 w-5" />
+              <LayoutGrid className="h-5 w-5" />
             </Button>
         </div>
 
