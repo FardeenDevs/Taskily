@@ -82,29 +82,29 @@ const AppContent = memo(function AppContent({
         <header className="absolute top-0 left-0 right-0 z-10 flex justify-center items-center h-16">
             <h1 className="text-2xl font-bold tracking-tight text-foreground">Listily</h1>
         </header>
+        <div className="absolute top-4 left-4 z-20">
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground hover:text-foreground md:hidden">
+                        <Menu className="h-5 w-5" />
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start">
+                    <DropdownMenuItem onSelect={() => setSidebarOpen(true)}>
+                        <LayoutGrid className="mr-2 h-4 w-4"/>
+                        <span>Listspaces</span>
+                    </DropdownMenuItem>
+                      <DropdownMenuItem onSelect={() => setIsSettingsOpen(true)}>
+                        <Settings className="mr-2 h-4 w-4"/>
+                        <span>Settings</span>
+                    </DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
+              <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground hover:text-foreground hidden md:flex" onClick={() => setSidebarOpen(true)}>
+                <Menu className="h-5 w-5" />
+            </Button>
+        </div>
         <main className="flex min-h-screen w-full flex-col items-center justify-start p-4 sm:p-8 pt-24 sm:pt-24">
-           <div className="absolute top-4 left-4">
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground hover:text-foreground md:hidden">
-                            <Menu className="h-5 w-5" />
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="start">
-                        <DropdownMenuItem onSelect={() => setSidebarOpen(true)}>
-                            <LayoutGrid className="mr-2 h-4 w-4"/>
-                            <span>Listspaces</span>
-                        </DropdownMenuItem>
-                         <DropdownMenuItem onSelect={() => setIsSettingsOpen(true)}>
-                            <Settings className="mr-2 h-4 w-4"/>
-                            <span>Settings</span>
-                        </DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
-                 <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground hover:text-foreground hidden md:flex" onClick={() => setSidebarOpen(true)}>
-                    <Menu className="h-5 w-5" />
-                </Button>
-            </div>
           <WelcomeDialog open={isFirstTime} onOpenChange={setIsFirstTime} />
           <SettingsDialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen} onClearAll={clearAllWorkspaces} />
           <div className="w-full max-w-2xl">
