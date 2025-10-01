@@ -1,12 +1,16 @@
 
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { type Note } from '@/lib/types';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
+import { RichTextEditor } from './rich-text-editor';
+import { RichTextToolbar } from './rich-text-toolbar';
+import { useEditor } from '@tiptap/react';
+import StarterKit from '@tiptap/starter-kit';
+import Underline from '@tiptap/extension-underline';
 
 interface NoteDialogProps {
   open: boolean;
@@ -17,21 +21,52 @@ interface NoteDialogProps {
 
 export function NoteDialog({ open, onOpenChange, note, onSave }: NoteDialogProps) {
   const [title, setTitle] = useState('');
-  const [content, setContent] = useState('');
+  const contentRef = useRef<string>('');
+
+  const editor = useEditor({
+    extensions: [
+      StarterKit.configure({
+        bulletList: {
+          HTMLAttributes: {
+            class: 'list-disc pl-4',
+          },
+        },
+        orderedList: {
+          HTMLAttributes: {
+            class: 'list-decimal pl-4',
+          },
+        },
+      }),
+      Underline,
+    ],
+    content: '',
+    editorProps: {
+      attributes: {
+        class: 'prose dark:prose-invert prose-sm sm:prose-base lg:prose-lg xl:prose-2xl focus:outline-none w-full h-full text-lg placeholder:text-muted-foreground/40',
+      },
+    },
+    onUpdate: ({ editor }) => {
+      contentRef.current = editor.getHTML();
+    },
+  });
 
   useEffect(() => {
-    if (note) {
-      setTitle(note.title);
-      setContent(note.content);
-    } else {
-      setTitle('');
-      setContent('');
+    if (open && editor) {
+      if (note) {
+        setTitle(note.title);
+        contentRef.current = note.content;
+        editor.commands.setContent(note.content);
+      } else {
+        setTitle('');
+        contentRef.current = '';
+        editor.commands.setContent('');
+      }
     }
-  }, [note, open]);
+  }, [note, open, editor]);
 
   const handleSave = () => {
     if (title.trim()) {
-      onSave(note?.id ?? null, title, content);
+      onSave(note?.id ?? null, title, contentRef.current);
     }
   };
 
@@ -56,21 +91,16 @@ export function NoteDialog({ open, onOpenChange, note, onSave }: NoteDialogProps
                 onKeyDown={(e) => {
                     if (e.key === 'Enter') {
                         e.preventDefault();
-                        document.getElementById('note-content')?.focus();
+                        editor?.commands.focus();
                     }
                 }}
             />
           </DialogTitle>
         </DialogHeader>
-        <div className="flex-grow pt-4">
-            <Textarea
-              id="note-content"
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              placeholder="Just start writing..."
-              className="w-full h-full resize-none border-0 shadow-none focus-visible:ring-0 text-lg placeholder:text-muted-foreground/40"
-            />
+        <div className="flex-grow pt-4 overflow-y-auto">
+           <RichTextEditor editor={editor} />
         </div>
+        <RichTextToolbar editor={editor} />
       </DialogContent>
     </Dialog>
   );

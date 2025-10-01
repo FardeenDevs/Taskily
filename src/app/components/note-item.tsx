@@ -1,9 +1,11 @@
+
 "use client";
 
 import { type Note } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Pencil, Trash2 } from 'lucide-react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
 
 interface NoteItemProps {
   note: Note;
@@ -26,9 +28,10 @@ export function NoteItem({ note, onEdit, onDelete }: NoteItemProps) {
         </div>
       </CardHeader>
       <CardContent className="flex-grow pt-0">
-        <p className="text-sm text-muted-foreground line-clamp-4 whitespace-pre-wrap">
-          {note.content || "No content"}
-        </p>
+        <div 
+            className="text-sm text-muted-foreground line-clamp-4 whitespace-pre-wrap [&_ul]:list-disc [&_ul]:pl-4 [&_ol]:list-decimal [&_ol]:pl-4"
+            dangerouslySetInnerHTML={{ __html: note.content || "No content" }} 
+        />
       </CardContent>
        <CardFooter className="pt-2 pb-4">
         <p className="text-xs text-muted-foreground">{new Date(note.createdAt).toLocaleDateString()}</p>
