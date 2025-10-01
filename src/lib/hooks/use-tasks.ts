@@ -28,21 +28,23 @@ export function useTasks() {
     }
   }, []);
 
+  const fetchTasks = useCallback(async (userId: string) => {
+      setLoading(true);
+      const firestoreTasks = await getTasks(userId);
+      setTasks(firestoreTasks);
+      setLoading(false);
+  }, []);
+
+
   useEffect(() => {
-    async function fetchTasks() {
-      if (user) {
-        setLoading(true);
-        const firestoreTasks = await getTasks(user.uid);
-        setTasks(firestoreTasks);
-        setLoading(false);
-      } else if (!authLoading) {
-        // If user is not logged in and auth is not loading, clear tasks
-        setTasks([]);
-        setLoading(false);
-      }
+    if (user) {
+      fetchTasks(user.uid);
+    } else if (!authLoading) {
+      // If user is not logged in and auth is not loading, clear tasks
+      setTasks([]);
+      setLoading(false);
     }
-    fetchTasks();
-  }, [user, authLoading]);
+  }, [user, authLoading, fetchTasks]);
 
   const addTask = useCallback(async (text: string) => {
     if (text.trim() === "") return;
@@ -67,20 +69,15 @@ export function useTasks() {
     };
 
     try {
-        const newDocId = await addTaskToFirestore(user.uid, newTaskData);
-        const newTask: Task = {
-            id: newDocId,
-            ...newTaskData,
-            createdAt: new Date().toISOString(),
-        };
-        // Update state after successful creation
-        setTasks((prevTasks) => [...prevTasks, newTask]);
+        await addTaskToFirestore(user.uid, newTaskData);
+        // Refetch tasks from firestore to ensure UI is in sync
+        await fetchTasks(user.uid);
     } catch(error) {
         console.error("Error adding task:", error);
         toast({ title: "Failed to add task", variant: "destructive"});
     }
 
-  }, [tasks, user, toast]);
+  }, [tasks, user, toast, fetchTasks]);
 
   const toggleTask = useCallback(async (id: string) => {
     if (!user) return;
