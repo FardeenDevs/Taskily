@@ -22,10 +22,10 @@ import {
 interface SettingsDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  onClearAll: () => void
+  onResetApp: () => void
 }
 
-export const SettingsDialog = memo(function SettingsDialog({ open, onOpenChange, onClearAll }: SettingsDialogProps) {
+export const SettingsDialog = memo(function SettingsDialog({ open, onOpenChange, onResetApp }: SettingsDialogProps) {
   const { theme, setTheme } = useTheme()
   const [isDark, setIsDark] = useState(theme === 'dark');
 
@@ -33,6 +33,11 @@ export const SettingsDialog = memo(function SettingsDialog({ open, onOpenChange,
     const newTheme = checked ? 'dark' : 'light';
     setIsDark(checked);
     setTheme(newTheme);
+  }
+
+  const handleReset = () => {
+    onResetApp();
+    onOpenChange(false);
   }
 
   return (
@@ -81,12 +86,12 @@ export const SettingsDialog = memo(function SettingsDialog({ open, onOpenChange,
                         <AlertDialogHeader>
                             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                             <AlertDialogDescription>
-                                This will permanently delete all tasks. This action cannot be undone.
+                                This will permanently delete all tasks and Listspaces. This action cannot be undone.
                             </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
                             <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => { onClearAll(); onOpenChange(false); }} className="bg-red-600 hover:bg-red-700 text-white">
+                            <AlertDialogAction onClick={handleReset} className="bg-red-600 hover:bg-red-700 text-white">
                                 Yes, reset everything
                             </AlertDialogAction>
                         </AlertDialogFooter>
