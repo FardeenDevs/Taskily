@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { cn } from '@/lib/utils';
 
 interface NoteDialogProps {
   open: boolean;
@@ -38,34 +39,36 @@ export function NoteDialog({ open, onOpenChange, note, onSave }: NoteDialogProps
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className={cn("sm:max-w-2xl h-[80vh] flex flex-col")}>
         <DialogHeader>
-          <DialogTitle>{note ? 'Edit Note' : 'New Note'}</DialogTitle>
-        </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div className="grid gap-2">
-            <Label htmlFor="note-title">Title</Label>
-            <Input
-              id="note-title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Your note title..."
-              onKeyDown={(e) => e.key === 'Enter' && handleSave()}
+          <DialogTitle>
+             <Input
+                id="note-title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Your note title..."
+                className="text-2xl font-bold border-0 shadow-none focus-visible:ring-0 px-0"
+                onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        document.getElementById('note-content')?.focus();
+                    }
+                }}
             />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="note-content">Content</Label>
+          </DialogTitle>
+        </DialogHeader>
+        <div className="flex-grow py-4">
             <Textarea
               id="note-content"
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              placeholder="Your note content..."
-              rows={8}
+              placeholder="Just start writing..."
+              className="w-full h-full resize-none border-0 shadow-none focus-visible:ring-0 text-base"
             />
-          </div>
         </div>
         <DialogFooter>
-          <Button onClick={handleSave}>{note ? 'Save Changes' : 'Create Note'}</Button>
+          <Button onClick={() => onOpenChange(false)} variant="ghost">Cancel</Button>
+          <Button onClick={handleSave} variant="gradient">{note ? 'Save Changes' : 'Create Note'}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
