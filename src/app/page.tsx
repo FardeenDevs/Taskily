@@ -21,7 +21,7 @@ import { type Task, type Workspace } from "@/lib/types";
 
 function AppContent() {
   const {
-    tasks: allTasks,
+    tasks,
     loading,
     addTask,
     toggleTask,
@@ -35,28 +35,13 @@ function AppContent() {
     switchWorkspace,
     deleteWorkspace,
     clearTasks,
+    completedTasks,
+    totalTasks,
   } = useTasks();
 
   const { setOpenMobile: setSidebarOpen } = useSidebar();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [currentTasks, setCurrentTasks] = useState<Task[]>([]);
-
-  useEffect(() => {
-    if (activeWorkspace) {
-      setCurrentTasks(allTasks.filter(t => activeWorkspace.tasks.some(wt => wt.id === t.id)));
-    } else {
-      setCurrentTasks([]);
-    }
-  }, [activeWorkspace, allTasks]);
   
-  const completedTasks = useMemo(
-    () => currentTasks.filter((task) => task.completed).length,
-    [currentTasks]
-  );
-  
-  const totalTasks = useMemo(() => currentTasks.length, [currentTasks]);
-
-
   if (loading) {
      return (
         <div className="flex min-h-screen w-full flex-col items-center justify-center bg-background p-4 sm:p-8">
@@ -107,14 +92,14 @@ function AppContent() {
                     <TaskProgress completed={completedTasks} total={totalTasks} />
                     <TaskInput onAddTask={addTask} />
                     <TaskList
-                      tasks={currentTasks}
+                      tasks={tasks}
                       onToggleTask={toggleTask}
                       onDeleteTask={deleteTask}
                       onEditTask={editTask}
                     />
                   </CardContent>
                   <CardFooter className="flex justify-end">
-                    <TaskSuggestions currentTasks={currentTasks} onAddTask={addTask} />
+                    <TaskSuggestions currentTasks={tasks} onAddTask={addTask} />
                   </CardFooter>
                 </Card>
               </motion.div>

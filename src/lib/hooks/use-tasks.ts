@@ -68,26 +68,25 @@ export function useTasks() {
         activeWorkspaceId: newActiveId,
       };
       localStorage.setItem(DATA_KEY, JSON.stringify(dataToStore));
-      setWorkspaces(newWorkspaces);
-      setActiveWorkspaceId(newActiveId);
     } catch (error) {
       console.error("Failed to save data to localStorage", error);
     }
   };
+  
+  const updateAndSave = (newWorkspaces: Workspace[], newActiveId: string | null) => {
+    setWorkspaces(newWorkspaces);
+    setActiveWorkspaceId(newActiveId);
+    saveData(newWorkspaces, newActiveId);
+  }
 
   const activeWorkspace = useMemo(() => {
     return workspaces.find(ws => ws.id === activeWorkspaceId) || null;
   }, [workspaces, activeWorkspaceId]);
 
   const tasks = useMemo(() => {
-    return activeWorkspace ? activeWorkspace.tasks : [];
+    return activeWorkspace ? activeWorkspace.tasks.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()) : [];
   }, [activeWorkspace]);
   
-  const sortedTasks = useMemo(
-    () => [...tasks].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()),
-    [tasks]
-  );
-
   const completedTasks = useMemo(
     () => tasks.filter((task) => task.completed).length,
     [tasks]
@@ -99,7 +98,7 @@ export function useTasks() {
     const newWorkspaces = workspaces.map(ws => 
       ws.id === workspaceId ? { ...ws, tasks: updatedTasks } : ws
     );
-    saveData(newWorkspaces, activeWorkspaceId);
+    updateAndSave(newWorkspaces, activeWorkspaceId);
   }
 
   const addTask = useCallback((text: string) => {
@@ -183,11 +182,11 @@ export function useTasks() {
       createdAt: new Date().toISOString(),
     };
     const newWorkspaces = [...workspaces, newWorkspace];
-    saveData(newWorkspaces, newWorkspace.id);
+    updateAndSave(newWorkspaces, newWorkspace.id);
   };
 
   const switchWorkspace = (workspaceId: string) => {
-    saveData(workspaces, workspaceId);
+    updateAndSave(workspaces, workspaceId);
   }
 
   const deleteWorkspace = (workspaceId: string) => {
@@ -204,7 +203,7 @@ export function useTasks() {
     if(activeWorkspaceId === workspaceId) {
       newActiveId = newWorkspaces[0]?.id || null;
     }
-    saveData(newWorkspaces, newActiveId);
+    updateAndSave(newWorkspaces, newActiveId);
   }
   
   const clearTasks = useCallback(() => {
@@ -219,7 +218,7 @@ export function useTasks() {
   return {
     workspaces,
     activeWorkspace,
-    tasks: sortedTasks,
+    tasks: tasks,
     loading,
     addTask,
     toggleTask,
