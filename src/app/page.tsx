@@ -78,18 +78,18 @@ const AppContent = memo(function AppContent({ tasksHook }: AppContentProps) {
             </DropdownMenuTrigger>
             <DropdownMenuContent side="bottom" align="start">
               <DropdownMenuItem onClick={() => setSidebarOpen(true)}>
-                <LayoutGrid className="mr-2" />
-                Listspaces
+                <LayoutGrid className="mr-2 h-4 w-4" />
+                <span>Listspaces</span>
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setIsSettingsOpen(true)}>
-                <Settings className="mr-2" />
-                Settings
+                <Settings className="mr-2 h-4 w-4" />
+                <span>Settings</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
       
-        <div className="absolute top-4 left-4 z-50 hidden md:block">
+        <div className="absolute top-4 left-4 z-10 hidden md:block">
            <Button variant="ghost" size="icon" onClick={toggleSidebar}>
               <LayoutGrid className="h-5 w-5" />
             </Button>
@@ -162,7 +162,7 @@ export default function Home() {
   const tasksHook = useTasks();
 
   return (
-    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+    <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
       <SidebarProvider>
         <WorkspaceSidebar tasksHook={tasksHook} />
         <AppContent tasksHook={tasksHook} />

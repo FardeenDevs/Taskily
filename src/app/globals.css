@@ -62,10 +62,10 @@
     --muted-foreground: 0 0% 63.9%;
     --accent: 142.1 70.6% 45.3%;
     --accent-foreground: 355.7 100% 97.3%;
-    --destructive: 0 62.8% 30.6%;
+    --destructive: 0 72.2% 50.6%;
     --destructive-foreground: 0 0% 98%;
-    --destructive-gradient-start: 0 70% 40%;
-    --destructive-gradient-end: 0 80% 45%;
+    --destructive-gradient-start: 0 75% 55%;
+    --destructive-gradient-end: 0 80% 60%;
     --edit-gradient-start: 221.2 83.2% 53.3%;
     --edit-gradient-end: 221.2 83.2% 58.3%;
     --border: 220 15% 25%;
