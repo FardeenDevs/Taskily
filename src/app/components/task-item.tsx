@@ -60,7 +60,7 @@ export function TaskItem({ task, onToggleTask, onDeleteTask, onEditTask }: TaskI
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
           <DialogTrigger asChild>
             <Button variant="editIcon" size="icon" className="h-8 w-8" aria-label={`Edit task "${task.text}"`}>
-              <Pencil className="h-4 w-4" />
+              <Pencil />
             </Button>
           </DialogTrigger>
           <DialogContent>
@@ -93,7 +93,7 @@ export function TaskItem({ task, onToggleTask, onDeleteTask, onEditTask }: TaskI
           onClick={() => onDeleteTask(task.id)}
           aria-label={`Delete task "${task.text}"`}
         >
-          <Trash2 className="h-4 w-4" />
+          <Trash2 />
         </Button>
       </div>
     </div>

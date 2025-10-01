@@ -162,7 +162,7 @@ export default function Home() {
   const tasksHook = useTasks();
 
   return (
-    <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <SidebarProvider>
         <WorkspaceSidebar tasksHook={tasksHook} />
         <AppContent tasksHook={tasksHook} />
