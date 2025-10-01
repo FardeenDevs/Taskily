@@ -11,8 +11,7 @@ import { SidebarProvider, Sidebar, SidebarInset, useSidebar } from "@/components
 import { WorkspaceSidebar } from "@/app/components/workspace-sidebar";
 import { AnimatePresence, motion } from "framer-motion";
 import { Skeleton } from "@/components/ui/skeleton";
-import { LayoutGrid, Settings, Trash2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Trash2 } from "lucide-react";
 import { useState, memo } from "react";
 import { SettingsDialog } from "@/app/components/settings-dialog";
 import { ThemeProvider } from "@/app/components/theme-provider";
@@ -28,6 +27,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
 
 interface AppContentProps {
   tasks: Task[];
@@ -75,19 +75,10 @@ const AppContent = memo(function AppContent({
   }
 
   return (
-      <SidebarInset>
-        <header className="fixed top-0 left-0 right-0 z-40 flex h-16 items-center justify-between bg-background/80 px-4 backdrop-blur-sm md:left-[--sidebar-width] md:group-data-[collapsible=icon]:left-[--sidebar-width-icon] md:group-data-[collapsible=offcanvas]:left-0 transition-all duration-300 ease-in-out">
-          <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground hover:text-foreground md:hidden" onClick={() => setSidebarOpen(true)}>
-              <LayoutGrid className="h-5 w-5" />
-          </Button>
-           <h1 className="text-2xl font-bold tracking-tight text-foreground absolute left-1/2 -translate-x-1/2">Listily</h1>
-          <div className="ml-auto">
-            <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground hover:text-foreground" onClick={() => setIsSettingsOpen(true)}>
-                <Settings className="h-5 w-5" />
-            </Button>
-          </div>
-        </header>
-        
+      <SidebarInset 
+        setSidebarOpen={setSidebarOpen} 
+        setIsSettingsOpen={setIsSettingsOpen}
+      >
         <main className="flex min-h-screen w-full flex-col items-center justify-start p-4 sm:p-8 pt-20">
           <WelcomeDialog open={isFirstTime} onOpenChange={setIsFirstTime} />
           <SettingsDialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen} onClearAll={clearAllWorkspaces} />
