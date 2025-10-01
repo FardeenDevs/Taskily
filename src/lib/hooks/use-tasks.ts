@@ -168,11 +168,11 @@ export function useTasks() {
   // --- Note Management ---
 
   const addNote = useCallback((title: string, content: string) => {
-    if (title.trim() === "" || !data.activeWorkspaceId) return;
+    if (!data.activeWorkspaceId) return;
 
     const newNote: Note = {
         id: crypto.randomUUID(),
-        title: title.trim(),
+        title: title || "New Note",
         content: content,
         createdAt: new Date().toISOString(),
         workspaceId: data.activeWorkspaceId,
@@ -181,7 +181,6 @@ export function useTasks() {
   }, [data, updateAndSave]);
 
   const editNote = useCallback((id: string, newTitle: string, newContent: string) => {
-    if (newTitle.trim() === "") return;
     const updatedNotes = (data.notes || []).map(note =>
         note.id === id ? { ...note, title: newTitle.trim(), content: newContent } : note
     );
