@@ -3,10 +3,8 @@
 
 import { useState, useEffect } from 'react';
 import { type Note } from '@/lib/types';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 
@@ -46,7 +44,7 @@ export function NoteDialog({ open, onOpenChange, note, onSave }: NoteDialogProps
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className={cn("w-screen h-screen max-w-none rounded-none flex flex-col")}>
+      <DialogContent className={cn("w-screen h-screen max-w-none rounded-none flex flex-col p-8 sm:p-12")}>
         <DialogHeader>
           <DialogTitle>
              <Input
@@ -54,7 +52,7 @@ export function NoteDialog({ open, onOpenChange, note, onSave }: NoteDialogProps
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="Your note title..."
-                className="text-2xl font-bold border-0 shadow-none focus-visible:ring-0 px-0"
+                className="text-4xl font-extrabold border-0 shadow-none focus-visible:ring-0 px-0 h-auto placeholder:text-muted-foreground/40"
                 onKeyDown={(e) => {
                     if (e.key === 'Enter') {
                         e.preventDefault();
@@ -64,13 +62,13 @@ export function NoteDialog({ open, onOpenChange, note, onSave }: NoteDialogProps
             />
           </DialogTitle>
         </DialogHeader>
-        <div className="flex-grow">
+        <div className="flex-grow pt-4">
             <Textarea
               id="note-content"
               value={content}
               onChange={(e) => setContent(e.target.value)}
               placeholder="Just start writing..."
-              className="w-full h-full resize-none border-0 shadow-none focus-visible:ring-0 text-base"
+              className="w-full h-full resize-none border-0 shadow-none focus-visible:ring-0 text-lg placeholder:text-muted-foreground/40"
             />
         </div>
       </DialogContent>
