@@ -93,53 +93,55 @@ const AppContent = memo(function AppContent({
           <WelcomeDialog open={isFirstTime} onOpenChange={setIsFirstTime} />
           <SettingsDialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen} onClearAll={clearAllWorkspaces} />
           <div className="w-full max-w-2xl">
-              <motion.div layout transition={{ type: 'spring', stiffness: 300, damping: 30 }}>
-                <Card className="border-2 border-border/50 shadow-2xl shadow-primary/5 overflow-hidden">
-                  <CardHeader>
-                     <CardTitle className="font-headline text-4xl font-bold tracking-tight text-foreground text-center">
-                        {activeWorkspace?.name || "General"}
-                    </CardTitle>
-                    <CardDescription className="text-center">
-                        Get things done, one task at a time.
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-8">
-                    <TaskProgress completed={completedTasks} total={totalTasks} />
-                    <TaskInput onAddTask={addTask} />
-                    <TaskList
-                      tasks={tasks}
-                      onToggleTask={toggleTask}
-                      onDeleteTask={deleteTask}
-                      onEditTask={editTask}
-                    />
-                  </CardContent>
-                  <CardFooter className="flex items-center justify-between">
-                     <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                           <Button variant="destructiveGradient" size="sm" disabled={tasks.length === 0}>
-                                <Trash2 className="mr-2 h-4 w-4"/>
-                                Clear All Tasks
-                            </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                            <AlertDialogHeader>
-                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                    This will permanently delete all tasks in the "{activeWorkspace?.name}" Listspace. This action cannot be undone.
-                                </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction onClick={clearTasks} className="bg-red-600 hover:bg-red-700 text-white">
-                                    Yes, delete all tasks
-                                </AlertDialogAction>
-                            </AlertDialogFooter>
-                        </AlertDialogContent>
-                    </AlertDialog>
-                    <TaskSuggestions currentTasks={tasks} onAddTask={addTask} />
-                  </CardFooter>
-                </Card>
-              </motion.div>
+              <AnimatePresence>
+                <motion.div layout transition={{ type: 'spring', stiffness: 300, damping: 30 }}>
+                  <Card className="border-2 border-border/50 shadow-2xl shadow-primary/5 overflow-hidden">
+                    <CardHeader>
+                       <CardTitle className="font-headline text-4xl font-bold tracking-tight text-foreground text-center">
+                          {activeWorkspace?.name || "General"}
+                      </CardTitle>
+                      <CardDescription className="text-center">
+                          Get things done, one task at a time.
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-8">
+                      <TaskProgress completed={completedTasks} total={totalTasks} />
+                      <TaskInput onAddTask={addTask} />
+                      <TaskList
+                        tasks={tasks}
+                        onToggleTask={toggleTask}
+                        onDeleteTask={deleteTask}
+                        onEditTask={editTask}
+                      />
+                    </CardContent>
+                    <CardFooter className="flex items-center justify-between">
+                       <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                             <Button variant="destructiveGradient" size="sm" disabled={tasks.length === 0}>
+                                  <Trash2 className="mr-2 h-4 w-4"/>
+                                  Clear All Tasks
+                              </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                              <AlertDialogHeader>
+                                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                      This will permanently delete all tasks in the "{activeWorkspace?.name}" Listspace. This action cannot be undone.
+                                  </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction onClick={clearTasks} className="bg-red-600 hover:bg-red-700 text-white">
+                                      Yes, delete all tasks
+                                  </AlertDialogAction>
+                              </AlertDialogFooter>
+                          </AlertDialogContent>
+                      </AlertDialog>
+                      <TaskSuggestions currentTasks={tasks} onAddTask={addTask} />
+                    </CardFooter>
+                  </Card>
+                </motion.div>
+              </AnimatePresence>
           </div>
         </main>
       </SidebarInset>
