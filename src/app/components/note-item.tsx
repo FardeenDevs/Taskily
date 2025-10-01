@@ -17,7 +17,7 @@ export function NoteItem({ note, onEdit, onDelete }: NoteItemProps) {
     <Card className="flex flex-col h-full group bg-secondary/30 hover:bg-secondary/60 transition-colors duration-200" onClick={onEdit}>
       <CardHeader className="flex-row items-start justify-between pb-2">
         <CardTitle className="text-base font-bold leading-tight line-clamp-2 pr-8">{note.title}</CardTitle>
-         <Button variant="destructiveIcon" size="icon" className="absolute top-2 right-2 h-8 w-8" onClick={(e) => { e.stopPropagation(); onDelete(); }} aria-label={`Delete note "${note.title}"`}>
+         <Button variant="destructiveIcon" size="icon" className="absolute top-2 right-2 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => { e.stopPropagation(); onDelete(); }} aria-label={`Delete note "${note.title}"`}>
             <Trash2 className="h-4 w-4" />
         </Button>
       </CardHeader>
