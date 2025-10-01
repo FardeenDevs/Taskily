@@ -22,10 +22,10 @@ import {
 interface SettingsDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  onClearTasks: () => void
+  onClearAll: () => void
 }
 
-export function SettingsDialog({ open, onOpenChange, onClearTasks }: SettingsDialogProps) {
+export function SettingsDialog({ open, onOpenChange, onClearAll }: SettingsDialogProps) {
   const { theme, setTheme } = useTheme()
   const [isDark, setIsDark] = useState(theme === 'dark');
 
@@ -67,27 +67,27 @@ export function SettingsDialog({ open, onOpenChange, onClearTasks }: SettingsDia
                  <div className="space-y-0.5">
                     <Label className="text-base text-destructive">Danger Zone</Label>
                     <p className="text-sm text-muted-foreground">
-                       This action cannot be undone.
+                       This will reset the entire application.
                     </p>
                 </div>
                 <AlertDialog>
                     <AlertDialogTrigger asChild>
                         <Button variant="destructive" size="sm">
                             <Trash2 className="mr-2 h-4 w-4"/>
-                            Clear All Tasks
+                            Reset Application
                         </Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                         <AlertDialogHeader>
                             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                             <AlertDialogDescription>
-                                This will permanently delete all tasks in the current Taskspace. This action cannot be undone.
+                                This will permanently delete all Taskspaces and tasks. This action cannot be undone.
                             </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
                             <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => { onClearTasks(); onOpenChange(false); }}>
-                                Yes, delete all tasks
+                            <AlertDialogAction onClick={() => { onClearAll(); onOpenChange(false); }} className="bg-red-600 hover:bg-red-700 text-white">
+                                Yes, reset everything
                             </AlertDialogAction>
                         </AlertDialogFooter>
                     </AlertDialogContent>

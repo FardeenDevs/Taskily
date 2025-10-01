@@ -28,14 +28,11 @@ export function useTasks() {
 
       if (storedData) {
         const data = JSON.parse(storedData);
-        if (data.workspaces && data.activeWorkspaceId) {
+        if (data.workspaces && data.activeWorkspaceId && data.workspaces.length > 0) {
           setWorkspaces(data.workspaces);
           setActiveWorkspaceId(data.activeWorkspaceId);
         } else {
-            // Data is in old format, migrate it
-            const tasks = storedData ? JSON.parse(storedData) : [];
             const defaultWorkspace = createDefaultWorkspace();
-            defaultWorkspace.tasks = tasks;
             setWorkspaces([defaultWorkspace]);
             setActiveWorkspaceId(defaultWorkspace.id);
         }
@@ -49,7 +46,7 @@ export function useTasks() {
         }
       }
 
-      if (firstTime === null) {
+      if (firstTime === null && !storedData) {
           setIsFirstTime(true);
           localStorage.setItem(FIRST_TIME_KEY, "false");
       }
@@ -216,6 +213,15 @@ export function useTasks() {
         description: `All tasks in the "${activeWorkspace?.name}" Taskspace have been deleted.`,
     });
   }, [activeWorkspaceId, activeWorkspace?.name, updateTasksInWorkspace, toast]);
+  
+  const clearAllWorkspaces = useCallback(() => {
+    const defaultWorkspace = createDefaultWorkspace();
+    updateAndSave([defaultWorkspace], defaultWorkspace.id);
+    toast({
+        title: "App Reset",
+        description: `All Taskspaces and tasks have been deleted.`,
+    });
+  }, [updateAndSave, toast]);
 
   return {
     workspaces,
@@ -234,5 +240,6 @@ export function useTasks() {
     isFirstTime,
     setIsFirstTime,
     clearTasks,
+    clearAllWorkspaces,
   };
 }

@@ -11,13 +11,24 @@ import { SidebarProvider, Sidebar, SidebarInset, useSidebar } from "@/components
 import { WorkspaceSidebar } from "@/app/components/workspace-sidebar";
 import { AnimatePresence, motion } from "framer-motion";
 import { Skeleton } from "@/components/ui/skeleton";
-import { LayoutGrid, Menu, Settings } from "lucide-react";
+import { LayoutGrid, Menu, Settings, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useState } from "react";
 import { SettingsDialog } from "@/app/components/settings-dialog";
 import { ThemeProvider } from "@/app/components/theme-provider";
 import { type Task, type Workspace } from "@/lib/types";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 interface AppContentProps {
   tasks: Task[];
@@ -30,6 +41,7 @@ interface AppContentProps {
   setIsFirstTime: (value: boolean) => void;
   activeWorkspace: Workspace | null;
   clearTasks: () => void;
+  clearAllWorkspaces: () => void;
   completedTasks: number;
   totalTasks: number;
 }
@@ -46,6 +58,7 @@ function AppContent({
   setIsFirstTime,
   activeWorkspace,
   clearTasks,
+  clearAllWorkspaces,
   completedTasks,
   totalTasks,
 }: AppContentProps) {
@@ -85,7 +98,7 @@ function AppContent({
                 </DropdownMenu>
             </div>
           <WelcomeDialog open={isFirstTime} onOpenChange={setIsFirstTime} />
-          <SettingsDialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen} onClearTasks={clearTasks} />
+          <SettingsDialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen} onClearAll={clearAllWorkspaces} />
           <div className="w-full max-w-2xl">
             <AnimatePresence>
               <motion.div layout transition={{ type: 'spring', stiffness: 300, damping: 30 }}>
@@ -108,7 +121,29 @@ function AppContent({
                       onEditTask={editTask}
                     />
                   </CardContent>
-                  <CardFooter className="flex justify-end">
+                  <CardFooter className="flex items-center justify-between">
+                     <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                           <Button variant="outline" size="sm" disabled={tasks.length === 0}>
+                                <Trash2 className="mr-2 h-4 w-4"/>
+                                Clear All Tasks
+                            </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    This will permanently delete all tasks in the "{activeWorkspace?.name}" Taskspace. This action cannot be undone.
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={clearTasks} className="bg-red-600 hover:bg-red-700 text-white">
+                                    Yes, delete all tasks
+                                </AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
                     <TaskSuggestions currentTasks={tasks} onAddTask={addTask} />
                   </CardFooter>
                 </Card>
@@ -149,6 +184,7 @@ export default function Home() {
                     setIsFirstTime={tasksState.setIsFirstTime}
                     activeWorkspace={tasksState.activeWorkspace}
                     clearTasks={tasksState.clearTasks}
+                    clearAllWorkspaces={tasksState.clearAllWorkspaces}
                     completedTasks={tasksState.completedTasks}
                     totalTasks={tasksState.totalTasks}
                 />
