@@ -84,7 +84,7 @@ export function WorkspaceSidebar({
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => onDeleteWorkspace(ws.id)} className="bg-red-500 hover:bg-red-600">Delete</AlertDialogAction>
+                        <AlertDialogAction onClick={() => onDeleteWorkspace(ws.id)} className="bg-red-600 hover:bg-red-700 text-white">Delete</AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>

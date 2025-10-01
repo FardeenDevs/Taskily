@@ -82,7 +82,7 @@ export function TaskItem({ task, onToggleTask, onDeleteTask, onEditTask }: TaskI
               </div>
             </div>
             <DialogFooter>
-              <Button type="submit" onClick={handleSave}>Save changes</Button>
+              <Button type="submit" onClick={handleSave} className="bg-blue-600 hover:bg-blue-700 text-white">Save changes</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
