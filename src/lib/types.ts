@@ -17,6 +17,7 @@ export interface Workspace {
     name: string;
     createdAt: string;
     password?: string; // Optional password
+    passwordHint?: string; // Optional password hint
 }
 
 export interface Note {

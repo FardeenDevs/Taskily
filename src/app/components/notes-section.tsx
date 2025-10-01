@@ -1,34 +1,20 @@
 
 "use client";
 
-import { useState, memo } from 'react';
+import { memo } from 'react';
 import { type Note } from '@/lib/types';
-import { NoteDialog } from './note-dialog';
 import { NoteItem } from './note-item';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ShieldAlert } from 'lucide-react';
 
 interface NotesSectionProps {
   notes: Note[];
-  onAddNote: (title: string, content: string) => string | undefined;
-  onEditNote: (id: string, newTitle: string, newContent: string) => void;
+  onEditNote: (note: Note) => void;
   onDeleteNote: (id: string) => void;
   isLocked: boolean;
 }
 
-export const NotesSection = memo(function NotesSection({ notes, onAddNote, onEditNote, onDeleteNote, isLocked }: NotesSectionProps) {
-  const [isNoteDialogOpen, setIsNoteDialogOpen] = useState(false);
-  const [editingNote, setEditingNote] = useState<Note | null>(null);
-
-  const handleOpenEditDialog = (note: Note) => {
-    setEditingNote(note);
-    setIsNoteDialogOpen(true);
-  };
-  
-  const handleSave = (id: string, title: string, content: string) => {
-    onEditNote(id, title, content);
-  };
-
+export const NotesSection = memo(function NotesSection({ notes, onEditNote, onDeleteNote, isLocked }: NotesSectionProps) {
   if (isLocked) {
      return (
         <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/30 bg-muted/50 p-12 text-center h-64">
@@ -48,7 +34,7 @@ export const NotesSection = memo(function NotesSection({ notes, onAddNote, onEdi
             <p className="text-sm text-muted-foreground">Click "New Note" to get started.</p>
           </div>
         ) : (
-           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             <AnimatePresence>
                 {notes.map(note => (
                 <motion.div
@@ -62,7 +48,7 @@ export const NotesSection = memo(function NotesSection({ notes, onAddNote, onEdi
                 >
                     <NoteItem
                       note={note}
-                      onEdit={() => handleOpenEditDialog(note)}
+                      onEdit={() => onEditNote(note)}
                       onDelete={() => onDeleteNote(note.id)}
                     />
                 </motion.div>
@@ -71,13 +57,6 @@ export const NotesSection = memo(function NotesSection({ notes, onAddNote, onEdi
           </div>
         )}
       </div>
-
-      <NoteDialog
-        open={isNoteDialogOpen}
-        onOpenChange={setIsNoteDialogOpen}
-        note={editingNote}
-        onSave={handleSave}
-      />
     </div>
   );
 });

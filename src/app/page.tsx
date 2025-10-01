@@ -10,7 +10,7 @@ import { TaskSuggestions } from "@/app/components/task-suggestions";
 import { WelcomeDialog } from "@/app/components/welcome-dialog";
 import { AnimatePresence, motion } from "framer-motion";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Settings, LayoutGrid, Trash2 } from "lucide-react";
+import { Settings, LayoutGrid, Trash2, ShieldAlert, ShieldCheck } from "lucide-react";
 import { useState, memo } from "react";
 import { SettingsDialog } from "@/app/components/settings-dialog";
 import { ThemeProvider } from "@/app/components/theme-provider";
@@ -22,6 +22,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from "@/lib/utils";
+import { PasswordDialog } from "./components/password-dialog";
 
 
 interface AppContentProps {
@@ -44,15 +45,31 @@ const AppContent = memo(function AppContent({ tasksHook }: AppContentProps) {
     totalTasks,
     activeWorkspace,
     activeWorkspaceId,
+    previousWorkspaceId,
     isFirstTime,
     setIsFirstTime,
     resetApp,
     clearTasks,
+    isWorkspaceLocked,
+    unlockWorkspace,
+    switchWorkspace,
   } = tasksHook;
 
   const handleClearTasks = () => {
     if (activeWorkspaceId) {
       clearTasks(activeWorkspaceId);
+    }
+  };
+
+  const handleUnlock = (password: string) => {
+    if (activeWorkspace) {
+      unlockWorkspace(activeWorkspace.id, password);
+    }
+  };
+
+  const handleGoBack = () => {
+    if (previousWorkspaceId) {
+      switchWorkspace(previousWorkspaceId);
     }
   };
 
@@ -130,14 +147,28 @@ const AppContent = memo(function AppContent({ tasksHook }: AppContentProps) {
       <main className="flex min-h-screen w-full flex-col items-center justify-start p-4 pt-0 sm:p-8 sm:pt-0">
         <WelcomeDialog open={isFirstTime} onOpenChange={setIsFirstTime} />
         <SettingsDialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen} onResetApp={resetApp} />
+        {isWorkspaceLocked && activeWorkspace && (
+          <PasswordDialog 
+            open={isWorkspaceLocked}
+            onUnlock={handleUnlock}
+            onBack={handleGoBack}
+            workspaceName={activeWorkspace.name}
+            hint={activeWorkspace.passwordHint}
+          />
+        )}
         <div className="w-full max-w-2xl">
           <AnimatePresence>
             <motion.div layout transition={{ type: 'spring', stiffness: 300, damping: 30 }}>
               <Card className="border-2 border-border/50 shadow-2xl shadow-primary/5 overflow-hidden">
                 <CardHeader>
-                  <CardTitle className="font-headline text-2xl font-bold tracking-tight text-foreground text-center">
-                    {activeWorkspace?.name || "My List"}
-                  </CardTitle>
+                    <div className="flex items-center justify-center gap-2">
+                        {activeWorkspace?.password ? (
+                            isWorkspaceLocked ? <ShieldAlert className="h-6 w-6 text-destructive" /> : <ShieldCheck className="h-6 w-6 text-primary" />
+                        ) : null}
+                        <CardTitle className="font-headline text-2xl font-bold tracking-tight text-foreground text-center">
+                            {activeWorkspace?.name || "My List"}
+                        </CardTitle>
+                    </div>
                 </CardHeader>
                 <CardContent className="space-y-8">
                     <div className="space-y-6">

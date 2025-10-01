@@ -13,6 +13,7 @@ interface AppData {
   notes: Note[];
   workspaces: Workspace[];
   activeWorkspaceId: string | null;
+  previousWorkspaceId: string | null; // Added to track the last workspace
 }
 
 const DEFAULT_WORKSPACE_ID = "default";
@@ -23,6 +24,7 @@ export function useTasks() {
     notes: [],
     workspaces: [],
     activeWorkspaceId: null,
+    previousWorkspaceId: null,
   });
   const [loading, setLoading] = useState(true);
   const [isFirstTime, setIsFirstTime] = useState(false);
@@ -39,6 +41,9 @@ export function useTasks() {
         if (!storedData.notes) {
             storedData.notes = [];
         }
+        if (!storedData.previousWorkspaceId) {
+            storedData.previousWorkspaceId = null;
+        }
         setData(storedData);
         // Initially, only unlock workspaces that are not password protected
         setUnlockedWorkspaces(storedData.workspaces.filter((ws: Workspace) => !ws.password).map((ws: Workspace) => ws.id));
@@ -49,6 +54,7 @@ export function useTasks() {
           notes: [],
           workspaces: [defaultWorkspace],
           activeWorkspaceId: defaultWorkspace.id,
+          previousWorkspaceId: null,
         });
         setUnlockedWorkspaces([defaultWorkspace.id]); // Unlock default workspace
         if (firstTime === null) {
@@ -64,6 +70,7 @@ export function useTasks() {
         notes: [],
         workspaces: [defaultWorkspace],
         activeWorkspaceId: defaultWorkspace.id,
+        previousWorkspaceId: null,
       });
        setUnlockedWorkspaces([defaultWorkspace.id]);
     }
@@ -92,10 +99,11 @@ export function useTasks() {
   }, [activeWorkspace, unlockedWorkspaces]);
 
   const filteredTasks = useMemo(() => {
+    if (isWorkspaceLocked) return [];
     return data.tasks
       .filter(task => task.workspaceId === data.activeWorkspaceId)
       .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
-  }, [data.tasks, data.activeWorkspaceId]);
+  }, [data.tasks, data.activeWorkspaceId, isWorkspaceLocked]);
 
   const filteredNotes = useMemo(() => {
     if (isWorkspaceLocked) return []; // Return no notes if locked
@@ -212,6 +220,7 @@ export function useTasks() {
       notes: [],
       workspaces: [defaultWorkspace],
       activeWorkspaceId: defaultWorkspace.id,
+      previousWorkspaceId: null,
     };
     updateAndSave(newData);
     setUnlockedWorkspaces([defaultWorkspace.id]);
@@ -243,6 +252,7 @@ export function useTasks() {
     updateAndSave({
       workspaces: [...data.workspaces, newWorkspace],
       activeWorkspaceId: newWorkspace.id,
+      previousWorkspaceId: data.activeWorkspaceId
     });
     setUnlockedWorkspaces(prev => [...prev, newWorkspace.id]); // Auto-unlock new workspace
   }, [data, updateAndSave, toast]);
@@ -261,7 +271,7 @@ export function useTasks() {
     const notes = (data.notes || []).filter(note => note.workspaceId !== id);
     const activeWorkspaceId = id === data.activeWorkspaceId ? workspaces[0].id : data.activeWorkspaceId;
     
-    updateAndSave({ workspaces, tasks, notes, activeWorkspaceId });
+    updateAndSave({ workspaces, tasks, notes, activeWorkspaceId, previousWorkspaceId: null });
     setUnlockedWorkspaces(prev => prev.filter(unlockedId => unlockedId !== id));
     toast({
       title: "Listspace Deleted",
@@ -290,27 +300,45 @@ export function useTasks() {
 
   const switchWorkspace = useCallback((id: string) => {
     if (id === data.activeWorkspaceId) return;
-    updateAndSave({ activeWorkspaceId: id });
+    updateAndSave({ previousWorkspaceId: data.activeWorkspaceId, activeWorkspaceId: id });
   }, [data, updateAndSave]);
 
   // --- Password Management ---
-  const setWorkspacePassword = useCallback((workspaceId: string, password: string | null) => {
+  const setWorkspacePassword = useCallback((workspaceId: string, oldPassword: string | null, newPassword: string | null, hint: string | null): boolean => {
+    const workspace = data.workspaces.find(ws => ws.id === workspaceId);
+    if (!workspace) return false;
+
+    // Check old password if one exists
+    if (workspace.password && workspace.password !== oldPassword) {
+      toast({ variant: "destructive", title: "Incorrect Old Password" });
+      return false;
+    }
+
     const workspaces = data.workspaces.map(ws => {
       if (ws.id === workspaceId) {
-        return { ...ws, password: password || undefined };
+        return { 
+            ...ws, 
+            password: newPassword || undefined,
+            passwordHint: newPassword ? (hint || undefined) : undefined
+        };
       }
       return ws;
     });
     updateAndSave({ workspaces });
 
-    if (password) {
+    if (newPassword) {
       toast({ title: "Password Set", description: "Your listspace is now password protected." });
-      setUnlockedWorkspaces(prev => prev.filter(id => id !== workspaceId)); // Lock it after setting new password
+      // Lock the workspace after setting/changing the password
+      setUnlockedWorkspaces(prev => prev.filter(id => id !== workspaceId));
     } else {
       toast({ title: "Password Removed", description: "Your listspace is no longer password protected." });
-      setUnlockedWorkspaces(prev => [...prev, workspaceId]); // Unlock if password removed
+      // Ensure it's unlocked if password is removed
+      if (!unlockedWorkspaces.includes(workspaceId)) {
+        setUnlockedWorkspaces(prev => [...prev, workspaceId]);
+      }
     }
-  }, [data, updateAndSave, toast]);
+    return true;
+  }, [data, updateAndSave, toast, unlockedWorkspaces]);
 
   const unlockWorkspace = useCallback((workspaceId: string, passwordAttempt: string): boolean => {
     const workspace = data.workspaces.find(ws => ws.id === workspaceId);
@@ -333,6 +361,7 @@ export function useTasks() {
     workspaces: data.workspaces.sort((a,b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()),
     activeWorkspace,
     activeWorkspaceId: data.activeWorkspaceId,
+    previousWorkspaceId: data.previousWorkspaceId,
     loading,
     isFirstTime,
     setIsFirstTime,

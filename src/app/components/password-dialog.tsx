@@ -10,10 +10,12 @@ import { Label } from "@/components/ui/label";
 interface PasswordDialogProps {
   open: boolean;
   onUnlock: (password: string) => void;
+  onBack: () => void;
   workspaceName: string;
+  hint?: string;
 }
 
-export function PasswordDialog({ open, onUnlock, workspaceName }: PasswordDialogProps) {
+export function PasswordDialog({ open, onUnlock, onBack, workspaceName, hint }: PasswordDialogProps) {
   const [password, setPassword] = useState("");
 
   const handleUnlock = () => {
@@ -31,18 +33,26 @@ export function PasswordDialog({ open, onUnlock, workspaceName }: PasswordDialog
             This listspace is password protected. Please enter the password to continue.
           </DialogDescription>
         </DialogHeader>
-        <div className="py-4">
-          <Label htmlFor="password">Password</Label>
-          <Input 
-            id="password" 
-            type="password" 
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleUnlock()}
-            autoFocus
-          />
+        <div className="py-4 space-y-4">
+          <div>
+            <Label htmlFor="password">Password</Label>
+            <Input 
+              id="password" 
+              type="password" 
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleUnlock()}
+              autoFocus
+            />
+          </div>
+          {hint && (
+            <p className="text-sm text-muted-foreground">
+              <span className="font-semibold">Hint:</span> {hint}
+            </p>
+          )}
         </div>
-        <DialogFooter>
+        <DialogFooter className="sm:justify-between">
+          <Button onClick={onBack} variant="outline">Back</Button>
           <Button onClick={handleUnlock}>Unlock</Button>
         </DialogFooter>
       </DialogContent>
@@ -56,19 +66,3 @@ declare module "@radix-ui/react-dialog" {
     showCloseButton?: boolean;
   }
 }
-
-// You might need to update your actual DialogContent component to handle this prop
-// For example in src/components/ui/dialog.tsx
-/*
-const DialogContent = React.forwardRef<...>(({ ..., showCloseButton = true }, ref) => (
-  ...
-      {children}
-      {showCloseButton && (
-        <DialogPrimitive.Close ...>
-          <X className="h-4 w-4" />
-          <span className="sr-only">Close</span>
-        </DialogPrimitive.Close>
-      )}
-  ...
-))
-*/

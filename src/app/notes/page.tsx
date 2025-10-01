@@ -7,7 +7,7 @@ import { WelcomeDialog } from "@/app/components/welcome-dialog";
 import { AnimatePresence, motion } from "framer-motion";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Settings, LayoutGrid, Plus, ShieldCheck, ShieldAlert } from "lucide-react";
-import { useState, memo } from "react";
+import { useState, memo, useMemo } from "react";
 import { SettingsDialog } from "@/app/components/settings-dialog";
 import { ThemeProvider } from "@/app/components/theme-provider";
 import { Button } from "@/components/ui/button";
@@ -42,19 +42,25 @@ const NotesPageContent = memo(function NotesPageContent({ tasksHook }: NotesPage
     editNote,
     deleteNote,
     activeWorkspace,
+    previousWorkspaceId,
     isFirstTime,
     setIsFirstTime,
     resetApp,
     isWorkspaceLocked,
     unlockWorkspace,
+    switchWorkspace,
   } = tasksHook;
 
+  const handleOpenEditDialog = (note: Note) => {
+    setEditingNote(note);
+    setIsNoteDialogOpen(true);
+  };
+  
   const handleOpenNewNoteDialog = () => {
     const newNoteId = addNote("New Note", "");
     if (newNoteId) {
-      const newNote = { id: newNoteId, title: "New Note", content: "", createdAt: new Date().toISOString(), workspaceId: '' };
-      setEditingNote(newNote);
-      setIsNoteDialogOpen(true);
+      const newNote = { id: newNoteId, title: "New Note", content: "", createdAt: new Date().toISOString(), workspaceId: activeWorkspace?.id || '' };
+      handleOpenEditDialog(newNote);
     }
   };
   
@@ -63,10 +69,21 @@ const NotesPageContent = memo(function NotesPageContent({ tasksHook }: NotesPage
       unlockWorkspace(activeWorkspace.id, password);
     }
   };
+  
+  const handleGoBack = () => {
+    if (previousWorkspaceId) {
+      switchWorkspace(previousWorkspaceId);
+    }
+  };
 
   const handleSave = (id: string, title: string, content: string) => {
     editNote(id, title, content);
   };
+  
+  const sortedNotes = useMemo(() => {
+    return [...notes].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }, [notes]);
+
 
   if (loading) {
     return (
@@ -145,10 +162,12 @@ const NotesPageContent = memo(function NotesPageContent({ tasksHook }: NotesPage
           <PasswordDialog 
             open={isWorkspaceLocked}
             onUnlock={handleUnlock}
+            onBack={handleGoBack}
             workspaceName={activeWorkspace.name}
+            hint={activeWorkspace.passwordHint}
           />
         )}
-        <div className="w-full max-w-2xl">
+        <div className="w-full max-w-4xl">
           <AnimatePresence>
             <motion.div layout transition={{ type: 'spring', stiffness: 300, damping: 30 }}>
               <Card className="border-2 border-border/50 shadow-2xl shadow-primary/5 overflow-hidden">
@@ -168,10 +187,9 @@ const NotesPageContent = memo(function NotesPageContent({ tasksHook }: NotesPage
                 </CardHeader>
                 <CardContent>
                   <NotesSection
-                    notes={notes}
-                    onAddNote={addNote}
-                    onEditNote={editNote}
+                    notes={sortedNotes}
                     onDeleteNote={deleteNote}
+                    onEditNote={handleOpenEditDialog}
                     isLocked={isWorkspaceLocked}
                   />
                 </CardContent>
