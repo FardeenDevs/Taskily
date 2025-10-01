@@ -1,8 +1,9 @@
+
 "use client";
 
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Check, Edit, Plus, Trash2, Sparkles, Notebook, Rows3 } from 'lucide-react';
+import { Check, Edit, Plus, Trash2, Sparkles, Notebook, Rows3, Route } from 'lucide-react';
 
 interface WelcomeDialogProps {
   open: boolean;
@@ -22,11 +23,20 @@ export function WelcomeDialog({ open, onOpenChange }: WelcomeDialogProps) {
         <div className="mt-4 space-y-4 text-sm">
            <div className="flex items-start gap-4">
             <div className="flex h-8 w-8 items-center justify-center rounded-md text-primary">
+                <Route className="h-5 w-5" />
+            </div>
+            <div>
+              <h4 className="font-semibold">Two Apps in One</h4>
+              <p className="text-muted-foreground">Use the navigation bar at the top to switch between the "Progress" task tracker and the "Notes" app.</p>
+            </div>
+          </div>
+          <div className="flex items-start gap-4">
+            <div className="flex h-8 w-8 items-center justify-center rounded-md text-primary">
                 <Rows3 className="h-5 w-5" />
             </div>
             <div>
-              <h4 className="font-semibold">Progress & Notes</h4>
-              <p className="text-muted-foreground">Switch between your task list and a notes section using the tabs at the top of the card.</p>
+              <h4 className="font-semibold">Listspaces</h4>
+              <p className="text-muted-foreground">Organize your tasks and notes into separate lists called "Listspaces" using the sidebar menu.</p>
             </div>
           </div>
           <div className="flex items-start gap-4">
@@ -35,7 +45,7 @@ export function WelcomeDialog({ open, onOpenChange }: WelcomeDialogProps) {
             </div>
             <div>
               <h4 className="font-semibold">Add Items</h4>
-              <p className="text-muted-foreground">Add new tasks in the "Progress" tab or create new notes in the "Notes" tab.</p>
+              <p className="text-muted-foreground">Add new tasks in "Progress" or create new notes in "Notes".</p>
             </div>
           </div>
           <div className="flex items-start gap-4">
@@ -44,25 +54,16 @@ export function WelcomeDialog({ open, onOpenChange }: WelcomeDialogProps) {
             </div>
             <div>
               <h4 className="font-semibold">Complete Tasks</h4>
-              <p className="text-muted-foreground">In the "Progress" tab, click the checkbox to mark a task as complete. Your progress bar will update.</p>
+              <p className="text-muted-foreground">In "Progress", click the checkbox to mark a task as complete. Your progress bar will update.</p>
             </div>
           </div>
           <div className="flex items-start gap-4">
-            <div className="flex h-8 w-8 items-center justify-center rounded-md text-primary">
-                <Edit className="h-5 w-5" />
-            </div>
-            <div>
-              <h4 className="font-semibold">Edit Items</h4>
-              <p className="text-muted-foreground">Hover over any task or note and click the pencil icon to edit its content.</p>
-            </div>
-          </div>
-           <div className="flex items-start gap-4">
             <div className="flex h-8 w-8 items-center justify-center rounded-md text-primary">
                 <Sparkles className="h-5 w-5" />
             </div>
             <div>
               <h4 className="font-semibold">Get AI Suggestions</h4>
-              <p className="text-muted-foreground">In the "Progress" tab, click "Suggest Tasks" to get AI-powered recommendations.</p>
+              <p className="text-muted-foreground">In "Progress", click "Suggest Tasks" to get AI-powered recommendations.</p>
             </div>
           </div>
         </div>

@@ -2,15 +2,11 @@
 "use client";
 
 import { useTasks } from "@/lib/hooks/use-tasks";
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { TaskProgress } from "@/app/components/task-progress";
-import { TaskInput } from "@/app/components/task-input";
-import { TaskList } from "@/app/components/task-list";
-import { TaskSuggestions } from "@/app/components/task-suggestions";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { WelcomeDialog } from "@/app/components/welcome-dialog";
 import { AnimatePresence, motion } from "framer-motion";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Settings, LayoutGrid, Trash2 } from "lucide-react";
+import { Settings, LayoutGrid } from "lucide-react";
 import { useState, memo } from "react";
 import { SettingsDialog } from "@/app/components/settings-dialog";
 import { ThemeProvider } from "@/app/components/theme-provider";
@@ -18,43 +14,31 @@ import { Button } from "@/components/ui/button";
 import { WorkspaceSidebar } from "@/app/components/workspace-sidebar";
 import { SidebarProvider, SidebarInset, useSidebar } from "@/components/ui/sidebar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from "@/lib/utils";
+import { NotesSection } from "@/app/components/notes-section";
 
-
-interface AppContentProps {
+interface NotesPageContentProps {
   tasksHook: ReturnType<typeof useTasks>;
 }
 
-const AppContent = memo(function AppContent({ tasksHook }: AppContentProps) {
+const NotesPageContent = memo(function NotesPageContent({ tasksHook }: NotesPageContentProps) {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const { setOpen: setSidebarOpen } = useSidebar();
   const pathname = usePathname();
 
   const {
-    tasks,
+    notes,
     loading,
-    addTask,
-    toggleTask,
-    deleteTask,
-    editTask,
-    completedTasks,
-    totalTasks,
+    addNote,
+    editNote,
+    deleteNote,
     activeWorkspace,
-    activeWorkspaceId,
     isFirstTime,
     setIsFirstTime,
     resetApp,
-    clearTasks,
   } = tasksHook;
-
-  const handleClearTasks = () => {
-    if (activeWorkspaceId) {
-      clearTasks(activeWorkspaceId);
-    }
-  };
 
   if (loading) {
     return (
@@ -68,7 +52,7 @@ const AppContent = memo(function AppContent({ tasksHook }: AppContentProps) {
 
   return (
     <SidebarInset>
-        <header className="flex items-center justify-between p-4">
+      <header className="flex items-center justify-between p-4">
             <div className="flex items-center gap-2">
                  <div className="z-50 md:hidden">
                     <DropdownMenu>
@@ -97,7 +81,7 @@ const AppContent = memo(function AppContent({ tasksHook }: AppContentProps) {
                 </div>
             </div>
             
-            <div className="flex items-center gap-4">
+             <div className="flex items-center gap-4">
                 <h1 className="text-2xl font-bold text-center text-foreground">Listily</h1>
                 <nav className="flex items-center gap-2 rounded-full bg-secondary p-1">
                     <Link href="/" passHref>
@@ -119,7 +103,6 @@ const AppContent = memo(function AppContent({ tasksHook }: AppContentProps) {
                 </nav>
             </div>
 
-
             <div>
                  <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground hover:text-foreground" onClick={() => setIsSettingsOpen(true)}>
                     <Settings className="h-5 w-5" />
@@ -136,50 +119,17 @@ const AppContent = memo(function AppContent({ tasksHook }: AppContentProps) {
               <Card className="border-2 border-border/50 shadow-2xl shadow-primary/5 overflow-hidden">
                 <CardHeader>
                   <CardTitle className="font-headline text-2xl font-bold tracking-tight text-foreground text-center">
-                    {activeWorkspace?.name || "My List"}
+                    {activeWorkspace?.name || "My Notes"}
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-8">
-                    <div className="space-y-6">
-                      <TaskProgress completed={completedTasks} total={totalTasks} />
-                      <TaskInput onAddTask={addTask} />
-                      <TaskList
-                        tasks={tasks}
-                        onToggleTask={toggleTask}
-                        onDeleteTask={deleteTask}
-                        onEditTask={editTask}
-                      />
-                    </div>
+                <CardContent>
+                  <NotesSection
+                    notes={notes}
+                    onAddNote={addNote}
+                    onEditNote={editNote}
+                    onDeleteNote={deleteNote}
+                  />
                 </CardContent>
-                <CardFooter className="flex items-center justify-between">
-                   <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button
-                          variant="destructive"
-                          disabled={tasks.length === 0}
-                          className="disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
-                        >
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          Clear All Tasks
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            This will permanently delete all tasks in this list. This action cannot be undone.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction onClick={handleClearTasks} variant="destructive">
-                            Yes, clear all
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  <TaskSuggestions currentTasks={tasks} onAddTask={(text) => addTask(text, null, null)} />
-                </CardFooter>
               </Card>
             </motion.div>
           </AnimatePresence>
@@ -189,14 +139,14 @@ const AppContent = memo(function AppContent({ tasksHook }: AppContentProps) {
   );
 });
 
-export default function Home() {
+export default function NotesPage() {
   const tasksHook = useTasks();
 
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <SidebarProvider>
         <WorkspaceSidebar tasksHook={tasksHook} />
-        <AppContent tasksHook={tasksHook} />
+        <NotesPageContent tasksHook={tasksHook} />
       </SidebarProvider>
     </ThemeProvider>
   );
