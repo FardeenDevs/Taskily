@@ -24,7 +24,7 @@ interface AppContentProps {
 
 const AppContent = memo(function AppContent({ tasksHook }: AppContentProps) {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const { setOpen: setSidebarOpen } = useSidebar();
+  const { setOpen: setSidebarOpen, toggleSidebar } = useSidebar();
 
   const {
     tasks,
@@ -54,30 +54,16 @@ const AppContent = memo(function AppContent({ tasksHook }: AppContentProps) {
 
   return (
     <SidebarInset>
-      <div className="absolute top-4 right-4 z-20 hidden md:block">
+       <div className="absolute top-4 right-4 z-20">
         <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground hover:text-foreground" onClick={() => setIsSettingsOpen(true)}>
           <Settings className="h-5 w-5" />
         </Button>
       </div>
 
-      <div className="absolute top-4 left-4 z-50 md:hidden">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon">
-              <PanelLeft className="h-5 w-5" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start">
-            <DropdownMenuItem onClick={() => setSidebarOpen(true)}>
-              <LayoutGrid className="mr-2 h-4 w-4" />
-              <span>Listspaces</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setIsSettingsOpen(true)}>
-              <Settings className="mr-2 h-4 w-4" />
-              <span>Settings</span>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+      <div className="absolute top-4 left-4 z-50">
+         <Button variant="ghost" size="icon" onClick={toggleSidebar}>
+            <PanelLeft className="h-5 w-5" />
+          </Button>
       </div>
       
       <main className="flex min-h-screen w-full flex-col items-center justify-center p-4 sm:p-8">
@@ -88,7 +74,7 @@ const AppContent = memo(function AppContent({ tasksHook }: AppContentProps) {
             <motion.div layout transition={{ type: 'spring', stiffness: 300, damping: 30 }}>
               <Card className="border-2 border-border/50 shadow-2xl shadow-primary/5 overflow-hidden">
                 <CardHeader>
-                  <CardTitle className="font-headline text-4xl font-bold tracking-tight text-foreground text-center">
+                  <CardTitle className="font-headline text-4xl font-bold tracking-tight text-foreground text-center pt-10">
                     {activeWorkspace?.name || "Listily"}
                   </CardTitle>
                   <CardDescription className="text-center">
