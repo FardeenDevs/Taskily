@@ -2,6 +2,7 @@
 
 import { Progress } from "@/components/ui/progress";
 import { useEffect, useState } from "react";
+import { cn } from "@/lib/utils";
 
 interface TaskProgressProps {
   completed: number;
@@ -18,14 +19,17 @@ export function TaskProgress({ completed, total }: TaskProgressProps) {
 
   return (
     <div className="space-y-2">
-      <div className="flex justify-between items-center text-sm font-medium text-green-600">
+      <div className={cn(
+        "flex justify-between items-center text-sm font-medium",
+        total > 0 ? "text-primary" : "text-muted-foreground"
+      )}>
         <p>Progress</p>
         <p>
           {total > 0 && `${Math.round(progress)}% | `}
           {completed} / {total}
         </p>
       </div>
-      <Progress value={progress} className="h-3 [&>div]:bg-green-500" />
+      <Progress value={progress} className="h-3" />
     </div>
   );
 }

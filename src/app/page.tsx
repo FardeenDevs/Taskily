@@ -59,16 +59,16 @@ export default function Home() {
             <AnimatePresence>
               <motion.div layout transition={{ type: 'spring', stiffness: 300, damping: 30 }}>
                 <Card className="border-2 border-border/50 shadow-2xl shadow-primary/5 overflow-hidden">
-                  <CardHeader className="flex flex-row items-center justify-between">
-                    <div className="flex-1">
-                      <CardTitle className="font-headline text-4xl font-bold tracking-tight text-foreground">
-                        {activeWorkspace?.name || "Taskily"}
-                      </CardTitle>
-                      <CardDescription>
-                        Get things done, one task at a time.
-                      </CardDescription>
-                    </div>
-                     <div className="md:hidden">
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                            <CardTitle className="font-headline text-4xl font-bold tracking-tight text-foreground">
+                                {activeWorkspace?.name || "Taskily"}
+                            </CardTitle>
+                            <CardDescription>
+                                Get things done, one task at a time.
+                            </CardDescription>
+                        </div>
                         <SidebarTrigger />
                     </div>
                   </CardHeader>

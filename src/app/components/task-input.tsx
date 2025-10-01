@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { Plus } from "lucide-react";
+import { useState, useEffect } from "react";
 
 const formSchema = z.object({
   task: z.string().min(1, {
@@ -28,6 +29,16 @@ export function TaskInput({ onAddTask }: TaskInputProps) {
     },
   });
 
+  const [isInputEmpty, setIsInputEmpty] = useState(true);
+
+  useEffect(() => {
+    const subscription = form.watch((value) => {
+      setIsInputEmpty(!value.task);
+    });
+    return () => subscription.unsubscribe();
+  }, [form]);
+
+
   function onSubmit(values: z.infer<typeof formSchema>) {
     onAddTask(values.task);
     form.reset();
@@ -45,14 +56,20 @@ export function TaskInput({ onAddTask }: TaskInputProps) {
                 <Input 
                   placeholder="Add a new task..." 
                   {...field} 
-                  className="focus-visible:ring-green-500 focus-visible:ring-offset-2 focus-visible:ring-offset-background transition-shadow duration-300 focus-visible:shadow-[0_0_0_2px_rgba(34,197,94,0.4)]"
+                  className="focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background transition-shadow duration-300 focus-visible:shadow-[0_0_0_2px_hsl(var(--primary)_/_0.4)]"
                 />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-        <Button type="submit" size="icon" aria-label="Add task" className="bg-green-500 hover:bg-green-600 text-white">
+        <Button 
+            type="submit" 
+            size="icon" 
+            aria-label="Add task" 
+            disabled={isInputEmpty}
+            className="disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed"
+        >
           <Plus />
         </Button>
       </form>
