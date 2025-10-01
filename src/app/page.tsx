@@ -2,7 +2,7 @@
 "use client";
 
 import { useTasks } from "@/lib/hooks/use-tasks";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { TaskProgress } from "@/app/components/task-progress";
 import { TaskInput } from "@/app/components/task-input";
 import { TaskList } from "@/app/components/task-list";
@@ -27,7 +27,7 @@ interface AppContentProps {
 
 const AppContent = memo(function AppContent({ tasksHook }: AppContentProps) {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const { setOpen: setSidebarOpen, toggleSidebar } = useSidebar();
+  const { setOpen: setSidebarOpen } = useSidebar();
 
   const {
     tasks,
@@ -87,7 +87,7 @@ const AppContent = memo(function AppContent({ tasksHook }: AppContentProps) {
                 </div>
             
                 <div className="hidden md:block">
-                    <Button variant="ghost" size="icon" onClick={toggleSidebar}>
+                    <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(true)}>
                         <LayoutGrid className="h-5 w-5" />
                     </Button>
                 </div>
