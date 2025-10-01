@@ -3,8 +3,6 @@
 
 import { useState, memo } from 'react';
 import { type Note } from '@/lib/types';
-import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
 import { NoteDialog } from './note-dialog';
 import { NoteItem } from './note-item';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -20,14 +18,6 @@ export const NotesSection = memo(function NotesSection({ notes, onAddNote, onEdi
   const [isNoteDialogOpen, setIsNoteDialogOpen] = useState(false);
   const [editingNote, setEditingNote] = useState<Note | null>(null);
 
-  const handleOpenNewNoteDialog = () => {
-    const newNoteId = onAddNote("New Note", "");
-    if (newNoteId) {
-      const newNote = { id: newNoteId, title: "New Note", content: "", createdAt: new Date().toISOString(), workspaceId: '' };
-      handleOpenEditDialog(newNote);
-    }
-  };
-
   const handleOpenEditDialog = (note: Note) => {
     setEditingNote(note);
     setIsNoteDialogOpen(true);
@@ -39,13 +29,6 @@ export const NotesSection = memo(function NotesSection({ notes, onAddNote, onEdi
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end">
-        <Button onClick={handleOpenNewNoteDialog} variant="gradient">
-          <Plus className="mr-2 h-4 w-4" />
-          New Note
-        </Button>
-      </div>
-
       <div className="space-y-3">
         {notes.length === 0 ? (
           <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/30 bg-muted/50 p-12 text-center h-64">

@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { WelcomeDialog } from "@/app/components/welcome-dialog";
 import { AnimatePresence, motion } from "framer-motion";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Settings, LayoutGrid } from "lucide-react";
+import { Settings, LayoutGrid, Plus } from "lucide-react";
 import { useState, memo } from "react";
 import { SettingsDialog } from "@/app/components/settings-dialog";
 import { ThemeProvider } from "@/app/components/theme-provider";
@@ -18,6 +18,8 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from "@/lib/utils";
 import { NotesSection } from "@/app/components/notes-section";
+import { Note } from "@/lib/types";
+import { NoteDialog } from "../components/note-dialog";
 
 interface NotesPageContentProps {
   tasksHook: ReturnType<typeof useTasks>;
@@ -27,6 +29,9 @@ const NotesPageContent = memo(function NotesPageContent({ tasksHook }: NotesPage
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const { setOpen: setSidebarOpen } = useSidebar();
   const pathname = usePathname();
+
+  const [isNoteDialogOpen, setIsNoteDialogOpen] = useState(false);
+  const [editingNote, setEditingNote] = useState<Note | null>(null);
 
   const {
     notes,
@@ -39,6 +44,19 @@ const NotesPageContent = memo(function NotesPageContent({ tasksHook }: NotesPage
     setIsFirstTime,
     resetApp,
   } = tasksHook;
+
+  const handleOpenNewNoteDialog = () => {
+    const newNoteId = addNote("New Note", "");
+    if (newNoteId) {
+      const newNote = { id: newNoteId, title: "New Note", content: "", createdAt: new Date().toISOString(), workspaceId: '' };
+      setEditingNote(newNote);
+      setIsNoteDialogOpen(true);
+    }
+  };
+
+  const handleSave = (id: string, title: string, content: string) => {
+    editNote(id, title, content);
+  };
 
   if (loading) {
     return (
@@ -117,10 +135,14 @@ const NotesPageContent = memo(function NotesPageContent({ tasksHook }: NotesPage
           <AnimatePresence>
             <motion.div layout transition={{ type: 'spring', stiffness: 300, damping: 30 }}>
               <Card className="border-2 border-border/50 shadow-2xl shadow-primary/5 overflow-hidden">
-                <CardHeader>
-                  <CardTitle className="font-headline text-2xl font-bold tracking-tight text-foreground text-center">
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <CardTitle className="font-headline text-2xl font-bold tracking-tight text-foreground">
                     {activeWorkspace?.name || "My Notes"}
                   </CardTitle>
+                  <Button onClick={handleOpenNewNoteDialog} variant="gradient">
+                    <Plus className="mr-2 h-4 w-4" />
+                    New Note
+                  </Button>
                 </CardHeader>
                 <CardContent>
                   <NotesSection
@@ -135,6 +157,12 @@ const NotesPageContent = memo(function NotesPageContent({ tasksHook }: NotesPage
           </AnimatePresence>
         </div>
       </main>
+      <NoteDialog
+        open={isNoteDialogOpen}
+        onOpenChange={setIsNoteDialogOpen}
+        note={editingNote}
+        onSave={handleSave}
+      />
     </SidebarInset>
   );
 });
