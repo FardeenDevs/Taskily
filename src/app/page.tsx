@@ -76,15 +76,15 @@ const AppContent = memo(function AppContent({
 
   return (
       <SidebarInset>
-        <div className="absolute top-4 left-4 z-50 md:hidden">
-          <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground hover:text-foreground" onClick={() => setSidebarOpen(true)}>
-              <LayoutGrid className="h-5 w-5" />
-          </Button>
-        </div>
-        <div className="absolute top-4 right-4 z-20">
+        <div className="absolute top-4 right-4 z-50">
             <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground hover:text-foreground" onClick={() => setIsSettingsOpen(true)}>
                 <Settings className="h-5 w-5" />
             </Button>
+        </div>
+         <div className="absolute top-4 left-4 z-50 md:hidden">
+          <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground hover:text-foreground" onClick={() => setSidebarOpen(true)}>
+              <LayoutGrid className="h-5 w-5" />
+          </Button>
         </div>
         <main className="flex min-h-screen w-full flex-col items-center justify-center p-4 sm:p-8">
           <WelcomeDialog open={isFirstTime} onOpenChange={setIsFirstTime} />
