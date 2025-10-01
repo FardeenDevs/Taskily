@@ -34,12 +34,18 @@ export function NoteDialog({ open, onOpenChange, note, onSave }: NoteDialogProps
   const handleSave = () => {
     if (title.trim()) {
       onSave(note?.id ?? null, title, content);
-      onOpenChange(false);
     }
   };
 
+  const handleOpenChange = (isOpen: boolean) => {
+    if (!isOpen) {
+      handleSave();
+    }
+    onOpenChange(isOpen);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className={cn("w-screen h-screen max-w-none rounded-none flex flex-col")}>
         <DialogHeader>
           <DialogTitle>
@@ -58,7 +64,7 @@ export function NoteDialog({ open, onOpenChange, note, onSave }: NoteDialogProps
             />
           </DialogTitle>
         </DialogHeader>
-        <div className="flex-grow py-4">
+        <div className="flex-grow">
             <Textarea
               id="note-content"
               value={content}
@@ -67,10 +73,6 @@ export function NoteDialog({ open, onOpenChange, note, onSave }: NoteDialogProps
               className="w-full h-full resize-none border-0 shadow-none focus-visible:ring-0 text-base"
             />
         </div>
-        <DialogFooter>
-          <Button onClick={() => onOpenChange(false)} variant="ghost">Cancel</Button>
-          <Button onClick={handleSave} variant="gradient">{note ? 'Save Changes' : 'Create Note'}</Button>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
