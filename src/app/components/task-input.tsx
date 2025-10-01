@@ -68,7 +68,8 @@ export const TaskInput = memo(function TaskInput({ onAddTask }: TaskInputProps) 
             size="icon" 
             aria-label="Add task" 
             disabled={isInputEmpty}
-            className="disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed"
+            variant="gradient"
+            className="disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
         >
           <Plus />
         </Button>
@@ -76,5 +77,3 @@ export const TaskInput = memo(function TaskInput({ onAddTask }: TaskInputProps) 
     </Form>
   );
 });
-
-    

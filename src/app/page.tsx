@@ -14,7 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { LayoutGrid, Menu, Settings, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { useState } from "react";
+import { useState, memo } from "react";
 import { SettingsDialog } from "@/app/components/settings-dialog";
 import { ThemeProvider } from "@/app/components/theme-provider";
 import { type Task, type Workspace } from "@/lib/types";
@@ -29,7 +29,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 
 interface AppContentProps {
@@ -69,7 +68,7 @@ function AppContent({
   
   if (loading) {
      return (
-        <div className="flex min-h-screen w-full flex-col items-center justify-center bg-background p-4 sm:p-8">
+        <div className="flex min-h-screen w-full flex-col items-center justify-center p-4 sm:p-8">
             <div className="w-full max-w-2xl space-y-8">
                  <Skeleton className="h-[600px] w-full rounded-lg" />
             </div>
@@ -79,7 +78,7 @@ function AppContent({
 
   return (
       <SidebarInset>
-        <main className="flex min-h-screen w-full flex-col items-center justify-start bg-background p-4 sm:p-8 pt-16 sm:pt-24">
+        <main className="flex min-h-screen w-full flex-col items-center justify-start p-4 sm:p-8 pt-16 sm:pt-24">
            <div className="absolute top-4 left-4">
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>

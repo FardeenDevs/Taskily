@@ -12,6 +12,8 @@
     --popover-foreground: 220 10% 20%;
     --primary: 142.1 76.2% 36.3%;
     --primary-foreground: 355.7 100% 97.3%;
+    --primary-gradient-start: 142.1 76.2% 36.3%;
+    --primary-gradient-end: 142.1 80% 45%;
     --secondary: 212 30% 93%;
     --secondary-foreground: 220 10% 20%;
     --muted: 212 30% 93%;
@@ -48,6 +50,8 @@
     --popover-foreground: 0 0% 98%;
     --primary: 142.1 70.6% 45.3%;
     --primary-foreground: 355.7 100% 97.3%;
+    --primary-gradient-start: 142.1 70.6% 45.3%;
+    --primary-gradient-end: 142.1 75% 55%;
     --secondary: 220 15% 20%;
     --secondary-foreground: 0 0% 98%;
     --muted: 220 15% 20%;
@@ -81,5 +85,14 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  .bg-app-gradient {
+    @apply bg-gradient-to-br from-background to-secondary/50;
+  }
+  .dark .bg-app-gradient {
+    @apply bg-gradient-to-br from-background to-secondary/20;
   }
 }
