@@ -21,8 +21,8 @@ const buttonVariants = cva(
         gradient: "bg-gradient-to-r from-primary-gradient-start to-primary-gradient-end text-primary-foreground shadow-md transform-gpu transition-transform duration-150 hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 active:shadow-sm",
         destructiveGradient: "bg-gradient-to-r from-destructive-gradient-start to-destructive-gradient-end text-destructive-foreground shadow-md transform-gpu transition-transform duration-150 hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 active:shadow-sm",
         edit: "bg-gradient-to-r from-edit-gradient-start to-edit-gradient-end text-white shadow-md transform-gpu transition-transform duration-150 hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 active:shadow-sm",
-        editIcon: "[&_svg]:text-blue-500 hover:!bg-blue-500 hover:[&_svg]:!text-white",
-        destructiveIcon: "[&_svg]:text-destructive hover:!bg-destructive hover:[&_svg]:!text-destructive-foreground",
+        editIcon: "text-blue-500 hover:!bg-blue-500 hover:!text-white [&_svg]:!text-blue-500 hover:[&_svg]:!text-white",
+        destructiveIcon: "text-destructive hover:!bg-destructive hover:!text-destructive-foreground [&_svg]:!text-destructive hover:[&_svg]:!text-destructive-foreground",
       },
       size: {
         default: "h-10 px-4 py-2",
