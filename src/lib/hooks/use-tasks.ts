@@ -24,6 +24,8 @@ export function useTasks() {
   useEffect(() => {
     try {
       const storedData = localStorage.getItem(DATA_KEY);
+      const firstTime = localStorage.getItem(FIRST_TIME_KEY);
+
       if (storedData) {
         const data = JSON.parse(storedData);
         if (data.workspaces && data.activeWorkspaceId) {
@@ -41,7 +43,17 @@ export function useTasks() {
         const defaultWorkspace = createDefaultWorkspace();
         setWorkspaces([defaultWorkspace]);
         setActiveWorkspaceId(defaultWorkspace.id);
+         if (firstTime === null) {
+            setIsFirstTime(true);
+            localStorage.setItem(FIRST_TIME_KEY, "false");
+        }
       }
+
+      if (firstTime === null) {
+          setIsFirstTime(true);
+          localStorage.setItem(FIRST_TIME_KEY, "false");
+      }
+
     } catch (error) {
         console.error("Failed to load data from localStorage", error);
         const defaultWorkspace = createDefaultWorkspace();
@@ -49,19 +61,9 @@ export function useTasks() {
         setActiveWorkspaceId(defaultWorkspace.id);
     }
     setLoading(false);
-    
-    try {
-        const firstTime = localStorage.getItem(FIRST_TIME_KEY);
-        if (firstTime === null) {
-            setIsFirstTime(true);
-            localStorage.setItem(FIRST_TIME_KEY, "false");
-        }
-    } catch (error) {
-        console.error("Failed to access localStorage for first-time check", error);
-    }
   }, []);
 
-  const saveData = (newWorkspaces: Workspace[], newActiveId: string | null) => {
+  const saveData = useCallback((newWorkspaces: Workspace[], newActiveId: string | null) => {
     try {
       const dataToStore = {
         workspaces: newWorkspaces,
@@ -71,13 +73,13 @@ export function useTasks() {
     } catch (error) {
       console.error("Failed to save data to localStorage", error);
     }
-  };
+  }, []);
   
-  const updateAndSave = (newWorkspaces: Workspace[], newActiveId: string | null) => {
+  const updateAndSave = useCallback((newWorkspaces: Workspace[], newActiveId: string | null) => {
     setWorkspaces(newWorkspaces);
     setActiveWorkspaceId(newActiveId);
     saveData(newWorkspaces, newActiveId);
-  }
+  }, [saveData]);
 
   const activeWorkspace = useMemo(() => {
     return workspaces.find(ws => ws.id === activeWorkspaceId) || null;
@@ -93,13 +95,13 @@ export function useTasks() {
   );
   
   const totalTasks = tasks.length;
-
-  const updateTasksInWorkspace = (workspaceId: string, updatedTasks: Task[]) => {
+  
+  const updateTasksInWorkspace = useCallback((workspaceId: string, updatedTasks: Task[]) => {
     const newWorkspaces = workspaces.map(ws => 
       ws.id === workspaceId ? { ...ws, tasks: updatedTasks } : ws
     );
     updateAndSave(newWorkspaces, activeWorkspaceId);
-  }
+  }, [workspaces, activeWorkspaceId, updateAndSave]);
 
   const addTask = useCallback((text: string) => {
     if (!activeWorkspaceId) return;
@@ -126,7 +128,7 @@ export function useTasks() {
     const updatedTasks = [...currentTasks, newTask];
     updateTasksInWorkspace(activeWorkspaceId, updatedTasks);
 
-  }, [activeWorkspace, activeWorkspaceId, workspaces, toast]);
+  }, [activeWorkspace, activeWorkspaceId, updateTasksInWorkspace, toast]);
 
   const toggleTask = useCallback((id: string) => {
     if (!activeWorkspaceId || !activeWorkspace) return;
@@ -134,13 +136,13 @@ export function useTasks() {
       task.id === id ? { ...task, completed: !task.completed } : task
     );
     updateTasksInWorkspace(activeWorkspaceId, updatedTasks);
-  }, [activeWorkspace, activeWorkspaceId, workspaces]);
+  }, [activeWorkspace, activeWorkspaceId, updateTasksInWorkspace]);
 
   const deleteTask = useCallback((id: string) => {
     if (!activeWorkspaceId || !activeWorkspace) return;
     const updatedTasks = activeWorkspace.tasks.filter((task) => task.id !== id);
     updateTasksInWorkspace(activeWorkspaceId, updatedTasks);
-  }, [activeWorkspace, activeWorkspaceId, workspaces]);
+  }, [activeWorkspace, activeWorkspaceId, updateTasksInWorkspace]);
 
   const editTask = useCallback((id: string, newText: string) => {
     if (!activeWorkspaceId || !activeWorkspace) return;
@@ -162,9 +164,9 @@ export function useTasks() {
       task.id === id ? { ...task, text: newText.trim() } : task
     );
     updateTasksInWorkspace(activeWorkspaceId, updatedTasks);
-  }, [activeWorkspace, activeWorkspaceId, workspaces, toast]);
+  }, [activeWorkspace, activeWorkspaceId, updateTasksInWorkspace, toast]);
 
-  const addWorkspace = (name: string) => {
+  const addWorkspace = useCallback((name: string) => {
     if (name.trim() === "") return;
      if (workspaces.some(ws => ws.name.toLowerCase() === name.trim().toLowerCase())) {
         toast({
@@ -183,13 +185,13 @@ export function useTasks() {
     };
     const newWorkspaces = [...workspaces, newWorkspace];
     updateAndSave(newWorkspaces, newWorkspace.id);
-  };
+  }, [workspaces, updateAndSave, toast]);
 
-  const switchWorkspace = (workspaceId: string) => {
+  const switchWorkspace = useCallback((workspaceId: string) => {
     updateAndSave(workspaces, workspaceId);
-  }
+  }, [workspaces, updateAndSave]);
 
-  const deleteWorkspace = (workspaceId: string) => {
+  const deleteWorkspace = useCallback((workspaceId: string) => {
     if (workspaces.length <= 1) {
         toast({
             variant: "destructive",
@@ -204,7 +206,7 @@ export function useTasks() {
       newActiveId = newWorkspaces[0]?.id || null;
     }
     updateAndSave(newWorkspaces, newActiveId);
-  }
+  }, [workspaces, activeWorkspaceId, updateAndSave, toast]);
   
   const clearTasks = useCallback(() => {
     if (!activeWorkspaceId) return;
@@ -213,7 +215,7 @@ export function useTasks() {
         title: "Tasks Cleared",
         description: `All tasks in the "${activeWorkspace?.name}" Taskspace have been deleted.`,
     });
-  }, [activeWorkspaceId, activeWorkspace?.name, workspaces, toast]);
+  }, [activeWorkspaceId, activeWorkspace?.name, updateTasksInWorkspace, toast]);
 
   return {
     workspaces,
