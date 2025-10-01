@@ -7,13 +7,18 @@ import { TaskInput } from "@/app/components/task-input";
 import { TaskList } from "@/app/components/task-list";
 import { TaskSuggestions } from "@/app/components/task-suggestions";
 import { WelcomeDialog } from "@/app/components/welcome-dialog";
-import { SidebarProvider, Sidebar, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
+import { SidebarProvider, Sidebar, SidebarInset, useSidebar } from "@/components/ui/sidebar";
 import { WorkspaceSidebar } from "@/app/components/workspace-sidebar";
 import { AnimatePresence, motion } from "framer-motion";
 import { Skeleton } from "@/components/ui/skeleton";
-import { LayoutGrid } from "lucide-react";
+import { LayoutGrid, Menu, Settings } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { useState } from "react";
+import { SettingsDialog } from "@/app/components/settings-dialog";
+import { ThemeProvider } from "@/app/components/theme-provider";
 
-export default function Home() {
+function AppContent() {
   const {
     tasks,
     loading,
@@ -30,7 +35,12 @@ export default function Home() {
     addWorkspace,
     switchWorkspace,
     deleteWorkspace,
+    clearTasks,
   } = useTasks();
+
+  const { setOpenMobile: setSidebarOpen } = useSidebar();
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
 
   if (loading) {
      return (
@@ -43,24 +53,29 @@ export default function Home() {
   }
 
   return (
-    <SidebarProvider>
-      <Sidebar>
-        <WorkspaceSidebar 
-          workspaces={workspaces}
-          activeWorkspace={activeWorkspace}
-          onAddWorkspace={addWorkspace}
-          onSwitchWorkspace={switchWorkspace}
-          onDeleteWorkspace={deleteWorkspace}
-        />
-      </Sidebar>
       <SidebarInset>
         <main className="flex min-h-screen w-full flex-col items-center justify-start bg-background p-4 sm:p-8 pt-16 sm:pt-24">
            <div className="absolute top-4 left-4">
-                <SidebarTrigger className="h-10 w-10 text-muted-foreground hover:text-foreground">
-                    <LayoutGrid className="h-5 w-5" />
-                </SidebarTrigger>
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground hover:text-foreground">
+                            <Menu className="h-5 w-5" />
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start">
+                        <DropdownMenuItem onSelect={() => setSidebarOpen(true)}>
+                            <LayoutGrid className="mr-2"/>
+                            Taskspaces
+                        </DropdownMenuItem>
+                         <DropdownMenuItem onSelect={() => setIsSettingsOpen(true)}>
+                            <Settings className="mr-2"/>
+                            Settings
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
             </div>
           <WelcomeDialog open={isFirstTime} onOpenChange={setIsFirstTime} />
+          <SettingsDialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen} onClearTasks={clearTasks} />
           <div className="w-full max-w-2xl">
             <AnimatePresence>
               <motion.div layout transition={{ type: 'spring', stiffness: 300, damping: 30 }}>
@@ -92,6 +107,37 @@ export default function Home() {
           </div>
         </main>
       </SidebarInset>
-    </SidebarProvider>
   );
+}
+
+
+export default function Home() {
+  return (
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+        <SidebarProvider>
+          <Sidebar>
+            <WorkspaceSidebarWrapper/>
+          </Sidebar>
+          <AppContent/>
+        </SidebarProvider>
+    </ThemeProvider>
+  );
+}
+
+// We need to wrap the WorkspaceSidebar in a component that uses the useTasks hook
+// because the Sidebar component is outside the main AppContent where the hook is used.
+function WorkspaceSidebarWrapper() {
+    const { workspaces, activeWorkspace, addWorkspace, switchWorkspace, deleteWorkspace } = useTasks();
+
+    if (!workspaces) return null;
+
+    return (
+        <WorkspaceSidebar 
+          workspaces={workspaces}
+          activeWorkspace={activeWorkspace}
+          onAddWorkspace={addWorkspace}
+          onSwitchWorkspace={switchWorkspace}
+          onDeleteWorkspace={deleteWorkspace}
+        />
+    )
 }

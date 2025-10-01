@@ -202,6 +202,15 @@ export function useTasks() {
     }
     saveData(newWorkspaces, newActiveId);
   }
+  
+  const clearTasks = useCallback(() => {
+    if (!activeWorkspaceId) return;
+    updateTasksInWorkspace(activeWorkspaceId, []);
+    toast({
+        title: "Tasks Cleared",
+        description: `All tasks in the "${activeWorkspace?.name}" Taskspace have been deleted.`,
+    });
+  }, [activeWorkspaceId, activeWorkspace?.name, workspaces, toast]);
 
   return {
     workspaces,
@@ -219,5 +228,6 @@ export function useTasks() {
     totalTasks,
     isFirstTime,
     setIsFirstTime,
+    clearTasks,
   };
 }
