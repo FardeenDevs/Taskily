@@ -40,13 +40,11 @@ type WorkspaceSidebarProps = {
 };
 
 export function WorkspaceSidebar({ tasksHook }: WorkspaceSidebarProps) {
-  const { workspaces, activeWorkspaceId, switchWorkspace, addWorkspace, editWorkspace, deleteWorkspace, clearTasks } = tasksHook;
+  const { workspaces, activeWorkspaceId, switchWorkspace, addWorkspace, editWorkspace, deleteWorkspace } = tasksHook;
   const { setOpen } = useSidebar();
   const [newWorkspaceName, setNewWorkspaceName] = useState("");
   const [editName, setEditName] = useState("");
   const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<string | null>(null);
-  const [isClearAlertOpen, setIsClearAlertOpen] = useState(false);
-  const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
 
   const handleAddWorkspace = () => {
     addWorkspace(newWorkspaceName);
@@ -59,19 +57,10 @@ export function WorkspaceSidebar({ tasksHook }: WorkspaceSidebarProps) {
     }
   };
   
-  const handleClearTasks = () => {
-    if (selectedWorkspaceId) {
-        clearTasks(selectedWorkspaceId);
-    }
-    setIsClearAlertOpen(false);
-    setSelectedWorkspaceId(null);
-  }
-
   const handleDeleteWorkspace = () => {
     if(selectedWorkspaceId) {
       deleteWorkspace(selectedWorkspaceId)
     }
-    setIsDeleteAlertOpen(false);
     setSelectedWorkspaceId(null);
   }
 
@@ -113,14 +102,8 @@ export function WorkspaceSidebar({ tasksHook }: WorkspaceSidebarProps) {
                           <span>Edit</span>
                         </DropdownMenuItem>
                       </DialogTrigger>
-                       <AlertDialogTrigger asChild>
-                         <DropdownMenuItem onSelect={() => setSelectedWorkspaceId(workspace.id)} className="hover:!text-destructive-foreground hover:!bg-destructive/90 focus:text-destructive focus:bg-destructive/10">
-                          <Archive className="mr-2 h-4 w-4" />
-                          <span>Clear All Tasks</span>
-                        </DropdownMenuItem>
-                      </AlertDialogTrigger>
                       <AlertDialogTrigger asChild>
-                         <DropdownMenuItem onSelect={() => setSelectedWorkspaceId(workspace.id)} className="text-destructive hover:!text-destructive-foreground hover:!bg-destructive focus:text-destructive focus:bg-destructive/10">
+                         <DropdownMenuItem onSelect={() => setSelectedWorkspaceId(workspace.id)} className="text-destructive hover:!text-white hover:!bg-destructive focus:text-destructive focus:bg-destructive/90">
                           <Trash2 className="mr-2 h-4 w-4" />
                           <span>Delete</span>
                         </DropdownMenuItem>
@@ -147,7 +130,6 @@ export function WorkspaceSidebar({ tasksHook }: WorkspaceSidebarProps) {
           </SidebarGroup>
         </Sidebar>
 
-        {/* Edit Dialog */}
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Edit Listspace</DialogTitle>
@@ -166,18 +148,17 @@ export function WorkspaceSidebar({ tasksHook }: WorkspaceSidebarProps) {
           </DialogFooter>
         </DialogContent>
         
-        {/* Combined Alert Dialog */}
          <AlertDialogContent>
             <AlertDialogHeader>
-                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                 <AlertDialogDescription>
-                    This action cannot be undone. Are you sure you want to proceed?
+                    This will permanently delete the listspace and all its tasks. This action cannot be undone.
                 </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={() => selectedWorkspaceId && (isDeleteAlertOpen ? handleDeleteWorkspace() : handleClearTasks())} className="bg-red-600 hover:bg-red-700 text-white">
-                    Yes
+                <AlertDialogAction onClick={handleDeleteWorkspace} className="bg-red-600 hover:bg-red-700 text-white">
+                    Yes, delete it
                 </AlertDialogAction>
             </AlertDialogFooter>
         </AlertDialogContent>
@@ -185,5 +166,3 @@ export function WorkspaceSidebar({ tasksHook }: WorkspaceSidebarProps) {
     </Dialog>
   );
 }
-
-    

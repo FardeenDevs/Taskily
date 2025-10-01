@@ -9,7 +9,7 @@ import { TaskSuggestions } from "@/app/components/task-suggestions";
 import { WelcomeDialog } from "@/app/components/welcome-dialog";
 import { AnimatePresence, motion } from "framer-motion";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Settings, LayoutGrid } from "lucide-react";
+import { Settings, LayoutGrid, Trash2 } from "lucide-react";
 import { useState, memo } from "react";
 import { SettingsDialog } from "@/app/components/settings-dialog";
 import { ThemeProvider } from "@/app/components/theme-provider";
@@ -17,6 +17,8 @@ import { Button } from "@/components/ui/button";
 import { WorkspaceSidebar } from "@/app/components/workspace-sidebar";
 import { SidebarProvider, SidebarInset, useSidebar } from "@/components/ui/sidebar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+
 
 interface AppContentProps {
   tasksHook: ReturnType<typeof useTasks>;
@@ -36,10 +38,18 @@ const AppContent = memo(function AppContent({ tasksHook }: AppContentProps) {
     completedTasks,
     totalTasks,
     activeWorkspace,
+    activeWorkspaceId,
     isFirstTime,
     setIsFirstTime,
     resetApp,
+    clearTasks,
   } = tasksHook;
+
+  const handleClearTasks = () => {
+    if (activeWorkspaceId) {
+      clearTasks(activeWorkspaceId);
+    }
+  };
 
   if (loading) {
     return (
@@ -110,7 +120,33 @@ const AppContent = memo(function AppContent({ tasksHook }: AppContentProps) {
                     onEditTask={editTask}
                   />
                 </CardContent>
-                <CardFooter className="flex items-center justify-end">
+                <CardFooter className="flex items-center justify-between">
+                   <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="destructive"
+                          disabled={tasks.length === 0}
+                          className="disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Clear All Tasks
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This will permanently delete all tasks in this list. This action cannot be undone.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={handleClearTasks} className="bg-red-600 hover:bg-red-700 text-white">
+                            Yes, clear all
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   <TaskSuggestions currentTasks={tasks} onAddTask={addTask} />
                 </CardFooter>
               </Card>
