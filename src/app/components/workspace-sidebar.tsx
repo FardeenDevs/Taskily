@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { type Workspace } from "@/lib/types"
-import { SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarFooter, SidebarTrigger } from "@/components/ui/sidebar"
+import { SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarFooter } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
@@ -52,9 +52,6 @@ export function WorkspaceSidebar({
                 <LayoutGrid className="h-5 w-5" />
             </div>
             <h2 className="text-lg font-semibold tracking-tight text-sidebar-foreground">Taskspaces</h2>
-        </div>
-        <div className="hidden md:block">
-            <SidebarTrigger />
         </div>
       </SidebarHeader>
 
