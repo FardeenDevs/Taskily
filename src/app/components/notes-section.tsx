@@ -1,16 +1,13 @@
 
 "use client";
 
-import { useState, memo, useEffect } from 'react';
+import { useState, memo } from 'react';
 import { type Note } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { NoteDialog } from './note-dialog';
 import { NoteItem } from './note-item';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 
 interface NotesSectionProps {
   notes: Note[];
@@ -21,42 +18,24 @@ interface NotesSectionProps {
 
 export const NotesSection = memo(function NotesSection({ notes, onAddNote, onEditNote, onDeleteNote }: NotesSectionProps) {
   const [isNoteDialogOpen, setIsNoteDialogOpen] = useState(false);
-  const [isTitleDialogOpen, setIsTitleDialogOpen] = useState(false);
   const [editingNote, setEditingNote] = useState<Note | null>(null);
-  const [editingTitle, setEditingTitle] = useState('');
 
   const handleOpenNewNoteDialog = () => {
     const newNoteId = onAddNote("New Note", "");
     if (newNoteId) {
       const newNote = { id: newNoteId, title: "New Note", content: "", createdAt: new Date().toISOString(), workspaceId: '' };
-      handleOpenEditTitleDialog(newNote);
+      handleOpenEditDialog(newNote);
     }
   };
 
-  const handleOpenEditContentDialog = (note: Note) => {
+  const handleOpenEditDialog = (note: Note) => {
     setEditingNote(note);
     setIsNoteDialogOpen(true);
   };
   
-  const handleOpenEditTitleDialog = (note: Note) => {
-    setEditingNote(note);
-    setEditingTitle(note.title);
-    setIsTitleDialogOpen(true);
+  const handleSave = (id: string, title: string, content: string) => {
+    onEditNote(id, title, content);
   };
-
-  const handleSaveContent = (content: string) => {
-    if (editingNote) {
-      onEditNote(editingNote.id, editingNote.title, content);
-    }
-  };
-
-  const handleSaveTitle = () => {
-    if (editingNote && editingTitle.trim() !== '') {
-      onEditNote(editingNote.id, editingTitle, editingNote.content);
-    }
-    setIsTitleDialogOpen(false);
-    setEditingNote(null);
-  }
 
   return (
     <div className="space-y-4">
@@ -88,8 +67,7 @@ export const NotesSection = memo(function NotesSection({ notes, onAddNote, onEdi
                 >
                     <NoteItem
                       note={note}
-                      onEditContent={() => handleOpenEditContentDialog(note)}
-                      onEditTitle={() => handleOpenEditTitleDialog(note)}
+                      onEdit={() => handleOpenEditDialog(note)}
                       onDelete={() => onDeleteNote(note.id)}
                     />
                 </motion.div>
@@ -103,30 +81,8 @@ export const NotesSection = memo(function NotesSection({ notes, onAddNote, onEdi
         open={isNoteDialogOpen}
         onOpenChange={setIsNoteDialogOpen}
         note={editingNote}
-        onSaveContent={handleSaveContent}
+        onSave={handleSave}
       />
-      
-      <Dialog open={isTitleDialogOpen} onOpenChange={setIsTitleDialogOpen}>
-        <DialogContent>
-            <DialogHeader>
-                <DialogTitle>Edit Note Title</DialogTitle>
-            </DialogHeader>
-            <div className="py-4">
-                <Label htmlFor="note-title-input" className="sr-only">Title</Label>
-                <Input 
-                    id="note-title-input"
-                    value={editingTitle} 
-                    onChange={(e) => setEditingTitle(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleSaveTitle()} 
-                    placeholder="Enter note title"
-                />
-            </div>
-            <DialogFooter>
-                <Button variant="secondary" onClick={() => setIsTitleDialogOpen(false)}>Cancel</Button>
-                <Button onClick={handleSaveTitle}>Save</Button>
-            </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 });
