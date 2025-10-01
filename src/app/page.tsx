@@ -8,13 +8,7 @@ import { TaskList } from "@/app/components/task-list";
 import { TaskSuggestions } from "@/app/components/task-suggestions";
 import { WelcomeDialog } from "@/app/components/welcome-dialog";
 import { AnimatePresence, motion } from "framer-motion";
-import { useAuth } from "@/hooks/use-auth";
-import { Button } from "@/components/ui/button";
-import { getAuth, signOut } from "firebase/auth";
-import { LogOut } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export default function Home() {
   const {
@@ -30,17 +24,6 @@ export default function Home() {
     setIsFirstTime,
   } = useTasks();
 
-  const { user } = useAuth();
-  const auth = getAuth();
-
-  const handleSignOut = () => {
-    signOut(auth);
-  };
-  
-  const getInitials = (email?: string | null) => {
-    if (!email) return "?";
-    return email.substring(0, 2).toUpperCase();
-  }
 
   if (loading) {
      return (
@@ -65,36 +48,9 @@ export default function Home() {
                     Taskily
                   </CardTitle>
                   <CardDescription>
-                    {user?.displayName ? `Welcome back, ${user.displayName}!` : 'Get things done, one task at a time.'}
+                    Get things done, one task at a time.
                   </CardDescription>
                 </div>
-                 {user && (
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                         <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-                            <Avatar className="h-10 w-10">
-                                <AvatarImage src={`https://api.dicebear.com/8.x/lorelei/svg?seed=${user.uid}`} alt={user.displayName || user.email || ''} />
-                                <AvatarFallback>{getInitials(user.displayName || user.email)}</AvatarFallback>
-                            </Avatar>
-                         </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent className="w-56" align="end" forceMount>
-                        <DropdownMenuLabel className="font-normal">
-                          <div className="flex flex-col space-y-1">
-                            <p className="text-sm font-medium leading-none">{user.displayName}</p>
-                            <p className="text-xs leading-none text-muted-foreground">
-                              {user.email}
-                            </p>
-                          </div>
-                        </DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={handleSignOut}>
-                          <LogOut className="mr-2 h-4 w-4" />
-                          <span>Log out</span>
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                 )}
               </CardHeader>
               <CardContent className="space-y-8">
                 <TaskProgress completed={completedTasks} total={totalTasks} />
