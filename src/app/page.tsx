@@ -11,11 +11,17 @@ import { SidebarProvider, Sidebar, SidebarInset, useSidebar } from "@/components
 import { WorkspaceSidebar } from "@/app/components/workspace-sidebar";
 import { AnimatePresence, motion } from "framer-motion";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Trash2, PanelLeft, Settings } from "lucide-react";
+import { Trash2, PanelLeft, Settings, LayoutGrid } from "lucide-react";
 import { useState, memo } from "react";
 import { SettingsDialog } from "@/app/components/settings-dialog";
 import { ThemeProvider } from "@/app/components/theme-provider";
 import { type Task, type Workspace } from "@/lib/types";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -76,16 +82,30 @@ const AppContent = memo(function AppContent({
 
   return (
       <SidebarInset>
-        <div className="absolute top-4 right-4 z-50">
-            <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground hover:text-foreground" onClick={() => setIsSettingsOpen(true)}>
-                <Settings className="h-5 w-5" />
-            </Button>
-        </div>
          <div className="absolute top-4 left-4 z-50 md:hidden">
-          <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground hover:text-foreground" onClick={() => setSidebarOpen(true)}>
-              <PanelLeft className="h-5 w-5" />
-          </Button>
+           <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground hover:text-foreground">
+                  <PanelLeft className="h-5 w-5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                <DropdownMenuItem onSelect={() => setSidebarOpen(true)}>
+                  <LayoutGrid className="mr-2 h-4 w-4" />
+                  <span>Listspaces</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => setIsSettingsOpen(true)}>
+                  <Settings className="mr-2 h-4 w-4" />
+                  <span>Settings</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
         </div>
+         <div className="absolute top-4 right-4 z-50 hidden md:block">
+             <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground hover:text-foreground" onClick={() => setIsSettingsOpen(true)}>
+                  <Settings className="h-5 w-5" />
+              </Button>
+          </div>
         <main className="flex min-h-screen w-full flex-col items-center justify-center p-4 sm:p-8">
           <WelcomeDialog open={isFirstTime} onOpenChange={setIsFirstTime} />
           <SettingsDialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen} onClearAll={clearAllWorkspaces} />
