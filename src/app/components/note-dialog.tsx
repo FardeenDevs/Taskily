@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -39,7 +40,7 @@ export function NoteDialog({ open, onOpenChange, note, onSave }: NoteDialogProps
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className={cn("sm:max-w-2xl h-[80vh] flex flex-col")}>
+      <DialogContent className={cn("w-screen h-screen max-w-none rounded-none flex flex-col")}>
         <DialogHeader>
           <DialogTitle>
              <Input
