@@ -11,6 +11,7 @@ import { SidebarProvider, Sidebar, SidebarInset, SidebarTrigger } from "@/compon
 import { WorkspaceSidebar } from "@/app/components/workspace-sidebar";
 import { AnimatePresence, motion } from "framer-motion";
 import { Skeleton } from "@/components/ui/skeleton";
+import { LayoutGrid } from "lucide-react";
 
 export default function Home() {
   const {
@@ -53,24 +54,24 @@ export default function Home() {
         />
       </Sidebar>
       <SidebarInset>
-        <main className="flex min-h-screen w-full flex-col items-center justify-center bg-background p-4 sm:p-8">
+        <main className="flex min-h-screen w-full flex-col items-center justify-start bg-background p-4 sm:p-8 pt-16 sm:pt-24">
+           <div className="absolute top-4 left-4">
+                <SidebarTrigger className="h-10 w-10 text-muted-foreground hover:text-foreground">
+                    <LayoutGrid className="h-5 w-5" />
+                </SidebarTrigger>
+            </div>
           <WelcomeDialog open={isFirstTime} onOpenChange={setIsFirstTime} />
           <div className="w-full max-w-2xl">
             <AnimatePresence>
               <motion.div layout transition={{ type: 'spring', stiffness: 300, damping: 30 }}>
                 <Card className="border-2 border-border/50 shadow-2xl shadow-primary/5 overflow-hidden">
                   <CardHeader>
-                    <div className="flex items-center justify-between">
-                        <div className="flex-1">
-                            <CardTitle className="font-headline text-4xl font-bold tracking-tight text-foreground">
-                                {activeWorkspace?.name || "Taskily"}
-                            </CardTitle>
-                            <CardDescription>
-                                Get things done, one task at a time.
-                            </CardDescription>
-                        </div>
-                        <SidebarTrigger />
-                    </div>
+                     <CardTitle className="font-headline text-4xl font-bold tracking-tight text-foreground text-center">
+                        {activeWorkspace?.name || "Taskily"}
+                    </CardTitle>
+                    <CardDescription className="text-center">
+                        Get things done, one task at a time.
+                    </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-8">
                     <TaskProgress completed={completedTasks} total={totalTasks} />

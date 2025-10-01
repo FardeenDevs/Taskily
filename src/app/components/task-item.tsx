@@ -36,7 +36,7 @@ export function TaskItem({ task, onToggleTask, onDeleteTask, onEditTask }: TaskI
             animate={{ scaleX: 1 }}
             exit={{ scaleX: 0 }}
             transition={{ duration: 0.3, ease: "easeOut" }}
-            className="absolute inset-0 bg-green-500/20 origin-left"
+            className="absolute inset-0 bg-primary/20 origin-left"
           />
         )}
       </AnimatePresence>
@@ -45,7 +45,7 @@ export function TaskItem({ task, onToggleTask, onDeleteTask, onEditTask }: TaskI
         checked={task.completed}
         onCheckedChange={() => onToggleTask(task.id)}
         aria-label={`Mark task "${task.text}" as ${task.completed ? 'incomplete' : 'complete'}`}
-        className="data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500 relative z-10"
+        className="data-[state=checked]:bg-primary data-[state=checked]:border-primary relative z-10"
       />
       <label
         htmlFor={`task-${task.id}`}
