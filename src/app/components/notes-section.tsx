@@ -6,15 +6,17 @@ import { type Note } from '@/lib/types';
 import { NoteDialog } from './note-dialog';
 import { NoteItem } from './note-item';
 import { AnimatePresence, motion } from 'framer-motion';
+import { ShieldAlert } from 'lucide-react';
 
 interface NotesSectionProps {
   notes: Note[];
   onAddNote: (title: string, content: string) => string | undefined;
   onEditNote: (id: string, newTitle: string, newContent: string) => void;
   onDeleteNote: (id: string) => void;
+  isLocked: boolean;
 }
 
-export const NotesSection = memo(function NotesSection({ notes, onAddNote, onEditNote, onDeleteNote }: NotesSectionProps) {
+export const NotesSection = memo(function NotesSection({ notes, onAddNote, onEditNote, onDeleteNote, isLocked }: NotesSectionProps) {
   const [isNoteDialogOpen, setIsNoteDialogOpen] = useState(false);
   const [editingNote, setEditingNote] = useState<Note | null>(null);
 
@@ -26,6 +28,16 @@ export const NotesSection = memo(function NotesSection({ notes, onAddNote, onEdi
   const handleSave = (id: string, title: string, content: string) => {
     onEditNote(id, title, content);
   };
+
+  if (isLocked) {
+     return (
+        <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/30 bg-muted/50 p-12 text-center h-64">
+            <ShieldAlert className="h-12 w-12 text-muted-foreground/50 mb-4" />
+            <h3 className="text-lg font-semibold text-muted-foreground">Listspace Locked</h3>
+            <p className="text-sm text-muted-foreground">Enter the password to view your notes.</p>
+        </div>
+     )
+  }
 
   return (
     <div className="space-y-4">

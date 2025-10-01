@@ -1,3 +1,4 @@
+
 "use client"
 
 import { memo, useState } from "react"
@@ -86,7 +87,7 @@ export const SettingsDialog = memo(function SettingsDialog({ open, onOpenChange,
                         <AlertDialogHeader>
                             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                             <AlertDialogDescription>
-                                This will permanently delete all tasks and Listspaces. This action cannot be undone.
+                                This will permanently delete all tasks, notes, and listspaces, and remove all passwords. This action cannot be undone.
                             </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>

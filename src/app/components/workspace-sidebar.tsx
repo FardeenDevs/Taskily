@@ -16,12 +16,13 @@ import {
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, MoreVertical, Pencil, Trash2, LayoutGrid, Archive } from "lucide-react";
+import { Plus, MoreVertical, Pencil, Trash2, LayoutGrid, Archive, ShieldAlert } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator
 } from "@/components/ui/dropdown-menu";
 import {
   Dialog,
@@ -29,10 +30,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-  DialogTrigger,
-  DialogClose,
 } from "@/components/ui/dialog";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 
 type WorkspaceSidebarProps = {
@@ -40,15 +39,28 @@ type WorkspaceSidebarProps = {
 };
 
 export function WorkspaceSidebar({ tasksHook }: WorkspaceSidebarProps) {
-  const { workspaces, activeWorkspaceId, switchWorkspace, addWorkspace, editWorkspace, deleteWorkspace, clearTasks } = tasksHook;
+  const { 
+    workspaces, 
+    activeWorkspaceId, 
+    switchWorkspace, 
+    addWorkspace, 
+    editWorkspace, 
+    deleteWorkspace, 
+    clearTasks,
+    setWorkspacePassword
+  } = tasksHook;
   const { setOpen } = useSidebar();
   const [newWorkspaceName, setNewWorkspaceName] = useState("");
   
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [clearDialogOpen, setClearDialogOpen] = useState(false);
+  const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
 
   const [editName, setEditName] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+
   const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<string | null>(null);
 
   const handleAddWorkspace = () => {
@@ -79,11 +91,30 @@ export function WorkspaceSidebar({ tasksHook }: WorkspaceSidebarProps) {
     setClearDialogOpen(false);
     setSelectedWorkspaceId(null);
   };
+  
+  const handleSetPassword = () => {
+    if (selectedWorkspaceId) {
+      if (password !== confirmPassword) {
+        alert("Passwords do not match."); // Replace with a proper toast/notification
+        return;
+      }
+      setWorkspacePassword(selectedWorkspaceId, password);
+    }
+    setPasswordDialogOpen(false);
+    setSelectedWorkspaceId(null);
+    setPassword("");
+    setConfirmPassword("");
+  }
 
   const openEditDialog = (workspace: {id: string, name: string}) => {
     setSelectedWorkspaceId(workspace.id);
     setEditName(workspace.name);
     setEditDialogOpen(true);
+  }
+
+  const openPasswordDialog = (workspaceId: string) => {
+    setSelectedWorkspaceId(workspaceId);
+    setPasswordDialogOpen(true);
   }
 
 
@@ -118,8 +149,14 @@ export function WorkspaceSidebar({ tasksHook }: WorkspaceSidebarProps) {
                 <DropdownMenuContent>
                     <DropdownMenuItem onSelect={() => openEditDialog(workspace)}>
                         <Pencil className="mr-2 h-4 w-4" />
-                        <span>Edit</span>
+                        <span>Edit Name</span>
                     </DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => openPasswordDialog(workspace.id)}>
+                        <ShieldAlert className="mr-2 h-4 w-4" />
+                        <span>{workspace.password ? 'Change' : 'Set'} Password</span>
+                    </DropdownMenuItem>
+
+                    <DropdownMenuSeparator />
                     
                     <DropdownMenuItem onSelect={() => { setSelectedWorkspaceId(workspace.id); setClearDialogOpen(true); }}>
                         <Archive className="mr-2 h-4 w-4" />
@@ -150,10 +187,12 @@ export function WorkspaceSidebar({ tasksHook }: WorkspaceSidebarProps) {
           </Button>
         </div>
       </SidebarGroup>
+
+       {/* Edit Name Dialog */}
        <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
             <DialogContent>
             <DialogHeader>
-                <DialogTitle>Edit Listspace</DialogTitle>
+                <DialogTitle>Edit Listspace Name</DialogTitle>
             </DialogHeader>
             <div className="py-4">
                 <Label htmlFor="workspace-name">Name</Label>
@@ -166,6 +205,30 @@ export function WorkspaceSidebar({ tasksHook }: WorkspaceSidebarProps) {
             </DialogContent>
         </Dialog>
         
+        {/* Set/Change Password Dialog */}
+        <Dialog open={passwordDialogOpen} onOpenChange={setPasswordDialogOpen}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Set Listspace Password</DialogTitle>
+                </DialogHeader>
+                <div className="py-4 space-y-4">
+                    <div>
+                        <Label htmlFor="new-password">New Password</Label>
+                        <Input id="new-password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+                    </div>
+                     <div>
+                        <Label htmlFor="confirm-password">Confirm Password</Label>
+                        <Input id="confirm-password" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSetPassword()} />
+                    </div>
+                </div>
+                <DialogFooter>
+                    <Button type="button" variant="secondary" onClick={() => setPasswordDialogOpen(false)}>Cancel</Button>
+                    <Button onClick={handleSetPassword}>Save Password</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+
+        {/* Delete Workspace Dialog */}
         <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
             <AlertDialogContent>
                 <AlertDialogHeader>
@@ -183,6 +246,7 @@ export function WorkspaceSidebar({ tasksHook }: WorkspaceSidebarProps) {
             </AlertDialogContent>
         </AlertDialog>
 
+        {/* Clear Tasks Dialog */}
         <AlertDialog open={clearDialogOpen} onOpenChange={setClearDialogOpen}>
             <AlertDialogContent>
                 <AlertDialogHeader>

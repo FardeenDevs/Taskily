@@ -16,6 +16,7 @@ export interface Workspace {
     id: string;
     name: string;
     createdAt: string;
+    password?: string; // Optional password
 }
 
 export interface Note {

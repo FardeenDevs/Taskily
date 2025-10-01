@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { WelcomeDialog } from "@/app/components/welcome-dialog";
 import { AnimatePresence, motion } from "framer-motion";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Settings, LayoutGrid, Plus } from "lucide-react";
+import { Settings, LayoutGrid, Plus, ShieldCheck, ShieldAlert } from "lucide-react";
 import { useState, memo } from "react";
 import { SettingsDialog } from "@/app/components/settings-dialog";
 import { ThemeProvider } from "@/app/components/theme-provider";
@@ -20,6 +20,8 @@ import { cn } from "@/lib/utils";
 import { NotesSection } from "@/app/components/notes-section";
 import { Note } from "@/lib/types";
 import { NoteDialog } from "../components/note-dialog";
+import { PasswordDialog } from "../components/password-dialog";
+
 
 interface NotesPageContentProps {
   tasksHook: ReturnType<typeof useTasks>;
@@ -43,6 +45,8 @@ const NotesPageContent = memo(function NotesPageContent({ tasksHook }: NotesPage
     isFirstTime,
     setIsFirstTime,
     resetApp,
+    isWorkspaceLocked,
+    unlockWorkspace,
   } = tasksHook;
 
   const handleOpenNewNoteDialog = () => {
@@ -51,6 +55,12 @@ const NotesPageContent = memo(function NotesPageContent({ tasksHook }: NotesPage
       const newNote = { id: newNoteId, title: "New Note", content: "", createdAt: new Date().toISOString(), workspaceId: '' };
       setEditingNote(newNote);
       setIsNoteDialogOpen(true);
+    }
+  };
+  
+  const handleUnlock = (password: string) => {
+    if (activeWorkspace) {
+      unlockWorkspace(activeWorkspace.id, password);
     }
   };
 
@@ -131,15 +141,27 @@ const NotesPageContent = memo(function NotesPageContent({ tasksHook }: NotesPage
       <main className="flex min-h-screen w-full flex-col items-center justify-start p-4 pt-0 sm:p-8 sm:pt-0">
         <WelcomeDialog open={isFirstTime} onOpenChange={setIsFirstTime} />
         <SettingsDialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen} onResetApp={resetApp} />
+        {isWorkspaceLocked && activeWorkspace && (
+          <PasswordDialog 
+            open={isWorkspaceLocked}
+            onUnlock={handleUnlock}
+            workspaceName={activeWorkspace.name}
+          />
+        )}
         <div className="w-full max-w-2xl">
           <AnimatePresence>
             <motion.div layout transition={{ type: 'spring', stiffness: 300, damping: 30 }}>
               <Card className="border-2 border-border/50 shadow-2xl shadow-primary/5 overflow-hidden">
                 <CardHeader className="flex flex-row items-center justify-between">
-                  <CardTitle className="font-headline text-2xl font-bold tracking-tight text-foreground">
-                    {activeWorkspace?.name || "My Notes"}
-                  </CardTitle>
-                  <Button onClick={handleOpenNewNoteDialog} variant="gradient">
+                  <div className="flex items-center gap-2">
+                    {activeWorkspace?.password ? (
+                        isWorkspaceLocked ? <ShieldAlert className="h-6 w-6 text-destructive" /> : <ShieldCheck className="h-6 w-6 text-primary" />
+                    ) : null}
+                    <CardTitle className="font-headline text-2xl font-bold tracking-tight text-foreground">
+                        {activeWorkspace?.name || "My Notes"}
+                    </CardTitle>
+                  </div>
+                  <Button onClick={handleOpenNewNoteDialog} variant="gradient" disabled={isWorkspaceLocked}>
                     <Plus className="mr-2 h-4 w-4" />
                     New Note
                   </Button>
@@ -150,6 +172,7 @@ const NotesPageContent = memo(function NotesPageContent({ tasksHook }: NotesPage
                     onAddNote={addNote}
                     onEditNote={editNote}
                     onDeleteNote={deleteNote}
+                    isLocked={isWorkspaceLocked}
                   />
                 </CardContent>
               </Card>
