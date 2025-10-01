@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
@@ -135,15 +136,16 @@ export function useTasks() {
     updateAndSave({ ...data, tasks: updatedTasks });
   }, [data, filteredTasks, updateAndSave, toast]);
 
-  const clearTasks = useCallback(() => {
-    if (!data.activeWorkspaceId) return;
-    const tasksToKeep = data.tasks.filter(task => task.workspaceId !== data.activeWorkspaceId);
+  const clearTasks = useCallback((workspaceId: string) => {
+    const workspace = data.workspaces.find(ws => ws.id === workspaceId);
+    if (!workspace) return;
+    const tasksToKeep = data.tasks.filter(task => task.workspaceId !== workspaceId);
     updateAndSave({ ...data, tasks: tasksToKeep });
     toast({
       title: "Tasks Cleared",
-      description: `All tasks in "${activeWorkspace?.name}" have been deleted.`,
+      description: `All tasks in "${workspace.name}" have been deleted.`,
     });
-  }, [data, updateAndSave, toast, activeWorkspace]);
+  }, [data, updateAndSave, toast]);
 
   const resetApp = useCallback(() => {
     const defaultWorkspace: Workspace = { id: DEFAULT_WORKSPACE_ID, name: "My Tasks", createdAt: new Date().toISOString() };
@@ -253,3 +255,5 @@ export function useTasks() {
     switchWorkspace,
   };
 }
+
+    
