@@ -11,9 +11,3 @@ export interface Workspace {
     tasks: Task[];
     createdAt: string;
 }
-
-export interface Feedback {
-  id: string;
-  text: string;
-  createdAt: string;
-}

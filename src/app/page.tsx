@@ -11,14 +11,14 @@ import { SidebarProvider, Sidebar, SidebarInset, useSidebar } from "@/components
 import { WorkspaceSidebar } from "@/app/components/workspace-sidebar";
 import { AnimatePresence, motion } from "framer-motion";
 import { Skeleton } from "@/components/ui/skeleton";
-import { LayoutGrid, Menu, Settings, Trash2, MessageSquare } from "lucide-react";
+import { LayoutGrid, Menu, Settings, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useState } from "react";
 import { SettingsDialog } from "@/app/components/settings-dialog";
 import { ThemeProvider } from "@/app/components/theme-provider";
-import { type Task, type Workspace, type Feedback } from "@/lib/types";
-import { FeedbackDialog } from "@/app/components/feedback-dialog";
+import { type Task, type Workspace } from "@/lib/types";
+
 
 import {
   AlertDialog,
@@ -45,9 +45,6 @@ interface AppContentProps {
   clearTasks: () => void;
   completedTasks: number;
   totalTasks: number;
-  isOwner: boolean;
-  feedbacks: Feedback[];
-  addFeedback: (text: string) => void;
   clearAllWorkspaces: () => void;
 }
 
@@ -65,14 +62,10 @@ function AppContent({
   clearTasks,
   completedTasks,
   totalTasks,
-  isOwner,
-  feedbacks,
-  addFeedback,
   clearAllWorkspaces
 }: AppContentProps) {
   const { setOpen: setSidebarOpen } = useSidebar();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
   
   if (loading) {
      return (
@@ -103,16 +96,11 @@ function AppContent({
                             <Settings className="mr-2"/>
                             Settings
                         </DropdownMenuItem>
-                        <DropdownMenuItem onSelect={() => setIsFeedbackOpen(true)}>
-                            <MessageSquare className="mr-2"/>
-                            Feedback
-                        </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
             </div>
           <WelcomeDialog open={isFirstTime} onOpenChange={setIsFirstTime} />
           <SettingsDialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen} onClearAll={clearAllWorkspaces} />
-          <FeedbackDialog open={isFeedbackOpen} onOpenChange={setIsFeedbackOpen} isOwner={isOwner} feedbacks={feedbacks} onSubmit={addFeedback} />
           <div className="w-full max-w-2xl">
             <AnimatePresence>
               <motion.div layout transition={{ type: 'spring', stiffness: 300, damping: 30 }}>
@@ -201,9 +189,6 @@ export default function Home() {
                     clearAllWorkspaces={tasksState.clearAllWorkspaces}
                     completedTasks={tasksState.completedTasks}
                     totalTasks={tasksState.totalTasks}
-                    isOwner={tasksState.isOwner}
-                    feedbacks={tasksState.feedbacks}
-                    addFeedback={tasksState.addFeedback}
                 />
             </SidebarProvider>
         </ThemeProvider>

@@ -1,15 +1,11 @@
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { type Task, type Workspace, type Feedback } from "@/lib/types";
+import { type Task, type Workspace } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 
 const DATA_KEY = "taskily-data";
 const FIRST_TIME_KEY = "taskily-first-time";
-const FEEDBACK_KEY = "taskily-feedback";
-
-const OWNER_WORKSPACE_NAME = "O3n0i Mo&e";
-const OWNER_TASK_NAME = "FardeenO5n3Moa%e917167472761+-=";
 
 const createDefaultWorkspace = (): Workspace => ({
   id: crypto.randomUUID(),
@@ -23,15 +19,12 @@ export function useTasks() {
   const [activeWorkspaceId, setActiveWorkspaceId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [isFirstTime, setIsFirstTime] = useState(false);
-  const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
-  const [isOwner, setIsOwner] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
     try {
       const storedData = localStorage.getItem(DATA_KEY);
       const firstTime = localStorage.getItem(FIRST_TIME_KEY);
-      const storedFeedbacks = localStorage.getItem(FEEDBACK_KEY);
 
       if (storedData) {
         const data = JSON.parse(storedData);
@@ -58,10 +51,6 @@ export function useTasks() {
           localStorage.setItem(FIRST_TIME_KEY, "false");
       }
       
-      if (storedFeedbacks) {
-        setFeedbacks(JSON.parse(storedFeedbacks));
-      }
-
     } catch (error) {
         console.error("Failed to load data from localStorage", error);
         const defaultWorkspace = createDefaultWorkspace();
@@ -88,16 +77,6 @@ export function useTasks() {
     setActiveWorkspaceId(newActiveId);
     saveData(newWorkspaces, newActiveId);
   }, [saveData]);
-  
-  useEffect(() => {
-    const ownerWorkspace = workspaces.find(ws => ws.name === OWNER_WORKSPACE_NAME);
-    if (ownerWorkspace) {
-      const ownerTask = ownerWorkspace.tasks.find(t => t.text === OWNER_TASK_NAME);
-      setIsOwner(!!ownerTask);
-    } else {
-      setIsOwner(false);
-    }
-  }, [workspaces]);
 
   const activeWorkspace = useMemo(() => {
     return workspaces.find(ws => ws.id === activeWorkspaceId) || null;
@@ -244,21 +223,6 @@ export function useTasks() {
     });
   }, [updateAndSave, toast]);
 
-  const addFeedback = useCallback((text: string) => {
-    const newFeedback: Feedback = {
-      id: crypto.randomUUID(),
-      text,
-      createdAt: new Date().toISOString(),
-    };
-    const updatedFeedbacks = [...feedbacks, newFeedback];
-    setFeedbacks(updatedFeedbacks);
-    localStorage.setItem(FEEDBACK_KEY, JSON.stringify(updatedFeedbacks));
-    toast({
-      title: "Feedback Submitted",
-      description: "Thank you for your feedback!",
-    });
-  }, [feedbacks, toast]);
-
   return {
     workspaces,
     activeWorkspace,
@@ -277,8 +241,5 @@ export function useTasks() {
     setIsFirstTime,
     clearTasks,
     clearAllWorkspaces,
-    isOwner,
-    feedbacks,
-    addFeedback,
   };
 }
