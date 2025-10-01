@@ -14,7 +14,7 @@ export function WelcomeDialog({ open, onOpenChange }: WelcomeDialogProps) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[480px]">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold">Welcome to Taskily!</DialogTitle>
+          <DialogTitle className="text-2xl font-bold">Welcome to Listily!</DialogTitle>
           <DialogDescription>
             Here’s a quick guide to help you get started.
           </DialogDescription>

@@ -90,7 +90,7 @@ const AppContent = memo(function AppContent({
                     <DropdownMenuContent align="start">
                         <DropdownMenuItem onSelect={() => setSidebarOpen(true)}>
                             <LayoutGrid className="mr-2"/>
-                            Taskspaces
+                            Listspaces
                         </DropdownMenuItem>
                          <DropdownMenuItem onSelect={() => setIsSettingsOpen(true)}>
                             <Settings className="mr-2"/>
@@ -107,7 +107,7 @@ const AppContent = memo(function AppContent({
                 <Card className="border-2 border-border/50 shadow-2xl shadow-primary/5 overflow-hidden">
                   <CardHeader>
                      <CardTitle className="font-headline text-4xl font-bold tracking-tight text-foreground text-center">
-                        {activeWorkspace?.name || "Taskily"}
+                        {activeWorkspace?.name || "Listily"}
                     </CardTitle>
                     <CardDescription className="text-center">
                         Get things done, one task at a time.
@@ -135,7 +135,7 @@ const AppContent = memo(function AppContent({
                             <AlertDialogHeader>
                                 <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                                 <AlertDialogDescription>
-                                    This will permanently delete all tasks in the "{activeWorkspace?.name}" Taskspace. This action cannot be undone.
+                                    This will permanently delete all tasks in the "{activeWorkspace?.name}" Listspace. This action cannot be undone.
                                 </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>

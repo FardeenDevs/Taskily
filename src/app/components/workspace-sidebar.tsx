@@ -55,7 +55,7 @@ export const WorkspaceSidebar = memo(function WorkspaceSidebar({
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
                 <LayoutGrid className="h-5 w-5" />
             </div>
-            <h2 className="text-lg font-semibold tracking-tight text-sidebar-foreground">Taskspaces</h2>
+            <h2 className="text-lg font-semibold tracking-tight text-sidebar-foreground">Listspaces</h2>
         </div>
          <Button variant="ghost" size="icon" className="h-8 w-8 md:flex hidden" onClick={() => setOpen(false)}>
             <X className="h-5 w-5"/>
@@ -87,7 +87,7 @@ export const WorkspaceSidebar = memo(function WorkspaceSidebar({
                     <AlertDialogHeader>
                         <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                         <AlertDialogDescription>
-                            This will permanently delete the "{ws.name}" Taskspace and all its tasks. This action cannot be undone.
+                            This will permanently delete the "{ws.name}" Listspace and all its tasks. This action cannot be undone.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
@@ -107,12 +107,12 @@ export const WorkspaceSidebar = memo(function WorkspaceSidebar({
             <DialogTrigger asChild>
                 <Button variant="outline">
                     <Plus className="mr-2 h-4 w-4"/>
-                    New Taskspace
+                    New Listspace
                 </Button>
             </DialogTrigger>
             <DialogContent>
                 <DialogHeader>
-                    <DialogTitle>Create New Taskspace</DialogTitle>
+                    <DialogTitle>Create New Listspace</DialogTitle>
                 </DialogHeader>
                 <div className="py-4">
                     <Input 

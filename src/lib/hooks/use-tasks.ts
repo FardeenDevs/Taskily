@@ -4,8 +4,8 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { type Task, type Workspace } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 
-const DATA_KEY = "taskily-data";
-const FIRST_TIME_KEY = "taskily-first-time";
+const DATA_KEY = "listily-data";
+const FIRST_TIME_KEY = "listily-first-time";
 
 export function useTasks() {
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
@@ -110,7 +110,7 @@ export function useTasks() {
       toast({
         variant: "destructive",
         title: "Duplicate Task",
-        description: "A task with this name already exists in this Taskspace.",
+        description: "A task with this name already exists in this Listspace.",
       });
       return;
     }
@@ -152,7 +152,7 @@ export function useTasks() {
         toast({
             variant: "destructive",
             title: "Duplicate Task",
-            description: "A task with this name already exists in this Taskspace.",
+            description: "A task with this name already exists in this Listspace.",
         });
         return;
     }
@@ -168,8 +168,8 @@ export function useTasks() {
      if (workspaces.some(ws => ws.name.toLowerCase() === name.trim().toLowerCase())) {
         toast({
             variant: "destructive",
-            title: "Duplicate Taskspace",
-            description: "A Taskspace with this name already exists.",
+            title: "Duplicate Listspace",
+            description: "A Listspace with this name already exists.",
         });
         return;
     }
@@ -193,7 +193,7 @@ export function useTasks() {
         toast({
             variant: "destructive",
             title: "Cannot Delete",
-            description: "You must have at least one Taskspace.",
+            description: "You must have at least one Listspace.",
         });
         return;
     }
@@ -210,7 +210,7 @@ export function useTasks() {
     updateTasksInWorkspace(activeWorkspaceId, []);
     toast({
         title: "Tasks Cleared",
-        description: `All tasks in the "${activeWorkspace?.name}" Taskspace have been deleted.`,
+        description: `All tasks in the "${activeWorkspace?.name}" Listspace have been deleted.`,
     });
   }, [activeWorkspaceId, activeWorkspace?.name, updateTasksInWorkspace, toast]);
   
@@ -219,7 +219,7 @@ export function useTasks() {
     updateAndSave([defaultWorkspace], defaultWorkspace.id);
     toast({
         title: "App Reset",
-        description: `All Taskspaces and tasks have been deleted.`,
+        description: `All Listspaces and tasks have been deleted.`,
     });
   }, [updateAndSave, toast, createDefaultWorkspace]);
 
@@ -243,5 +243,3 @@ export function useTasks() {
     clearAllWorkspaces,
   };
 }
-
-    

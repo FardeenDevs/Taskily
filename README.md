@@ -1,6 +1,6 @@
-# Taskily
+# Listily
 
-Welcome to Taskily! Here’s a quick guide to help you get started.
+Welcome to Listily! Here’s a quick guide to help you get started.
 
 + Add Tasks: Type a task in the input field and press Enter or click the plus button to add it to your list.
 + Complete Tasks: Click the checkbox next to a task to mark it as complete. Your progress will update automatically.
