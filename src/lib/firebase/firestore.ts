@@ -54,7 +54,7 @@ export async function addTaskToFirestore(userId: string, task: Omit<Task, 'id' |
   const tasksCol = collection(db, 'users', userId, 'tasks');
   const docRef = await addDoc(tasksCol, {
     ...task,
-    createdAt: Timestamp.now(),
+    createdAt: Timestamp.fromDate(new Date()),
   });
   return docRef.id;
 }

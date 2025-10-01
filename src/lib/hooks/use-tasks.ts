@@ -61,31 +61,32 @@ export function useTasks() {
       return;
     }
     
-    const createdAt = new Date().toISOString();
     const newTaskData = {
       text: text.trim(),
       completed: false,
     };
 
-    try {
-        // Optimistically update the UI with a temporary ID and the current date
-        const tempId = `temp-${Date.now()}`;
-        const optimisticTask: Task = { id: tempId, ...newTaskData, createdAt };
-        setTasks((prevTasks) => [...prevTasks, optimisticTask]);
+    const optimisticTask: Task = {
+        id: `temp-${Date.now()}`,
+        ...newTaskData,
+        createdAt: new Date().toISOString(),
+    };
 
+    setTasks((prevTasks) => [...prevTasks, optimisticTask]);
+
+    try {
         const newDocId = await addTaskToFirestore(user.uid, newTaskData);
-        
         // Replace the temporary task with the real one from the server
         setTasks((prevTasks) =>
           prevTasks.map((task) =>
-            task.id === tempId ? { ...task, id: newDocId } : task
+            task.id === optimisticTask.id ? { ...task, id: newDocId } : task
           )
         );
     } catch(error) {
         console.error("Error adding task:", error);
         toast({ title: "Failed to add task", variant: "destructive"});
         // Revert optimistic update on failure
-        setTasks((prevTasks) => prevTasks.filter(task => !task.id.startsWith('temp-')));
+        setTasks((prevTasks) => prevTasks.filter(task => task.id !== optimisticTask.id));
     }
 
   }, [tasks, user, toast]);
