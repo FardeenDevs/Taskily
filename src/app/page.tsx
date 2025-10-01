@@ -2,7 +2,7 @@
 "use client";
 
 import { useTasks } from "@/lib/hooks/use-tasks";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TaskProgress } from "@/app/components/task-progress";
 import { TaskInput } from "@/app/components/task-input";
 import { TaskList } from "@/app/components/task-list";
@@ -64,41 +64,43 @@ const AppContent = memo(function AppContent({ tasksHook }: AppContentProps) {
 
   return (
     <SidebarInset>
-       <div className="absolute top-4 right-4 z-20">
-        <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground hover:text-foreground" onClick={() => setIsSettingsOpen(true)}>
-          <Settings className="h-5 w-5" />
-        </Button>
-      </div>
+        <header className="flex items-center justify-between p-4">
+            <div className="flex items-center gap-2">
+                 <div className="z-50 md:hidden">
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                            <LayoutGrid className="h-5 w-5" />
+                        </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent side="bottom" align="start">
+                        <DropdownMenuItem onClick={() => setSidebarOpen(true)}>
+                            <LayoutGrid className="mr-2 h-4 w-4" />
+                            <span>Listspaces</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setIsSettingsOpen(true)}>
+                            <Settings className="mr-2 h-4 w-4" />
+                            <span>Settings</span>
+                        </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </div>
+            
+                <div className="hidden md:block">
+                    <Button variant="ghost" size="icon" onClick={toggleSidebar}>
+                        <LayoutGrid className="h-5 w-5" />
+                    </Button>
+                </div>
+            </div>
+            
+            <h1 className="text-2xl font-bold text-center text-foreground">Listily</h1>
 
-       <div className="absolute top-4 left-4 z-50 md:hidden">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon">
-                <LayoutGrid className="h-5 w-5" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent side="bottom" align="start">
-              <DropdownMenuItem onClick={() => setSidebarOpen(true)}>
-                <LayoutGrid className="mr-2 h-4 w-4" />
-                <span>Listspaces</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setIsSettingsOpen(true)}>
-                <Settings className="mr-2 h-4 w-4" />
-                <span>Settings</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      
-        <div className="absolute top-4 left-4 z-10 hidden md:block">
-           <Button variant="ghost" size="icon" onClick={toggleSidebar}>
-              <LayoutGrid className="h-5 w-5" />
-            </Button>
-        </div>
-        
-      <header className="w-full pt-12 pb-8">
-          <h1 className="text-2xl font-bold text-center text-foreground">Listily</h1>
-      </header>
+            <div>
+                 <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground hover:text-foreground" onClick={() => setIsSettingsOpen(true)}>
+                    <Settings className="h-5 w-5" />
+                </Button>
+            </div>
+        </header>
 
       <main className="flex min-h-screen w-full flex-col items-center justify-start p-4 pt-0 sm:p-8 sm:pt-0">
         <WelcomeDialog open={isFirstTime} onOpenChange={setIsFirstTime} />
