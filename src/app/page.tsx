@@ -62,7 +62,7 @@ function AppContent({
   completedTasks,
   totalTasks,
 }: AppContentProps) {
-  const { setOpenMobile: setSidebarOpen } = useSidebar();
+  const { setOpen: setSidebarOpen } = useSidebar();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   
   if (loading) {
