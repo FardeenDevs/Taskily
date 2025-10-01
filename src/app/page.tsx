@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useTasks } from "@/lib/hooks/use-tasks";
@@ -94,8 +95,12 @@ const AppContent = memo(function AppContent({ tasksHook }: AppContentProps) {
               <LayoutGrid className="h-5 w-5" />
             </Button>
         </div>
+        
+      <header className="w-full pt-16 pb-8">
+          <h1 className="text-5xl font-bold text-center text-foreground">Listily</h1>
+      </header>
 
-      <main className="flex min-h-screen w-full flex-col items-center justify-center p-4 sm:p-8">
+      <main className="flex min-h-screen w-full flex-col items-center justify-start p-4 pt-0 sm:p-8 sm:pt-0">
         <WelcomeDialog open={isFirstTime} onOpenChange={setIsFirstTime} />
         <SettingsDialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen} onResetApp={resetApp} />
         <div className="w-full max-w-2xl">
@@ -141,7 +146,7 @@ const AppContent = memo(function AppContent({ tasksHook }: AppContentProps) {
                         </AlertDialogHeader>
                         <AlertDialogFooter>
                           <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction onClick={handleClearTasks} className="bg-red-600 hover:bg-red-700 text-white">
+                          <AlertDialogAction onClick={handleClearTasks} variant="destructive">
                             Yes, clear all
                           </AlertDialogAction>
                         </AlertDialogFooter>
