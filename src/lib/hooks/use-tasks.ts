@@ -167,7 +167,7 @@ export function useTasks() {
 
   // --- Note Management ---
 
-  const addNote = useCallback((title: string, content: string) => {
+  const addNote = useCallback((title: string, content: string): string | undefined => {
     if (!data.activeWorkspaceId) return;
 
     const newNote: Note = {
@@ -178,6 +178,7 @@ export function useTasks() {
         workspaceId: data.activeWorkspaceId,
     };
     updateAndSave({ notes: [...(data.notes || []), newNote] });
+    return newNote.id;
   }, [data, updateAndSave]);
 
   const editNote = useCallback((id: string, newTitle: string, newContent: string) => {

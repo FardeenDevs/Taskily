@@ -1,42 +1,62 @@
 
 "use client";
 
-import { useState, memo } from 'react';
+import { useState, memo, useEffect } from 'react';
 import { type Note } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { NoteDialog } from './note-dialog';
 import { NoteItem } from './note-item';
 import { AnimatePresence, motion } from 'framer-motion';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 interface NotesSectionProps {
   notes: Note[];
-  onAddNote: (title: string, content: string) => void;
+  onAddNote: (title: string, content: string) => string | undefined;
   onEditNote: (id: string, newTitle: string, newContent: string) => void;
   onDeleteNote: (id: string) => void;
 }
 
 export const NotesSection = memo(function NotesSection({ notes, onAddNote, onEditNote, onDeleteNote }: NotesSectionProps) {
   const [isNoteDialogOpen, setIsNoteDialogOpen] = useState(false);
+  const [isTitleDialogOpen, setIsTitleDialogOpen] = useState(false);
   const [editingNote, setEditingNote] = useState<Note | null>(null);
+  const [editingTitle, setEditingTitle] = useState('');
 
   const handleOpenNewNoteDialog = () => {
-    setEditingNote(null);
-    setIsNoteDialogOpen(true);
+    const newNoteId = onAddNote("New Note", "");
+    if (newNoteId) {
+      const newNote = { id: newNoteId, title: "New Note", content: "", createdAt: new Date().toISOString(), workspaceId: '' };
+      handleOpenEditTitleDialog(newNote);
+    }
   };
 
-  const handleOpenEditNoteDialog = (note: Note) => {
+  const handleOpenEditContentDialog = (note: Note) => {
     setEditingNote(note);
     setIsNoteDialogOpen(true);
   };
+  
+  const handleOpenEditTitleDialog = (note: Note) => {
+    setEditingNote(note);
+    setEditingTitle(note.title);
+    setIsTitleDialogOpen(true);
+  };
 
-  const handleSaveNote = (id: string | null, title: string, content: string) => {
-    if (id) {
-      onEditNote(id, title, content);
-    } else {
-      onAddNote(title, content);
+  const handleSaveContent = (content: string) => {
+    if (editingNote) {
+      onEditNote(editingNote.id, editingNote.title, content);
     }
   };
+
+  const handleSaveTitle = () => {
+    if (editingNote && editingTitle.trim() !== '') {
+      onEditNote(editingNote.id, editingTitle, editingNote.content);
+    }
+    setIsTitleDialogOpen(false);
+    setEditingNote(null);
+  }
 
   return (
     <div className="space-y-4">
@@ -67,9 +87,10 @@ export const NotesSection = memo(function NotesSection({ notes, onAddNote, onEdi
                     className="h-full"
                 >
                     <NoteItem
-                    note={note}
-                    onEdit={() => handleOpenEditNoteDialog(note)}
-                    onDelete={() => onDeleteNote(note.id)}
+                      note={note}
+                      onEditContent={() => handleOpenEditContentDialog(note)}
+                      onEditTitle={() => handleOpenEditTitleDialog(note)}
+                      onDelete={() => onDeleteNote(note.id)}
                     />
                 </motion.div>
                 ))}
@@ -82,8 +103,30 @@ export const NotesSection = memo(function NotesSection({ notes, onAddNote, onEdi
         open={isNoteDialogOpen}
         onOpenChange={setIsNoteDialogOpen}
         note={editingNote}
-        onSave={handleSaveNote}
+        onSaveContent={handleSaveContent}
       />
+      
+      <Dialog open={isTitleDialogOpen} onOpenChange={setIsTitleDialogOpen}>
+        <DialogContent>
+            <DialogHeader>
+                <DialogTitle>Edit Note Title</DialogTitle>
+            </DialogHeader>
+            <div className="py-4">
+                <Label htmlFor="note-title-input" className="sr-only">Title</Label>
+                <Input 
+                    id="note-title-input"
+                    value={editingTitle} 
+                    onChange={(e) => setEditingTitle(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSaveTitle()} 
+                    placeholder="Enter note title"
+                />
+            </div>
+            <DialogFooter>
+                <Button variant="secondary" onClick={() => setIsTitleDialogOpen(false)}>Cancel</Button>
+                <Button onClick={handleSaveTitle}>Save</Button>
+            </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 });

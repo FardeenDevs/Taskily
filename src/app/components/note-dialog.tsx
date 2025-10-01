@@ -10,17 +10,15 @@ import { RichTextToolbar } from './rich-text-toolbar';
 import { useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
-import { Input } from '@/components/ui/input';
 
 interface NoteDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   note: Note | null;
-  onSave: (id: string | null, title: string, content: string) => void;
+  onSaveContent: (content: string) => void;
 }
 
-export function NoteDialog({ open, onOpenChange, note, onSave }: NoteDialogProps) {
-  const [title, setTitle] = useState('');
+export function NoteDialog({ open, onOpenChange, note, onSaveContent }: NoteDialogProps) {
   const contentRef = useRef<string>('');
 
   const editor = useEditor({
@@ -52,18 +50,17 @@ export function NoteDialog({ open, onOpenChange, note, onSave }: NoteDialogProps
 
   useEffect(() => {
     if (open && editor) {
-      const noteTitle = note?.title || 'New Note';
       const content = note?.content || '';
-      setTitle(noteTitle);
       contentRef.current = content;
       editor.commands.setContent(content);
-      // Move focus to the end of the content
       editor.commands.focus('end');
     }
   }, [note, open, editor]);
   
   const handleSave = () => {
-    onSave(note?.id ?? null, title || "New Note", contentRef.current);
+    if (note) {
+      onSaveContent(contentRef.current);
+    }
   };
 
   const handleOpenChange = (isOpen: boolean) => {
@@ -76,14 +73,8 @@ export function NoteDialog({ open, onOpenChange, note, onSave }: NoteDialogProps
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className={cn("w-screen h-screen max-w-none rounded-none flex flex-col p-8 sm:p-12")}>
-        <DialogTitle className="sr-only">{title || 'Note'}</DialogTitle>
-        <Input
-            id="note-title"
-            placeholder="Note Title..."
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="text-4xl font-extrabold border-0 shadow-none focus-visible:ring-0 px-0 h-auto mb-4"
-        />
+        <DialogTitle className="text-2xl font-bold text-center mb-4">{note?.title || 'Note'}</DialogTitle>
+        
         <div className="flex-grow pt-4 overflow-y-auto">
            <RichTextEditor editor={editor} />
         </div>
