@@ -96,8 +96,8 @@ const AppContent = memo(function AppContent({ tasksHook }: AppContentProps) {
             </Button>
         </div>
         
-      <header className="w-full pt-16 pb-8">
-          <h1 className="text-5xl font-bold text-center text-foreground">Listily</h1>
+      <header className="w-full pt-12 pb-8">
+          <h1 className="text-2xl font-bold text-center text-foreground">Listily</h1>
       </header>
 
       <main className="flex min-h-screen w-full flex-col items-center justify-start p-4 pt-0 sm:p-8 sm:pt-0">
@@ -108,12 +108,9 @@ const AppContent = memo(function AppContent({ tasksHook }: AppContentProps) {
             <motion.div layout transition={{ type: 'spring', stiffness: 300, damping: 30 }}>
               <Card className="border-2 border-border/50 shadow-2xl shadow-primary/5 overflow-hidden">
                 <CardHeader>
-                  <CardTitle className="font-headline text-4xl font-bold tracking-tight text-foreground text-center pt-10">
+                  <CardTitle className="font-headline text-4xl font-bold tracking-tight text-foreground text-center">
                     {activeWorkspace?.name || "Listily"}
                   </CardTitle>
-                  <CardDescription className="text-center">
-                    Get things done, one task at a time.
-                  </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-8">
                   <TaskProgress completed={completedTasks} total={totalTasks} />
