@@ -79,7 +79,10 @@ const AppContent = memo(function AppContent({
 
   return (
       <SidebarInset>
-        <main className="flex min-h-screen w-full flex-col items-center justify-start p-4 sm:p-8 pt-16 sm:pt-24">
+        <header className="absolute top-0 left-0 right-0 z-10 flex justify-center items-center h-16">
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">Listily</h1>
+        </header>
+        <main className="flex min-h-screen w-full flex-col items-center justify-start p-4 sm:p-8 pt-24 sm:pt-24">
            <div className="absolute top-4 left-4">
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -107,7 +110,7 @@ const AppContent = memo(function AppContent({
                 <Card className="border-2 border-border/50 shadow-2xl shadow-primary/5 overflow-hidden">
                   <CardHeader>
                      <CardTitle className="font-headline text-4xl font-bold tracking-tight text-foreground text-center">
-                        {activeWorkspace?.name || "Listily"}
+                        {activeWorkspace?.name || "General"}
                     </CardTitle>
                     <CardDescription className="text-center">
                         Get things done, one task at a time.

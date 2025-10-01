@@ -21,7 +21,7 @@ export function WelcomeDialog({ open, onOpenChange }: WelcomeDialogProps) {
         </DialogHeader>
         <div className="mt-4 space-y-4 text-sm">
           <div className="flex items-start gap-4">
-            <div className="flex h-8 w-8 items-center justify-center rounded-md bg-green-100 text-green-600">
+            <div className="flex h-8 w-8 items-center justify-center rounded-md text-primary">
                 <Plus className="h-5 w-5" />
             </div>
             <div>
@@ -30,7 +30,7 @@ export function WelcomeDialog({ open, onOpenChange }: WelcomeDialogProps) {
             </div>
           </div>
           <div className="flex items-start gap-4">
-             <div className="flex h-8 w-8 items-center justify-center rounded-md bg-green-100 text-green-600">
+             <div className="flex h-8 w-8 items-center justify-center rounded-md text-primary">
                 <Check className="h-5 w-5" />
             </div>
             <div>
@@ -39,7 +39,7 @@ export function WelcomeDialog({ open, onOpenChange }: WelcomeDialogProps) {
             </div>
           </div>
           <div className="flex items-start gap-4">
-            <div className="flex h-8 w-8 items-center justify-center rounded-md bg-blue-100 text-blue-600">
+            <div className="flex h-8 w-8 items-center justify-center rounded-md text-primary">
                 <Edit className="h-5 w-5" />
             </div>
             <div>
@@ -48,7 +48,7 @@ export function WelcomeDialog({ open, onOpenChange }: WelcomeDialogProps) {
             </div>
           </div>
           <div className="flex items-start gap-4">
-            <div className="flex h-8 w-8 items-center justify-center rounded-md bg-red-100 text-red-600">
+            <div className="flex h-8 w-8 items-center justify-center rounded-md text-destructive">
                 <Trash2 className="h-5 w-5" />
             </div>
             <div>
@@ -57,7 +57,7 @@ export function WelcomeDialog({ open, onOpenChange }: WelcomeDialogProps) {
             </div>
           </div>
            <div className="flex items-start gap-4">
-            <div className="flex h-8 w-8 items-center justify-center rounded-md bg-purple-100 text-purple-600">
+            <div className="flex h-8 w-8 items-center justify-center rounded-md text-primary">
                 <Sparkles className="h-5 w-5" />
             </div>
             <div>
