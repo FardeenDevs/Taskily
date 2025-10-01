@@ -11,7 +11,7 @@ import { SidebarProvider, Sidebar, SidebarInset, useSidebar } from "@/components
 import { WorkspaceSidebar } from "@/app/components/workspace-sidebar";
 import { AnimatePresence, motion } from "framer-motion";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Trash2 } from "lucide-react";
+import { Trash2, LayoutGrid, Settings } from "lucide-react";
 import { useState, memo } from "react";
 import { SettingsDialog } from "@/app/components/settings-dialog";
 import { ThemeProvider } from "@/app/components/theme-provider";
@@ -75,11 +75,18 @@ const AppContent = memo(function AppContent({
   }
 
   return (
-      <SidebarInset 
-        setSidebarOpen={setSidebarOpen} 
-        setIsSettingsOpen={setIsSettingsOpen}
-      >
-        <main className="flex min-h-screen w-full flex-col items-center justify-start p-4 sm:p-8 pt-20">
+      <SidebarInset>
+        <div className="absolute top-4 left-4 z-20">
+          <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground hover:text-foreground md:hidden" onClick={() => setSidebarOpen(true)}>
+              <LayoutGrid className="h-5 w-5" />
+          </Button>
+        </div>
+        <div className="absolute top-4 right-4 z-20">
+            <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground hover:text-foreground" onClick={() => setIsSettingsOpen(true)}>
+                <Settings className="h-5 w-5" />
+            </Button>
+        </div>
+        <main className="flex min-h-screen w-full flex-col items-center justify-center p-4 sm:p-8">
           <WelcomeDialog open={isFirstTime} onOpenChange={setIsFirstTime} />
           <SettingsDialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen} onClearAll={clearAllWorkspaces} />
           <div className="w-full max-w-2xl">

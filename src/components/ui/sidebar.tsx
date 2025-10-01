@@ -3,7 +3,7 @@
 import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
 import { VariantProps, cva } from "class-variance-authority"
-import { LayoutGrid, PanelLeft, Settings } from "lucide-react"
+import { PanelLeft } from "lucide-react"
 
 import { useIsMobile } from "@/hooks/use-mobile"
 import { cn } from "@/lib/utils"
@@ -188,7 +188,7 @@ const Sidebar = React.forwardRef<
           <SheetContent
             data-sidebar="sidebar"
             data-mobile="true"
-            className="w-[--sidebar-width] bg-sidebar p-0 text-sidebar-foreground [&>button]:hidden top-16 h-[calc(100%-4rem)]"
+            className="w-[--sidebar-width] bg-sidebar p-0 text-sidebar-foreground [&>button]:hidden"
             style={
               {
                 "--sidebar-width": SIDEBAR_WIDTH_MOBILE,
@@ -304,15 +304,10 @@ const SidebarRail = React.forwardRef<
 })
 SidebarRail.displayName = "SidebarRail"
 
-interface SidebarInsetProps extends React.ComponentProps<"main"> {
-  setSidebarOpen: (open: boolean) => void;
-  setIsSettingsOpen: (open: boolean) => void;
-}
-
 const SidebarInset = React.forwardRef<
   HTMLDivElement,
-  SidebarInsetProps
->(({ className, setSidebarOpen, setIsSettingsOpen, children, ...props }, ref) => {
+  React.ComponentProps<"main">
+>(({ className, ...props }, ref) => {
   return (
     <div
       ref={ref}
@@ -322,20 +317,7 @@ const SidebarInset = React.forwardRef<
         className
       )}
       {...props}
-    >
-        <header className="fixed top-0 left-0 right-0 z-40 flex h-16 items-center justify-between bg-background/80 px-4 backdrop-blur-sm md:left-[--sidebar-width] md:group-data-[collapsible=icon]:left-[--sidebar-width-icon] md:group-data-[collapsible=offcanvas]:left-0 transition-all duration-300 ease-in-out">
-            <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground hover:text-foreground md:hidden" onClick={() => setSidebarOpen(true)}>
-                <LayoutGrid className="h-5 w-5" />
-            </Button>
-            <h1 className="text-2xl font-bold tracking-tight text-foreground absolute left-1/2 -translate-x-1/2">Listily</h1>
-            <div className="ml-auto">
-                <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground hover:text-foreground" onClick={() => setIsSettingsOpen(true)}>
-                    <Settings className="h-5 w-5" />
-                </Button>
-            </div>
-        </header>
-        {children}
-    </div>
+    />
   )
 })
 SidebarInset.displayName = "SidebarInset"
