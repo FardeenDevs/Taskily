@@ -32,11 +32,11 @@ export function TaskItem({ task, onToggleTask, onDeleteTask, onEditTask }: TaskI
        <AnimatePresence>
         {task.completed && (
           <motion.div
-            initial={{ scaleX: 0 }}
-            animate={{ scaleX: 1 }}
-            exit={{ scaleX: 0 }}
+            initial={{ scaleX: 0, opacity: 0 }}
+            animate={{ scaleX: 1, opacity: 0.2 }}
+            exit={{ scaleX: 0, opacity: 0 }}
             transition={{ duration: 0.3, ease: "easeOut" }}
-            className="absolute inset-0 bg-primary/20 origin-left"
+            className="absolute inset-0 bg-primary origin-left"
           />
         )}
       </AnimatePresence>
