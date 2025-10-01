@@ -5,7 +5,9 @@ export interface Task {
   createdAt: string;
 }
 
-export interface UserProfile {
-    username: string;
-    email: string;
+export interface Workspace {
+    id: string;
+    name: string;
+    tasks: Task[];
+    createdAt: string;
 }
