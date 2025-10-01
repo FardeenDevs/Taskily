@@ -14,31 +14,41 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { LayoutGrid, Menu, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { useState, useEffect, useMemo } from "react";
+import { useState } from "react";
 import { SettingsDialog } from "@/app/components/settings-dialog";
 import { ThemeProvider } from "@/app/components/theme-provider";
 import { type Task, type Workspace } from "@/lib/types";
 
-function AppContent() {
-  const {
-    tasks,
-    loading,
-    addTask,
-    toggleTask,
-    deleteTask,
-    editTask,
-    isFirstTime,
-    setIsFirstTime,
-    workspaces,
-    activeWorkspace,
-    addWorkspace,
-    switchWorkspace,
-    deleteWorkspace,
-    clearTasks,
-    completedTasks,
-    totalTasks,
-  } = useTasks();
+interface AppContentProps {
+  tasks: Task[];
+  loading: boolean;
+  addTask: (text: string) => void;
+  toggleTask: (id: string) => void;
+  deleteTask: (id: string) => void;
+  editTask: (id: string, newText: string) => void;
+  isFirstTime: boolean;
+  setIsFirstTime: (value: boolean) => void;
+  activeWorkspace: Workspace | null;
+  clearTasks: () => void;
+  completedTasks: number;
+  totalTasks: number;
+}
 
+
+function AppContent({
+  tasks,
+  loading,
+  addTask,
+  toggleTask,
+  deleteTask,
+  editTask,
+  isFirstTime,
+  setIsFirstTime,
+  activeWorkspace,
+  clearTasks,
+  completedTasks,
+  totalTasks,
+}: AppContentProps) {
   const { setOpenMobile: setSidebarOpen } = useSidebar();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   
@@ -112,32 +122,37 @@ function AppContent() {
 
 
 export default function Home() {
-  return (
-    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-        <SidebarProvider>
-          <Sidebar>
-            <WorkspaceSidebarWrapper/>
-          </Sidebar>
-          <AppContent/>
-        </SidebarProvider>
-    </ThemeProvider>
-  );
-}
-
-// We need to wrap the WorkspaceSidebar in a component that uses the useTasks hook
-// because the Sidebar component is outside the main AppContent where the hook is used.
-function WorkspaceSidebarWrapper() {
-    const { workspaces, activeWorkspace, addWorkspace, switchWorkspace, deleteWorkspace } = useTasks();
-
-    if (!workspaces) return null;
+    const tasksState = useTasks();
 
     return (
-        <WorkspaceSidebar 
-          workspaces={workspaces}
-          activeWorkspace={activeWorkspace}
-          onAddWorkspace={addWorkspace}
-          onSwitchWorkspace={switchWorkspace}
-          onDeleteWorkspace={deleteWorkspace}
-        />
-    )
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+            <SidebarProvider>
+                <Sidebar>
+                    {tasksState.workspaces && (
+                         <WorkspaceSidebar 
+                            workspaces={tasksState.workspaces}
+                            activeWorkspace={tasksState.activeWorkspace}
+                            onAddWorkspace={tasksState.addWorkspace}
+                            onSwitchWorkspace={tasksState.switchWorkspace}
+                            onDeleteWorkspace={tasksState.deleteWorkspace}
+                        />
+                    )}
+                </Sidebar>
+                <AppContent 
+                    tasks={tasksState.tasks}
+                    loading={tasksState.loading}
+                    addTask={tasksState.addTask}
+                    toggleTask={tasksState.toggleTask}
+                    deleteTask={tasksState.deleteTask}
+                    editTask={tasksState.editTask}
+                    isFirstTime={tasksState.isFirstTime}
+                    setIsFirstTime={tasksState.setIsFirstTime}
+                    activeWorkspace={tasksState.activeWorkspace}
+                    clearTasks={tasksState.clearTasks}
+                    completedTasks={tasksState.completedTasks}
+                    totalTasks={tasksState.totalTasks}
+                />
+            </SidebarProvider>
+        </ThemeProvider>
+    );
 }
