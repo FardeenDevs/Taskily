@@ -308,23 +308,31 @@ export function useTasks() {
     
     const userWorkspacesQuery = query(collection(firestore, 'users', user.uid, 'workspaces'), where('ownerId', '==', user.uid));
     
-    try {
+    getDocs(userWorkspacesQuery).then(async (querySnapshot) => {
         const batch = writeBatch(firestore);
-        const querySnapshot = await getDocs(userWorkspacesQuery);
-        
+
         for (const workspaceDoc of querySnapshot.docs) {
             const tasksCollectionRef = collection(workspaceDoc.ref, 'tasks');
-            const tasksSnapshot = await getDocs(tasksCollectionRef);
+            const tasksSnapshot = await getDocs(tasksCollectionRef).catch(e => {
+                 errorEmitter.emit('permission-error', new FirestorePermissionError({ path: tasksCollectionRef.path, operation: 'list' }));
+                 throw e;
+            });
             tasksSnapshot.forEach(taskDoc => batch.delete(taskDoc.ref));
             
             const notesCollectionRef = collection(workspaceDoc.ref, 'notes');
-            const notesSnapshot = await getDocs(notesCollectionRef);
+            const notesSnapshot = await getDocs(notesCollectionRef).catch(e => {
+                 errorEmitter.emit('permission-error', new FirestorePermissionError({ path: notesCollectionRef.path, operation: 'list' }));
+                 throw e;
+            });
             notesSnapshot.forEach(noteDoc => batch.delete(noteDoc.ref));
             
             batch.delete(workspaceDoc.ref);
         }
         
-        await batch.commit();
+        await batch.commit().catch(e => {
+            errorEmitter.emit('permission-error', new FirestorePermissionError({ path: `/users/${user.uid}/workspaces`, operation: 'write' }));
+            throw e;
+        });
 
         const workspacesCollectionRef = collection(firestore, 'users', user.uid, 'workspaces');
         
@@ -335,20 +343,19 @@ export function useTasks() {
              createdAt: serverTimestamp(),
              ownerId: user.uid
          };
-         const newWorkspaceRef = await addDoc(workspacesCollectionRef, workspaceData);
+         const newWorkspaceRef = await addDoc(workspacesCollectionRef, workspaceData).catch(e => {
+            errorEmitter.emit('permission-error', new FirestorePermissionError({ path: workspacesCollectionRef.path, operation: 'create', requestResourceData: workspaceData }));
+            throw e;
+         });
 
         setActiveWorkspaceId(newWorkspaceRef.id);
         toast({
           title: "App Reset",
           description: "Everything has been reset to default.",
         });
-    } catch (e) {
-         const permissionError = new FirestorePermissionError({
-            path: userWorkspacesQuery.path,
-            operation: 'list',
-        });
-        errorEmitter.emit('permission-error', permissionError);
-    }
+    }).catch(e => {
+         errorEmitter.emit('permission-error', new FirestorePermissionError({ path: userWorkspacesQuery.path, operation: 'list' }));
+    });
   }, [user, toast, firestore]);
 
   const addWorkspace = useCallback((name: string) => {
@@ -388,39 +395,43 @@ export function useTasks() {
     }
 
     const workspaceDocRef = doc(firestore, 'users', user.uid, 'workspaces', id);
-    try {
-        const tasksCollectionRef = collection(workspaceDocRef, 'tasks');
-        const tasksSnapshot = await getDocs(tasksCollectionRef);
-        const notesCollectionRef = collection(workspaceDocRef, 'notes');
-        const notesSnapshot = await getDocs(notesCollectionRef);
 
-        const batch = writeBatch(firestore);
-        tasksSnapshot.forEach(doc => batch.delete(doc.ref));
-        notesSnapshot.forEach(doc => batch.delete(noteDoc.ref));
-        batch.delete(workspaceDocRef);
+    const tasksCollectionRef = collection(workspaceDocRef, 'tasks');
+    const tasksSnapshot = await getDocs(tasksCollectionRef).catch(e => {
+        errorEmitter.emit('permission-error', new FirestorePermissionError({ path: tasksCollectionRef.path, operation: 'list' }));
+        throw e;
+    });
 
-        await batch.commit();
-        
-        if (id === activeWorkspaceId) {
-           const remainingWorkspaces = workspaces.filter(ws => ws.id !== id) || [];
-           if (remainingWorkspaces.length > 0) {
-                switchWorkspace(remainingWorkspaces[0].id);
-           } else {
-                setActiveWorkspaceId(null);
-           }
+    const notesCollectionRef = collection(workspaceDocRef, 'notes');
+    const notesSnapshot = await getDocs(notesCollectionRef).catch(e => {
+        errorEmitter.emit('permission-error', new FirestorePermissionError({ path: notesCollectionRef.path, operation: 'list' }));
+        throw e;
+    });
+
+    const batch = writeBatch(firestore);
+    tasksSnapshot.forEach(doc => batch.delete(doc.ref));
+    notesSnapshot.forEach(doc => batch.delete(doc.ref));
+    batch.delete(workspaceDocRef);
+
+    await batch.commit().catch(e => {
+        errorEmitter.emit('permission-error', new FirestorePermissionError({ path: workspaceDocRef.path, operation: 'delete' }));
+        throw e;
+    });
+    
+    if (id === activeWorkspaceId) {
+        const remainingWorkspaces = workspaces.filter(ws => ws.id !== id) || [];
+        if (remainingWorkspaces.length > 0) {
+            switchWorkspace(remainingWorkspaces[0].id);
+        } else {
+            setActiveWorkspaceId(null);
         }
-        
-        toast({
-          title: "Listspace Deleted",
-          description: "The Listspace and all its items have been removed.",
-        });
-    } catch(e) {
-        const permissionError = new FirestorePermissionError({
-            path: workspaceDocRef.path,
-            operation: 'delete',
-        });
-        errorEmitter.emit('permission-error', permissionError);
     }
+    
+    toast({
+        title: "Listspace Deleted",
+        description: "The Listspace and all its items have been removed.",
+    });
+
   }, [firestore, user, workspaces, activeWorkspaceId, switchWorkspace, toast]);
 
   const editWorkspace = useCallback((id: string, newName: string) => {
@@ -444,57 +455,67 @@ export function useTasks() {
         return;
     }
 
-    try {
-        // 1. Delete all user's sub-collection data
+    // 1. Delete all user's sub-collection data
+    const userWorkspacesQuery = query(collection(firestore, 'users', user.uid, 'workspaces'), where('ownerId', '==', user.uid));
+    
+    getDocs(userWorkspacesQuery)
+    .then(async (querySnapshot) => {
         const batch = writeBatch(firestore);
-
-        const userWorkspacesQuery = query(collection(firestore, 'users', user.uid, 'workspaces'), where('ownerId', '==', user.uid));
-        const querySnapshot = await getDocs(userWorkspacesQuery);
 
         for (const workspaceDoc of querySnapshot.docs) {
             const tasksCollectionRef = collection(workspaceDoc.ref, 'tasks');
-            const tasksSnapshot = await getDocs(tasksCollectionRef);
+            const tasksSnapshot = await getDocs(tasksCollectionRef).catch(e => {
+                errorEmitter.emit('permission-error', new FirestorePermissionError({ path: tasksCollectionRef.path, operation: 'list' }));
+                throw e; // re-throw to stop execution
+            });
             tasksSnapshot.forEach(taskDoc => batch.delete(taskDoc.ref));
 
             const notesCollectionRef = collection(workspaceDoc.ref, 'notes');
-            const notesSnapshot = await getDocs(notesCollectionRef);
+            const notesSnapshot = await getDocs(notesCollectionRef).catch(e => {
+                errorEmitter.emit('permission-error', new FirestorePermissionError({ path: notesCollectionRef.path, operation: 'list' }));
+                throw e; // re-throw to stop execution
+            });
             notesSnapshot.forEach(noteDoc => batch.delete(noteDoc.ref));
 
             batch.delete(workspaceDoc.ref);
         }
+        
+        await batch.commit().catch(e => {
+            // This is a generic path, but it's the best we can do for a batch write error
+            errorEmitter.emit('permission-error', new FirestorePermissionError({ path: `/users/${user.uid}/workspaces`, operation: 'write' }));
+            throw e; // re-throw to stop execution
+        });
 
-        const userDocRef = doc(firestore, 'users', user.uid);
-        batch.delete(userDocRef);
-
-        await batch.commit();
-
-        // 2. Delete the user from Authentication
-        await user.delete();
+        // 2. Delete the user from Authentication - this only runs if the batch commit succeeds
+        await user.delete().catch(error => {
+             console.error("Error deleting account: ", error);
+            if (error.code === 'auth/requires-recent-login') {
+                toast({
+                    variant: "destructive",
+                    title: "Action Required",
+                    description: "This is a sensitive action. Please sign out and sign back in before deleting your account.",
+                });
+            } else {
+                toast({
+                    variant: "destructive",
+                    title: "Error Deleting Account",
+                    description: "An error occurred while trying to delete your account. Please try again.",
+                });
+            }
+            throw error; // re-throw to stop execution
+        });
 
         toast({ title: "Account Deleted", description: "Your account and all associated data have been permanently deleted." });
 
-    } catch (error: any) {
-        console.error("Error deleting account: ", error);
-        if (error.code === 'auth/requires-recent-login') {
-            toast({
-                variant: "destructive",
-                title: "Action Required",
-                description: "This is a sensitive action. Please sign out and sign back in before deleting your account.",
-            });
-        } else {
-            toast({
-                variant: "destructive",
-                title: "Error Deleting Account",
-                description: "An error occurred while trying to delete your account. Please try again.",
-            });
-            // Emit a more generic error since we don't know the exact path that failed during the batch write.
-            const permissionError = new FirestorePermissionError({
-                path: `/users/${user.uid}`,
-                operation: 'delete',
-            });
-            errorEmitter.emit('permission-error', permissionError);
+    })
+    .catch((error) => {
+        // This will catch errors from the initial getDocs(userWorkspacesQuery) or any re-thrown errors from within the chain.
+        if (!error.name.includes('FirestorePermissionError')) {
+           // If it's not one of our custom errors, create one.
+           errorEmitter.emit('permission-error', new FirestorePermissionError({ path: userWorkspacesQuery.path, operation: 'list'}));
         }
-    }
+        console.error("Failed to delete user data:", error)
+    });
   }, [user, firestore, toast]);
 
   const completedTasks = useMemo(() => {
