@@ -41,6 +41,7 @@ export function useTasks() {
   , [activeWorkspaceId, user, firestore]);
   
   const { data: activeWorkspace, loading: activeWorkspaceLoading } = useDoc<Workspace>(activeWorkspaceRef);
+  
   const { data: tasks, loading: tasksLoading } = useCollection<Task>(activeWorkspaceId && user ? collection(firestore, 'users', user.uid, 'workspaces', activeWorkspaceId, 'tasks') : null);
 
   const notesRef = useMemo(() => {
@@ -445,6 +446,7 @@ export function useTasks() {
     const workspace = workspaces.find(ws => ws.id === id);
     if (!workspace) return false;
 
+    // If the workspace has a password, the current password must be correct to make any changes
     if (workspace.password && currentPassword !== workspace.password) {
       return false;
     }
@@ -455,7 +457,7 @@ export function useTasks() {
     if (newPassword !== undefined) {
       updatedData.password = newPassword;
       updatedData.passwordHint = newPasswordHint || "";
-      if (!newPassword) {
+       if (!newPassword) { // If new password is empty string, it means we are removing it.
         setUnlockedWorkspaces(prev => {
           const newSet = new Set(prev);
           newSet.add(id);

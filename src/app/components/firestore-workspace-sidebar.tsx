@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, MoreVertical, Pencil, Trash2, LayoutGrid, Archive, Lock, Unlock } from "lucide-react";
+import { Plus, MoreVertical, Pencil, Trash2, LayoutGrid, Archive, Lock, Unlock, ShieldQuestion } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -36,12 +36,14 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Label } from "@/components/ui/label";
 import { Workspace } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
+import { useUser } from "@/firebase";
 
 type WorkspaceSidebarProps = {
   tasksHook: ReturnType<typeof useTasks>;
 };
 
 export function FirestoreWorkspaceSidebar({ tasksHook }: WorkspaceSidebarProps) {
+  const { user } = useUser();
   const { 
     workspaces, 
     activeWorkspaceId, 
@@ -58,6 +60,8 @@ export function FirestoreWorkspaceSidebar({ tasksHook }: WorkspaceSidebarProps) 
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [clearDialogOpen, setClearDialogOpen] = useState(false);
+  const [forgotPasswordDialogOpen, setForgotPasswordDialogOpen] = useState(false);
+  const [forgotPasswordEmail, setForgotPasswordEmail] = useState("");
 
   const [editName, setEditName] = useState("");
   const [currentPassword, setCurrentPassword] = useState("");
@@ -82,6 +86,22 @@ export function FirestoreWorkspaceSidebar({ tasksHook }: WorkspaceSidebarProps) 
       }
     }
   };
+
+  const handleForgotPassword = () => {
+    if (selectedWorkspace && forgotPasswordEmail === user?.email) {
+      const success = editWorkspace(selectedWorkspace.id, selectedWorkspace.name, selectedWorkspace.password, "", "");
+       if (success) {
+        setForgotPasswordDialogOpen(false);
+        setEditDialogOpen(false);
+        toast({ title: "Password Removed", description: "You can now access your notes." });
+      } else {
+        toast({ variant: "destructive", title: "Error", description: "Could not remove password." });
+      }
+    } else {
+       toast({ variant: "destructive", title: "Incorrect Email", description: "The email address you entered does not match your account's email." });
+    }
+    setForgotPasswordEmail("");
+  }
   
   const handleDeleteWorkspace = () => {
     if(selectedWorkspace) {
@@ -197,6 +217,11 @@ export function FirestoreWorkspaceSidebar({ tasksHook }: WorkspaceSidebarProps) 
                     <Label htmlFor="workspace-password-hint">Password Hint (optional)</Label>
                     <Input id="workspace-password-hint" value={newPasswordHint} onChange={(e) => setNewPasswordHint(e.target.value)} placeholder="e.g., My first pet's name" />
                 </div>
+                 {selectedWorkspace?.password && (
+                    <div className="flex justify-end">
+                        <Button variant="link" size="sm" className="h-auto p-0" onClick={() => { setForgotPasswordDialogOpen(true) }}>Forgot Password?</Button>
+                    </div>
+                 )}
             </div>
             <DialogFooter>
                 <Button type="button" variant="secondary" onClick={() => setEditDialogOpen(false)}>Cancel</Button>
@@ -237,6 +262,36 @@ export function FirestoreWorkspaceSidebar({ tasksHook }: WorkspaceSidebarProps) 
                 <AlertDialogAction onClick={handleClearTasks} variant="destructive">
                     Yes, clear all
                 </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Forgot Password Dialog */}
+        <AlertDialog open={forgotPasswordDialogOpen} onOpenChange={setForgotPasswordDialogOpen}>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle className="flex items-center gap-2">
+                        <ShieldQuestion /> Forgot Password
+                    </AlertDialogTitle>
+                    <AlertDialogDescription>
+                        To remove the password from this listspace, please confirm your identity by entering your account's email address. This will grant you access to the notes.
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <div className="py-2 space-y-2">
+                    <Label htmlFor="email-confirm">Your email: <span className="font-bold">{user?.email}</span></Label>
+                    <Input 
+                        id="email-confirm" 
+                        type="email" 
+                        value={forgotPasswordEmail}
+                        onChange={(e) => setForgotPasswordEmail(e.target.value)}
+                        placeholder="Enter your email to confirm"
+                    />
+                </div>
+                <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleForgotPassword} disabled={!forgotPasswordEmail}>
+                        Remove Password
+                    </AlertDialogAction>
                 </AlertDialogFooter>
             </AlertDialogContent>
         </AlertDialog>

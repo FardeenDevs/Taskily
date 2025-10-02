@@ -27,7 +27,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
   if (loading) {
     return (
         <div className="flex h-screen w-screen items-center justify-center">
-            <div className="h-16 w-16 animate-spin rounded-full border-4 border-dashed border-primary"></div>
+            <div className="h-16 w-16 animate-spin rounded-full border-4 border-solid border-primary border-t-transparent"></div>
         </div>
     );
   }
@@ -43,7 +43,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
   // here as well to prevent a flash of unstyled content.
   return (
     <div className="flex h-screen w-screen items-center justify-center">
-        <div className="h-16 w-16 animate-spin rounded-full border-4 border-dashed border-primary"></div>
+        <div className="h-16 w-16 animate-spin rounded-full border-4 border-solid border-primary border-t-transparent"></div>
     </div>
   );
 }
