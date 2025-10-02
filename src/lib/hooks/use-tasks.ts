@@ -4,14 +4,13 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { type Task, type Workspace, type Priority, type Effort, type Note } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
-import { useUser, useAuth } from "@/firebase";
-import { useFirestore } from "@/firebase";
-import { collection, addDoc, doc, setDoc, deleteDoc, writeBatch, serverTimestamp, query, where, getDocs, onSnapshot, getDoc } from "firebase/firestore";
-import { updateProfile, onAuthStateChanged } from "firebase/auth";
-import { useCollection, useDoc } from "@/firebase";
+import { useUser, useAuth, useFirestore, useCollection, useDoc } from "@/firebase";
+import { collection, addDoc, doc, setDoc, deleteDoc, writeBatch, serverTimestamp, getDocs } from "firebase/firestore";
+import { onAuthStateChanged, updateProfile } from "firebase/auth";
 import { useSidebar } from "@/components/ui/sidebar";
 import { errorEmitter } from "@/firebase/error-emitter";
 import { FirestorePermissionError } from "@/firebase/errors";
+import { getDoc } from "firebase/firestore";
 
 
 const ACTIVE_WORKSPACE_KEY = "listily-active-workspace";
@@ -26,8 +25,7 @@ export function useTasks() {
   const [loading, setLoading] = useState(true);
   const [isFirstTime, setIsFirstTime] = useState(false);
   
-  const sidebarContext = useSidebar();
-  const setSidebarOpen = sidebarContext ? sidebarContext.setOpen : () => {};
+  const { setOpen: setSidebarOpen } = useSidebar();
   
   // Firestore references
   const workspacesRef = useMemo(() => 
@@ -35,16 +33,16 @@ export function useTasks() {
   , [firestore, user]);
 
   const activeWorkspaceRef = useMemo(() => 
-    activeWorkspaceId && workspacesRef ? doc(workspacesRef, activeWorkspaceId) : null
-  , [activeWorkspaceId, workspacesRef]);
+    activeWorkspaceId && user ? doc(firestore, 'users', user.uid, 'workspaces', activeWorkspaceId) : null
+  , [activeWorkspaceId, user, firestore]);
   
   const tasksRef = useMemo(() => 
-    activeWorkspaceRef ? collection(activeWorkspaceRef, 'tasks') : null
-  , [activeWorkspaceRef]);
+    activeWorkspaceId && user ? collection(firestore, 'users', user.uid, 'workspaces', activeWorkspaceId, 'tasks') : null
+  , [activeWorkspaceId, user, firestore]);
 
   const notesRef = useMemo(() => 
-    activeWorkspaceRef ? collection(activeWorkspaceRef, 'notes') : null
-  , [activeWorkspaceRef]);
+    activeWorkspaceId && user ? collection(firestore, 'users', user.uid, 'workspaces', activeWorkspaceId, 'notes') : null
+  , [activeWorkspaceId, user, firestore]);
   
   // Firestore data hooks
   const { data: workspaces, loading: workspacesLoading } = useCollection<Workspace>(workspacesRef);
@@ -55,17 +53,16 @@ export function useTasks() {
   // Handle user profile creation for new sign-ups
   useEffect(() => {
     if (!auth || !firestore) return;
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        const userDocRef = doc(firestore, 'users', user.uid);
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      if (currentUser) {
+        const userDocRef = doc(firestore, 'users', currentUser.uid);
         const userDoc = await getDoc(userDocRef);
         if (!userDoc.exists()) {
-          // New user, create profile
-          const displayName = user.displayName || 'New User';
+          const displayName = currentUser.displayName || 'New User';
           const profileData = {
             displayName: displayName,
-            email: user.email,
-            photoURL: user.photoURL,
+            email: currentUser.email,
+            photoURL: currentUser.photoURL,
           };
           
           setDoc(userDocRef, profileData).catch(async (serverError) => {
@@ -77,8 +74,8 @@ export function useTasks() {
                 errorEmitter.emit('permission-error', permissionError);
             });
 
-          if (!user.displayName) {
-             await updateProfile(user, { displayName: 'New User' });
+          if (!currentUser.displayName) {
+             await updateProfile(currentUser, { displayName: 'New User' });
           }
         }
       }
