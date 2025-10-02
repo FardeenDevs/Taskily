@@ -25,8 +25,7 @@ export function FirebaseClientProvider({
   }, []);
 
   if (!firebaseInstances) {
-    // You can return a loading spinner or null here
-    return null;
+    return <>{children}</>;
   }
 
   return (

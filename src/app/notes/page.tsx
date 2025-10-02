@@ -8,7 +8,6 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Settings, LayoutGrid, Plus } from "lucide-react";
 import { useState, memo, useMemo } from "react";
 import { SettingsDialog } from "@/app/components/settings-dialog";
-import { ThemeProvider } from "@/app/components/theme-provider";
 import { Button } from "@/components/ui/button";
 import { FirestoreWorkspaceSidebar } from "@/app/components/firestore-workspace-sidebar";
 import { SidebarProvider, SidebarInset, useSidebar } from "@/components/ui/sidebar";
@@ -24,7 +23,7 @@ import { UserNav } from "../components/user-nav";
 
 const NotesPageContentInternal = memo(function NotesPageContentInternal() {
   const tasksHook = useTasks();
-  const { setOpen: setSidebarOpen, toggleSidebar } = useSidebar();
+  const { toggleSidebar } = useSidebar();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const pathname = usePathname();
 
@@ -153,7 +152,7 @@ const NotesPageContentInternal = memo(function NotesPageContentInternal() {
                         New Note
                         </Button>
                     </CardHeader>
-                    <CardContent className="flex-grow overflow-y-auto">
+                    <CardContent className="flex-grow overflow-y-auto p-6 pt-0">
                         <NotesSection
                         notes={sortedNotes}
                         onDeleteNote={deleteNote}
@@ -187,19 +186,17 @@ const NotesPageContentInternal = memo(function NotesPageContentInternal() {
 });
 
 function NotesPageContent() {
-    return (
-        <SidebarProvider>
-            <NotesPageContentInternal />
-        </SidebarProvider>
-    );
+    const tasksHook = useTasks();
+    if (!tasksHook) return null;
+    return <NotesPageContentInternal />;
 }
 
 export default function NotesPage() {
   return (
-    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-        <AuthGate>
+    <AuthGate>
+        <SidebarProvider>
             <NotesPageContent />
-        </AuthGate>
-    </ThemeProvider>
+        </SidebarProvider>
+    </AuthGate>
   );
 }

@@ -12,7 +12,6 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Settings, LayoutGrid, Trash2 } from "lucide-react";
 import { useState, memo } from "react";
 import { SettingsDialog } from "@/app/components/settings-dialog";
-import { ThemeProvider } from "@/app/components/theme-provider";
 import { Button } from "@/components/ui/button";
 import { FirestoreWorkspaceSidebar } from "@/app/components/firestore-workspace-sidebar";
 import { SidebarProvider, SidebarInset, useSidebar } from "@/components/ui/sidebar";
@@ -26,7 +25,7 @@ import { UserNav } from "./components/user-nav";
 
 const AppContentInternal = memo(function AppContentInternal() {
   const tasksHook = useTasks();
-  const { setOpen: setSidebarOpen, toggleSidebar } = useSidebar();
+  const { toggleSidebar } = useSidebar();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const pathname = usePathname();
 
@@ -138,7 +137,7 @@ const AppContentInternal = memo(function AppContentInternal() {
                                 </CardTitle>
                             </div>
                         </CardHeader>
-                        <CardContent className="space-y-8 flex-grow overflow-y-auto">
+                        <CardContent className="space-y-8 flex-grow overflow-y-auto p-6 pt-0">
                             <div className="space-y-6">
                             <TaskProgress completed={completedTasks} total={totalTasks} />
                             <TaskInput onAddTask={addTask} />
@@ -193,19 +192,18 @@ const AppContentInternal = memo(function AppContentInternal() {
 });
 
 function AppContent() {
-    return (
-        <SidebarProvider>
-            <AppContentInternal />
-        </SidebarProvider>
-    )
+    const tasksHook = useTasks();
+    if (!tasksHook) return null;
+
+    return <AppContentInternal />;
 }
 
 export default function Home() {
   return (
-    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-        <AuthGate>
+    <AuthGate>
+        <SidebarProvider>
             <AppContent />
-        </AuthGate>
-    </ThemeProvider>
+        </SidebarProvider>
+    </AuthGate>
   );
 }
