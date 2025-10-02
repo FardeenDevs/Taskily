@@ -22,6 +22,7 @@ import { Note } from "@/lib/types";
 import { NoteDialog } from "../components/note-dialog";
 import { AuthGate } from "../components/auth-gate";
 import { UserNav } from "../components/user-nav";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const NotesPageContent = memo(function NotesPageContent() {
   const tasksHook = useTasks();
@@ -77,7 +78,7 @@ const NotesPageContent = memo(function NotesPageContent() {
     <SidebarInset>
        <FirestoreWorkspaceSidebar tasksHook={tasksHook} />
       <div className="flex flex-col h-screen">
-        <header className="flex items-center justify-between p-4 flex-shrink-0">
+        <header className="flex items-center justify-between p-4 border-b">
               <div className="flex items-center gap-2">
                   <div className="z-50 md:hidden">
                       <DropdownMenu>
@@ -136,11 +137,11 @@ const NotesPageContent = memo(function NotesPageContent() {
               </div>
           </header>
 
-        <main className="flex-1 w-full flex flex-col items-center justify-start p-4 pt-0 sm:p-8 sm:pt-0 overflow-y-auto">
+        <main className="flex-1 overflow-y-auto p-4 sm:p-8">
           <WelcomeDialog open={isFirstTime} onOpenChange={setIsFirstTime} />
           <SettingsDialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen} onResetApp={resetApp} />
           
-          <div className="w-full max-w-4xl">
+          <div className="w-full max-w-4xl mx-auto">
             <AnimatePresence>
               <motion.div layout transition={{ type: 'spring', stiffness: 300, damping: 30 }}>
                 <Card className="border-2 border-border/50 shadow-2xl shadow-primary/5 overflow-hidden">
