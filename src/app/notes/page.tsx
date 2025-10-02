@@ -204,10 +204,12 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
             <AlertDialogTitle>This Listspace is Locked</AlertDialogTitle>
             <AlertDialogDescription>
               Please enter the password to view your notes.
-              {activeWorkspace?.passwordHint && (
-                <div className="text-xs text-muted-foreground mt-2">Hint: {activeWorkspace.passwordHint}</div>
-              )}
             </AlertDialogDescription>
+              {activeWorkspace?.passwordHint && (
+                <p className="text-sm text-muted-foreground">
+                    <span className="text-xs">Hint: {activeWorkspace.passwordHint}</span>
+                </p>
+              )}
           </AlertDialogHeader>
           <div className="py-2">
             <Label htmlFor="password-unlock" className="sr-only">Password</Label>
