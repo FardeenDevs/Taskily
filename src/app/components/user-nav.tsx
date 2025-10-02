@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { LogOut, User as UserIcon, Settings } from "lucide-react";
 import { useRouter } from "next/navigation";
+import Link from 'next/link';
 
 interface UserNavProps {
   setIsSettingsOpen: (isOpen: boolean) => void;
@@ -65,10 +66,12 @@ export function UserNav({ setIsSettingsOpen }: UserNavProps) {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          <DropdownMenuItem disabled>
-            <UserIcon className="mr-2 h-4 w-4" />
-            <span>Profile</span>
-          </DropdownMenuItem>
+          <Link href="/profile" passHref>
+            <DropdownMenuItem>
+              <UserIcon className="mr-2 h-4 w-4" />
+              <span>Profile</span>
+            </DropdownMenuItem>
+          </Link>
           <DropdownMenuItem onClick={() => setIsSettingsOpen(true)}>
             <Settings className="mr-2 h-4 w-4" />
             <span>Settings</span>
