@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Trash2 } from 'lucide-react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { type Timestamp } from 'firebase/firestore';
 
 interface NoteItemProps {
   note: Note;
@@ -14,6 +15,16 @@ interface NoteItemProps {
 }
 
 export function NoteItem({ note, onEdit, onDelete }: NoteItemProps) {
+  const getDisplayDate = (createdAt: string | Timestamp) => {
+    if (!createdAt) return 'No date';
+    // Firestore Timestamps have a toDate() method
+    if (typeof (createdAt as Timestamp).toDate === 'function') {
+      return (createdAt as Timestamp).toDate().toLocaleDateString();
+    }
+    // Otherwise, it's likely an ISO string from a client-side object
+    return new Date(createdAt as string).toLocaleDateString();
+  };
+
   return (
     <Card className="relative flex flex-col h-full group bg-secondary/30 hover:bg-secondary/60 transition-colors duration-200" onClick={onEdit}>
       <CardHeader className="flex-row items-start justify-between pb-2">
@@ -47,7 +58,7 @@ export function NoteItem({ note, onEdit, onDelete }: NoteItemProps) {
         />
       </CardContent>
        <CardFooter className="pt-2 pb-4">
-        <p className="text-xs text-muted-foreground">{new Date(note.createdAt).toLocaleDateString()}</p>
+        <p className="text-xs text-muted-foreground">{getDisplayDate(note.createdAt)}</p>
       </CardFooter>
     </Card>
   );

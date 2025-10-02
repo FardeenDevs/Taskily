@@ -1,4 +1,6 @@
 
+import { type Timestamp } from "firebase/firestore";
+
 export type Priority = "P1" | "P2" | "P3" | "P4" | "P5";
 export type Effort = "E1" | "E2" | "E3" | "E4" | "E5";
 
@@ -24,8 +26,7 @@ export interface Note {
   id: string;
   title: string;
   content: string;
-  createdAt: string;
+  createdAt: Timestamp | string;
   workspaceId: string;
   isNew?: boolean; // Optional flag for temporary client-side notes
 }
-
