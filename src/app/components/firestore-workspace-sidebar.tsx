@@ -75,6 +75,11 @@ export function FirestoreWorkspaceSidebar({ tasksHook }: WorkspaceSidebarProps) 
   const protectNotesSwitchRef = useRef<HTMLButtonElement>(null);
 
 
+  const handleAddWorkspace = () => {
+    addWorkspace(newWorkspaceName);
+    setNewWorkspaceName("");
+  };
+
   const handleSaveChanges = async () => {
     if (selectedWorkspace) {
       // Handle name change
@@ -349,7 +354,5 @@ export function FirestoreWorkspaceSidebar({ tasksHook }: WorkspaceSidebarProps) 
     </Sidebar>
   );
 }
-
-    
 
     
