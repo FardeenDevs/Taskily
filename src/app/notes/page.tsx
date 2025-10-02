@@ -4,17 +4,17 @@
 import { useTasks } from "@/app/main-layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus } from "lucide-react";
-import { useState, memo, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { NotesSection } from "@/app/components/notes-section";
 import { Note } from "@/lib/types";
 import dynamic from "next/dynamic";
 
 
-const NoteDialog = dynamic(() => import('../components/note-dialog').then(mod => mod.NoteDialog));
+const NoteDialog = dynamic(() => import('@/app/components/note-dialog').then(mod => mod.NoteDialog));
 
 
-const NotesPageContent = memo(function NotesPageContentInternal() {
+export default function NotesPage() {
   const {
     notes,
     addNote,
@@ -103,10 +103,4 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
       />}
     </>
   );
-});
-
-export default function NotesPage() {
-    return (
-        <NotesPageContent />
-    );
 }
