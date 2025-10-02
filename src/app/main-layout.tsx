@@ -10,6 +10,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import dynamic from "next/dynamic";
 import { BackupCodesDialog } from "@/components/ui/backup-codes-dialog";
 import { NotesBackupCodesDialog } from "@/components/ui/notes-backup-codes-dialog";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 type useTasksType = ReturnType<typeof useTasksClient>;
 const TasksContext = React.createContext<useTasksType | null>(null);
@@ -23,7 +24,10 @@ export const useTasks = () => {
 }
 
 const WelcomeDialog = dynamic(() => import('@/app/components/welcome-dialog').then(mod => mod.WelcomeDialog));
-const SettingsDialog = dynamic(() => import('@/app/components/settings-dialog').then(mod => mod.SettingsDialog));
+const SettingsDialog = dynamic(() => import('@/app/components/settings-dialog').then(mod => mod.SettingsDialog), {
+    loading: () => <LoadingSpinner />,
+});
+
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const { user } = useUser();
