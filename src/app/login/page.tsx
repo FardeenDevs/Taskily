@@ -3,7 +3,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+import { GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
 import { useAuth, useUser } from '@/firebase';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -17,6 +17,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
 
 const signInSchema = z.object({
   email: z.string().email({ message: "Invalid email address." }),
@@ -29,12 +30,17 @@ const signUpSchema = z.object({
   password: z.string().min(6, { message: "Password must be at least 6 characters." }),
 });
 
+const forgotPasswordSchema = z.object({
+    email: z.string().email({ message: "Invalid email address." }),
+});
+
 export default function LoginPage() {
   const auth = useAuth();
   const { user, loading } = useUser();
   const router = useRouter();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false);
 
   const signInForm = useForm<z.infer<typeof signInSchema>>({
     resolver: zodResolver(signInSchema),
@@ -45,6 +51,12 @@ export default function LoginPage() {
     resolver: zodResolver(signUpSchema),
     defaultValues: { displayName: "", email: "", password: "" },
   });
+
+  const forgotPasswordForm = useForm<z.infer<typeof forgotPasswordSchema>>({
+    resolver: zodResolver(forgotPasswordSchema),
+    defaultValues: { email: "" },
+  });
+
 
   useEffect(() => {
     if (!loading && user) {
@@ -99,7 +111,7 @@ export default function LoginPage() {
     setIsSubmitting(true);
     try {
         await createUserWithEmailAndPassword(auth, values.email, values.password);
-        // The user profile creation is handled by the useTasks hook via onAuthStateChanged
+        // The user profile and backup code creation is handled by the useTasks hook via onAuthStateChanged
     } catch (error: any) {
         let description = "An unexpected error occurred.";
         if (error.code === 'auth/email-already-in-use') {
@@ -114,6 +126,29 @@ export default function LoginPage() {
         setIsSubmitting(false);
     }
   };
+  
+  const handleForgotPassword = async (values: z.infer<typeof forgotPasswordSchema>) => {
+    if (!auth) return;
+    setIsSubmitting(true);
+    try {
+        await sendPasswordResetEmail(auth, values.email);
+        toast({
+            title: "Password Reset Email Sent",
+            description: `If an account exists for ${values.email}, a password reset link has been sent.`,
+        });
+        setIsForgotPasswordOpen(false);
+        forgotPasswordForm.reset();
+    } catch (error) {
+        console.error("Error sending password reset email", error);
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Could not send password reset email. Please try again.",
+        });
+    } finally {
+        setIsSubmitting(false);
+    }
+  }
 
 
   if (loading || user) {
@@ -182,7 +217,12 @@ export default function LoginPage() {
                         name="password"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Password</FormLabel>
+                            <div className="flex justify-between items-center">
+                                <FormLabel>Password</FormLabel>
+                                <DialogTrigger asChild>
+                                    <Button type="button" variant="link" className="h-auto p-0 text-xs" onClick={() => setIsForgotPasswordOpen(true)}>Forgot Password?</Button>
+                                </DialogTrigger>
+                            </div>
                             <FormControl>
                               <Input type="password" placeholder="••••••••" {...field} />
                             </FormControl>
@@ -262,6 +302,40 @@ export default function LoginPage() {
             </CardContent>
           </Card>
         </motion.div>
+        
+        <Dialog open={isForgotPasswordOpen} onOpenChange={setIsForgotPasswordOpen}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Forgot Password</DialogTitle>
+                    <DialogDescription>
+                        Enter your email address and we'll send you a link to reset your password.
+                    </DialogDescription>
+                </DialogHeader>
+                <Form {...forgotPasswordForm}>
+                    <form onSubmit={forgotPasswordForm.handleSubmit(handleForgotPassword)} className="space-y-4">
+                        <FormField
+                            control={forgotPasswordForm.control}
+                            name="email"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Email</FormLabel>
+                                    <FormControl>
+                                        <Input type="email" placeholder="you@example.com" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <DialogFooter>
+                            <Button type="button" variant="secondary" onClick={() => setIsForgotPasswordOpen(false)}>Cancel</Button>
+                            <Button type="submit" disabled={isSubmitting}>
+                                {isSubmitting ? 'Sending...' : 'Send Reset Link'}
+                            </Button>
+                        </DialogFooter>
+                    </form>
+                </Form>
+            </DialogContent>
+        </Dialog>
     </div>
   );
 }

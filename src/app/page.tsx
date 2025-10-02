@@ -19,6 +19,7 @@ import dynamic from "next/dynamic";
 import { Priority, Effort } from "@/lib/types";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
+import { BackupCodesDialog } from "@/components/ui/backup-codes-dialog";
 
 const WelcomeDialog = dynamic(() => import('@/app/components/welcome-dialog').then(mod => mod.WelcomeDialog));
 const SettingsDialog = dynamic(() => import('@/app/components/settings-dialog').then(mod => mod.SettingsDialog));
@@ -50,6 +51,8 @@ const AppContent = memo(function AppContentInternal() {
     workspaces,
     appSettings, 
     setAppSettings,
+    backupCodes,
+    clearBackupCodes,
   } = tasksHook;
 
   const handleClearTasks = useCallback(() => {
@@ -99,27 +102,34 @@ const AppContent = memo(function AppContentInternal() {
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-8 flex-grow overflow-y-auto p-6 pt-0">
-                  <div className="space-y-6">
-                    <TaskProgress completed={completedTasks} total={totalTasks} />
-                    <TaskInput 
-                      onAddTask={handleAddTask} 
-                      defaultPriority={appSettings.defaultPriority}
-                      defaultEffort={appSettings.defaultEffort}
-                    />
-                    <TaskList
-                      tasks={tasks}
-                      onToggleTask={toggleTask}
-                      onDeleteTask={deleteTask}
-                      onEditTask={editTask}
-                    />
-                  </div>
+                  {!activeWorkspace ? (
+                     <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/30 bg-muted/50 p-12 text-center h-64">
+                        <h3 className="text-lg font-semibold text-muted-foreground">Select a Listspace</h3>
+                        <p className="text-sm text-muted-foreground">Choose a listspace from the sidebar to get started.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-6">
+                      <TaskProgress completed={completedTasks} total={totalTasks} />
+                      <TaskInput 
+                        onAddTask={handleAddTask} 
+                        defaultPriority={appSettings.defaultPriority}
+                        defaultEffort={appSettings.defaultEffort}
+                      />
+                      <TaskList
+                        tasks={tasks}
+                        onToggleTask={toggleTask}
+                        onDeleteTask={deleteTask}
+                        onEditTask={editTask}
+                      />
+                    </div>
+                  )}
                 </CardContent>
                 <CardFooter className="flex items-center justify-between flex-shrink-0">
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
                       <Button
                         variant="destructive"
-                        disabled={tasks.length === 0}
+                        disabled={tasks.length === 0 || !activeWorkspace}
                         className="disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         <Trash2 className="mr-2 h-4 w-4" />
@@ -148,6 +158,7 @@ const AppContent = memo(function AppContentInternal() {
           </div>
       </MainLayout>
       {isFirstTime && <WelcomeDialog open={isFirstTime} onOpenChange={setIsFirstTime} />}
+      {backupCodes && <BackupCodesDialog open={!!backupCodes} onOpenChange={clearBackupCodes} codes={backupCodes} />}
       {isSettingsOpen && <SettingsDialog 
         open={isSettingsOpen} 
         onOpenChange={setIsSettingsOpen} 

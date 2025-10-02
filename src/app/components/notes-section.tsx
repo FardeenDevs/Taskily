@@ -18,9 +18,8 @@ export const NotesSection = memo(function NotesSection({ notes, onEditNote, onDe
   if (isLocked) {
      return (
         <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/30 bg-muted/50 p-12 text-center h-64">
-            <ShieldAlert className="h-12 w-12 text-muted-foreground/50 mb-4" />
-            <h3 className="text-lg font-semibold text-muted-foreground">Listspace Locked</h3>
-            <p className="text-sm text-muted-foreground">Enter the password to view your notes.</p>
+            <h3 className="text-lg font-semibold text-muted-foreground">Select a Listspace</h3>
+            <p className="text-sm text-muted-foreground">Choose a listspace from the sidebar to see your notes.</p>
         </div>
      )
   }

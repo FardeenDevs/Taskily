@@ -23,6 +23,20 @@
       },
       "required": ["displayName", "email"]
     },
+    "UserPrivate": {
+      "title": "User Private Data",
+      "description": "Represents a user's private data, like backup codes.",
+      "type": "object",
+      "properties": {
+        "backupCodes": {
+          "type": "array",
+          "description": "An array of single-use backup codes for account recovery.",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
     "Workspace": {
       "title": "Workspace",
       "description": "A container for tasks and notes, owned by a user.",
@@ -98,6 +112,12 @@
         "$ref": "#/entities/UserProfile"
       },
       "description": "Stores public profile information for each user."
+    },
+    "/users/{userId}/private/{docId}": {
+      "schema": {
+        "$ref": "#/entities/UserPrivate"
+      },
+      "description": "Stores private user data, such as backup codes for account recovery. Only the user should have read/write access."
     },
     "/users/{userId}/workspaces/{workspaceId}": {
         "schema": {

@@ -14,6 +14,7 @@ import { useUser } from "@/firebase";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import dynamic from "next/dynamic";
+import { BackupCodesDialog } from "@/components/ui/backup-codes-dialog";
 
 const WelcomeDialog = dynamic(() => import('@/app/components/welcome-dialog').then(mod => mod.WelcomeDialog));
 const SettingsDialog = dynamic(() => import('@/app/components/settings-dialog').then(mod => mod.SettingsDialog));
@@ -44,6 +45,8 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
     workspaces,
     appSettings, 
     setAppSettings,
+    backupCodes,
+    clearBackupCodes,
   } = tasksHook;
 
   useEffect(() => {
@@ -142,7 +145,7 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
                           notes={sortedNotes}
                           onDeleteNote={handleDeleteNote}
                           onEditNote={handleOpenEditDialog}
-                          isLocked={false}
+                          isLocked={!activeWorkspace}
                       />
                     </CardContent>
                 </Card>
@@ -150,6 +153,7 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
         </div>
       </MainLayout>
       {isFirstTime && <WelcomeDialog open={isFirstTime} onOpenChange={setIsFirstTime} />}
+      {backupCodes && <BackupCodesDialog open={!!backupCodes} onOpenChange={clearBackupCodes} codes={backupCodes} />}
       {isSettingsOpen && <SettingsDialog 
         open={isSettingsOpen} 
         onOpenChange={setIsSettingsOpen} 

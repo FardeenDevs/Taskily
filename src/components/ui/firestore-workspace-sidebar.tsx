@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, MoreVertical, Pencil, Trash2, LayoutGrid, Archive, Lock, Unlock, Copy, Check } from "lucide-react";
+import { Plus, MoreVertical, Pencil, Trash2, LayoutGrid, Archive } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -32,13 +32,10 @@ import {
   DialogFooter,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { Workspace } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
-import { useUser } from "@/firebase";
-import { BackupCodesDialog } from "./backup-codes-dialog";
-
 
 type WorkspaceSidebarProps = {
   tasksHook: ReturnType<typeof useTasks>;
@@ -57,18 +54,12 @@ export function FirestoreWorkspaceSidebar({ tasksHook }: WorkspaceSidebarProps) 
   const { setOpen } = useSidebar();
   const [newWorkspaceName, setNewWorkspaceName] = useState("");
   
-  const { user } = useUser();
   const { toast } = useToast();
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [clearDialogOpen, setClearDialogOpen] = useState(false);
-  const [backupCodes, setBackupCodes] = useState<string[] | null>(null);
-
   
   const [editName, setEditName] = useState("");
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [newPasswordHint, setNewPasswordHint] = useState("");
   const [selectedWorkspace, setSelectedWorkspace] = useState<Workspace | null>(null);
 
   const handleAddWorkspace = () => {
@@ -78,17 +69,9 @@ export function FirestoreWorkspaceSidebar({ tasksHook }: WorkspaceSidebarProps) 
   
   const handleEditWorkspace = () => {
     if (selectedWorkspace) {
-      const { success, newBackupCodes } = editWorkspace(selectedWorkspace.id, editName, currentPassword, newPassword, newPasswordHint);
-      if (success) {
-        setEditDialogOpen(false);
-        // Do not nullify selectedWorkspace here, so we can use its name
-        toast({ title: "Listspace updated!" });
-        if (newBackupCodes) {
-            setBackupCodes(newBackupCodes);
-        }
-      } else {
-        toast({ variant: "destructive", title: "Incorrect Current Password" });
-      }
+      editWorkspace(selectedWorkspace.id, editName);
+      setEditDialogOpen(false);
+      toast({ title: "Listspace updated!" });
     }
   };
   
@@ -111,15 +94,7 @@ export function FirestoreWorkspaceSidebar({ tasksHook }: WorkspaceSidebarProps) 
   const openEditDialog = (workspace: Workspace) => {
     setSelectedWorkspace(workspace);
     setEditName(workspace.name);
-    setCurrentPassword("");
-    setNewPassword("");
-    setNewPasswordHint(workspace.passwordHint || "");
     setEditDialogOpen(true);
-  }
-  
-  const closeBackupDialog = () => {
-    setBackupCodes(null);
-    setSelectedWorkspace(null); // Clear selected workspace after codes are handled.
   }
 
   return (
@@ -138,7 +113,6 @@ export function FirestoreWorkspaceSidebar({ tasksHook }: WorkspaceSidebarProps) 
                 isActive={workspace.id === activeWorkspaceId}
                 onClick={() => switchWorkspace(workspace.id)}
               >
-                {workspace.password ? <Lock className="h-4 w-4 text-muted-foreground" /> : <Unlock className="h-4 w-4 text-muted-foreground/50" />}
                 <span className="truncate">{workspace.name}</span>
               </SidebarMenuButton>
 
@@ -151,7 +125,7 @@ export function FirestoreWorkspaceSidebar({ tasksHook }: WorkspaceSidebarProps) 
                 <DropdownMenuContent>
                     <DropdownMenuItem onSelect={() => openEditDialog(workspace)}>
                         <Pencil className="mr-2 h-4 w-4" />
-                        <span>Edit / Password</span>
+                        <span>Edit</span>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onSelect={() => { setSelectedWorkspace(workspace); setClearDialogOpen(true); }}>
@@ -183,33 +157,18 @@ export function FirestoreWorkspaceSidebar({ tasksHook }: WorkspaceSidebarProps) 
         </div>
       </SidebarGroup>
 
-       {/* Edit Name / Password Dialog */}
        <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
             <DialogContent>
             <DialogHeader>
                 <DialogTitle>Edit Listspace</DialogTitle>
                 <DialogDescription>
-                    Manage the listspace name and password. Leave the new password field blank to remove an existing password.
+                    Manage the listspace name.
                 </DialogDescription>
             </DialogHeader>
             <div className="py-4 space-y-4">
                 <div className="space-y-2">
                     <Label htmlFor="workspace-name">Name</Label>
                     <Input id="workspace-name" value={editName} onChange={(e) => setEditName(e.target.value)} />
-                </div>
-                 {selectedWorkspace?.password && (
-                    <div className="space-y-2">
-                        <Label htmlFor="workspace-current-password">Current Password</Label>
-                        <Input id="workspace-current-password" type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} placeholder="Enter current password"/>
-                    </div>
-                 )}
-                 <div className="space-y-2">
-                    <Label htmlFor="workspace-new-password">New Password (optional)</Label>
-                    <Input id="workspace-new-password" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="Leave blank to remove"/>
-                </div>
-                 <div className="space-y-2">
-                    <Label htmlFor="workspace-password-hint">Password Hint (optional)</Label>
-                    <Input id="workspace-password-hint" value={newPasswordHint} onChange={(e) => setNewPasswordHint(e.target.value)} placeholder="e.g., My first pet's name" />
                 </div>
             </div>
             <DialogFooter>
@@ -219,10 +178,6 @@ export function FirestoreWorkspaceSidebar({ tasksHook }: WorkspaceSidebarProps) 
             </DialogContent>
         </Dialog>
 
-        {/* Backup Codes Dialog */}
-        <BackupCodesDialog codes={backupCodes} open={!!backupCodes} onOpenChange={closeBackupDialog} />
-
-        {/* Delete Workspace Dialog */}
         <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
             <AlertDialogContent>
                 <AlertDialogHeader>
@@ -240,7 +195,6 @@ export function FirestoreWorkspaceSidebar({ tasksHook }: WorkspaceSidebarProps) 
             </AlertDialogContent>
         </AlertDialog>
 
-        {/* Clear Tasks Dialog */}
         <AlertDialog open={clearDialogOpen} onOpenChange={setClearDialogOpen}>
             <AlertDialogContent>
                 <AlertDialogHeader>

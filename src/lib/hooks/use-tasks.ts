@@ -6,10 +6,11 @@ import { type Task, type Workspace, type Priority, type Effort, type Note, type 
 import { useToast } from "@/hooks/use-toast";
 import { useUser, useAuth, useFirestore, useCollection, useDoc } from "@/firebase";
 import { collection, addDoc, doc, setDoc, deleteDoc, writeBatch, serverTimestamp, getDocs, getDoc, query, where, updateDoc } from "firebase/firestore";
-import { onAuthStateChanged, updateProfile, deleteUser } from "firebase/auth";
+import { onAuthStateChanged, updateProfile, deleteUser, type User as FirebaseUser } from "firebase/auth";
 import { useSidebar } from "@/components/ui/sidebar";
 import { errorEmitter } from "@/firebase/error-emitter";
 import { FirestorePermissionError } from "@/firebase/errors";
+import { v4 as uuidv4 } from 'uuid'; // Using uuid for truly random codes
 
 
 const ACTIVE_WORKSPACE_KEY = "listily-active-workspace";
@@ -20,6 +21,16 @@ const DEFAULT_SETTINGS: AppSettings = {
   defaultEffort: "E3",
   defaultWorkspaceId: null,
 };
+
+// Helper function to generate backup codes
+const generateBackupCodes = () => {
+    const codes = [];
+    for (let i = 0; i < 8; i++) {
+        codes.push(uuidv4().slice(0, 8));
+    }
+    return codes;
+};
+
 
 export function useTasks() {
   const auth = useAuth();
@@ -32,6 +43,7 @@ export function useTasks() {
   const [isFirstTime, setIsFirstTime] = useState(false);
   const [initialCheckDone, setInitialCheckDone] = useState(false);
   const [appSettings, setAppSettingsState] = useState<AppSettings>(DEFAULT_SETTINGS);
+  const [backupCodes, setBackupCodes] = useState<string[] | null>(null);
   
   const { setOpen: setSidebarOpen } = useSidebar();
   
@@ -88,22 +100,37 @@ export function useTasks() {
       if (currentUser) {
         const userDocRef = doc(firestore, 'users', currentUser.uid);
         const userDoc = await getDoc(userDocRef);
+        
         if (!userDoc.exists()) {
-          const displayName = currentUser.displayName || 'New User';
+          // New user
+          const isEmailUser = currentUser.providerData.some(p => p.providerId === 'password');
+          
           const profileData = {
-            displayName: displayName,
+            displayName: currentUser.displayName || 'New User',
             email: currentUser.email,
             photoURL: currentUser.photoURL,
           };
           
-          setDoc(userDocRef, profileData).catch(async (serverError) => {
-                const permissionError = new FirestorePermissionError({
-                    path: userDocRef.path,
-                    operation: 'create',
-                    requestResourceData: profileData,
-                });
-                errorEmitter.emit('permission-error', permissionError);
-            });
+          const userPrivateDocRef = doc(firestore, 'users', currentUser.uid, 'private', 'data');
+          
+          const batch = writeBatch(firestore);
+          batch.set(userDocRef, profileData);
+          
+          if (isEmailUser) {
+            const codes = generateBackupCodes();
+            // In a real app, hash these codes before storing
+            batch.set(userPrivateDocRef, { backupCodes: codes });
+            setBackupCodes(codes); // Show codes to the user
+          }
+          
+          await batch.commit().catch(async (serverError) => {
+             // It's hard to know which operation failed, so we provide a generic path
+             const permissionError = new FirestorePermissionError({
+                path: `/users/${currentUser.uid}`,
+                operation: 'create',
+             });
+             errorEmitter.emit('permission-error', permissionError);
+          });
 
           if (!currentUser.displayName) {
              await updateProfile(currentUser, { displayName: 'New User' });
@@ -113,6 +140,10 @@ export function useTasks() {
     });
     return () => unsubscribe();
   }, [auth, firestore]);
+
+  const clearBackupCodes = useCallback(() => {
+    setBackupCodes(null);
+  }, []);
 
   // Determine initial active workspace
   useEffect(() => {
@@ -416,7 +447,7 @@ export function useTasks() {
     const workspaceData = {
         name: name.trim(),
         createdAt: serverTimestamp(),
-        ownerId: user.uid
+        ownerId: user.uid,
     };
 
     addDoc(workspacesCollectionRef, workspaceData)
@@ -519,6 +550,8 @@ export function useTasks() {
     const userDocRef = doc(firestore, 'users', currentUser.uid);
 
     try {
+        // This is a soft delete for the public profile to avoid breaking UI for other users who might interact with this user's content.
+        // A more robust solution would use a cloud function to clean up all user data.
         const updateData = { displayName: "Deleted User" };
         await updateDoc(userDocRef, updateData)
             .catch(e => {
@@ -526,6 +559,7 @@ export function useTasks() {
                 throw e; // re-throw to stop execution
             });
 
+        // The actual user account deletion
         await deleteUser(currentUser).catch(error => {
             console.error("Error deleting account: ", error);
             if (error.code === 'auth/requires-recent-login') {
@@ -619,5 +653,7 @@ export function useTasks() {
     switchWorkspace,
     appSettings,
     setAppSettings,
+    backupCodes,
+    clearBackupCodes,
   };
 }

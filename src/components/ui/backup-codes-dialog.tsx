@@ -6,7 +6,6 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Button } from "@/components/ui/button";
 import { Copy, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { cn } from "@/lib/utils";
 
 interface BackupCodesDialogProps {
   open: boolean;
@@ -77,7 +76,7 @@ export function BackupCodesDialog({ open, onOpenChange, codes }: BackupCodesDial
         <DialogHeader>
           <DialogTitle>Save Your Backup Codes</DialogTitle>
           <DialogDescription>
-            Store these codes in a safe place. They can be used to regain access to this listspace if you <span className="text-destructive font-semibold">forget your password</span>. <span className="text-destructive font-semibold">Each code can only be used once.</span>
+            Store these codes in a safe place. They can be used to <span className="text-destructive font-semibold">regain access to your account</span> if you lose your password. <span className="text-destructive font-semibold">Each code can only be used once.</span>
           </DialogDescription>
         </DialogHeader>
         <div className="my-4 grid grid-cols-2 gap-x-6 gap-y-3 font-mono text-lg">
