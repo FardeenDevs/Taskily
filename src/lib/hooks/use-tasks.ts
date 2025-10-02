@@ -85,24 +85,28 @@ export function useTasks() {
 
   // Determine initial active workspace
   useEffect(() => {
-    if (userLoading || workspacesLoading) return;
-
-    if (user && !initialCheckDone) {
-      if (workspaces) {
-        if (workspaces.length === 0) {
-           setInitialCheckDone(true);
-           return;
-        }
-
-        const storedWorkspaceId = localStorage.getItem(`${ACTIVE_WORKSPACE_KEY}-${user.uid}`);
-        if (storedWorkspaceId && workspaces.some(ws => ws.id === storedWorkspaceId)) {
-          setActiveWorkspaceId(storedWorkspaceId);
-        } else if (workspaces.length > 0) {
-          const sortedWorkspaces = [...workspaces].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
-          setActiveWorkspaceId(sortedWorkspaces[0].id);
-        }
-        setInitialCheckDone(true);
+    if (userLoading || workspacesLoading || !user || initialCheckDone) return;
+  
+    if (workspaces) {
+      if (workspaces.length === 0) {
+         // This case is handled by the effect below.
+         // We set initialCheckDone here to allow that effect to run.
+         setInitialCheckDone(true);
+         return;
       }
+  
+      const storedWorkspaceId = localStorage.getItem(`${ACTIVE_WORKSPACE_KEY}-${user.uid}`);
+      if (storedWorkspaceId && workspaces.some(ws => ws.id === storedWorkspaceId)) {
+        setActiveWorkspaceId(storedWorkspaceId);
+      } else if (workspaces.length > 0) {
+        const sortedWorkspaces = [...workspaces].sort((a, b) => {
+          const dateA = a.createdAt ? (typeof (a.createdAt as any).toDate === 'function' ? (a.createdAt as any).toDate() : new Date(a.createdAt as string)) : new Date(0);
+          const dateB = b.createdAt ? (typeof (b.createdAt as any).toDate === 'function' ? (b.createdAt as any).toDate() : new Date(b.createdAt as string)) : new Date(0);
+          return dateA.getTime() - dateB.getTime();
+        });
+        setActiveWorkspaceId(sortedWorkspaces[0].id);
+      }
+      setInitialCheckDone(true);
     }
   }, [user, userLoading, workspaces, workspacesLoading, initialCheckDone]);
 
@@ -441,12 +445,8 @@ export function useTasks() {
     }
 
     try {
-        // 1. Delete all user's Firestore data
+        // 1. Delete all user's sub-collection data
         const batch = writeBatch(firestore);
-
-        // Delete user profile
-        const userDocRef = doc(firestore, 'users', user.uid);
-        batch.delete(userDocRef);
 
         // Delete all workspaces and their subcollections
         const userWorkspacesQuery = query(collection(firestore, 'users', user.uid, 'workspaces'), where('ownerId', '==', user.uid));
@@ -501,7 +501,11 @@ export function useTasks() {
   return {
     tasks: tasks || [],
     notes: notes || [],
-    workspaces: (workspaces || []).sort((a,b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()),
+    workspaces: (workspaces || []).sort((a,b) => {
+        const dateA = a.createdAt ? (typeof (a.createdAt as any).toDate === 'function' ? (a.createdAt as any).toDate() : new Date(a.createdAt as string)) : new Date(0);
+        const dateB = b.createdAt ? (typeof (b.createdAt as any).toDate === 'function' ? (b.createdAt as any).toDate() : new Date(b.createdAt as string)) : new Date(0);
+        return dateA.getTime() - dateB.getTime();
+    }),
     activeWorkspace,
     activeWorkspaceId,
     loading,
