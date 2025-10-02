@@ -1,117 +1,154 @@
 /**
- * @fileoverview Firestore Security Rules for Task Management App
+ * @fileoverview Firestore Security Rules for the application.
  *
  * Core Philosophy:
- * This ruleset enforces a strict user-ownership model. Users can only
- * read and write their own profile data and data within their workspaces.
+ * This ruleset enforces a strict user-ownership model. Each user can only
+ * access their own profile data and the workspaces, tasks, and notes
+ * associated with those workspaces.
  *
  * Data Structure:
- * - /users/{userId}: User profiles, accessible only by the user themselves.
- * - /users/{userId}/workspaces/{workspaceId}: Workspaces owned by a specific user.
- * - /users/{userId}/workspaces/{workspaceId}/tasks/{taskId}: Tasks within a workspace, owned by the workspace owner.
- * - /users/{userId}/workspaces/{workspaceId}/notes/{noteId}: Notes within a workspace, owned by the workspace owner.
+ * - /users/{userId}: Stores public profile information for each user.
+ * - /users/{userId}/workspaces/{workspaceId}: Stores workspaces owned by a user.
+ * - /users/{userId}/workspaces/{workspaceId}/tasks/{taskId}: Stores tasks within a workspace.
+ * - /users/{userId}/workspaces/{workspaceId}/notes/{noteId}: Stores notes within a workspace.
  *
  * Key Security Decisions:
- * - Users can only access their own user document.
- * - Users can only access workspaces, tasks and notes that are part of their data tree.
- * - Data model favors strict ownership; shared access is not supported.
+ * - Users can only read and write their own user profile.
+ * - Users can only read and write workspaces, tasks, and notes they own.
+ * - No public listing of users, workspaces, tasks, or notes is allowed.
+ * - Schema validation is relaxed in this prototype to allow for rapid iteration. Only authorization-critical fields are validated.
+ *
+ * Denormalization for Authorization:
+ * - Workspaces include an `ownerId` field, which is automatically set to the user's UID on creation.
+ * - Tasks and notes inherit authorization from their parent workspace. No additional `ownerId` field is needed on these documents.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Allows a user to read and write their own user profile.
+     * @description Controls access to user profile documents.
      * @path /users/{userId}
-     * @allow (get, create, update, delete) if request.auth.uid == userId
-     * @deny (get) if request.auth.uid != userId
-     * @deny (create) if request.auth.uid != userId
-     * @deny (update) if request.auth.uid != userId
-     * @deny (delete) if request.auth.uid != userId
-     * @principle Enforces document ownership for all operations.
+     * @allow (get) User can read their own profile.
+     * @allow (create) User can create their own profile.
+     * @allow (update) User can update their own profile.
+     * @allow (delete) User can delete their own profile.
+     * @deny (get) User cannot read other user's profiles.
+     * @deny (create) User cannot create profiles for other users.
+     * @deny (update) User cannot update other user's profiles.
+     * @deny (delete) User cannot delete other user's profiles.
+     * @principle Enforces document ownership for user profiles.
      */
     match /users/{userId} {
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
       function isOwner(userId) {
         return request.auth.uid == userId;
       }
 
-      allow get: if isOwner(userId);
+      allow get: if isSignedIn() && isOwner(userId);
       allow list: if false;
-      allow create: if isOwner(userId);
-      allow update: if isOwner(userId);
-      allow delete: if isOwner(userId);
+      allow create: if isSignedIn() && isOwner(userId);
+      allow update: if isSignedIn() && isOwner(userId);
+      allow delete: if isSignedIn() && isOwner(userId);
     }
 
     /**
-     * @description Allows a user to manage their own workspaces.
+     * @description Controls access to workspace documents.
      * @path /users/{userId}/workspaces/{workspaceId}
-     * @allow (get, list, create) if request.auth.uid == userId
-     * @allow (update, delete) if request.auth.uid == resource.data.ownerId
-     * @deny (get) if request.auth.uid != userId
-     * @deny (list) if request.auth.uid != userId
-     * @deny (create) if request.auth.uid != userId
-     * @deny (update) if request.auth.uid != resource.data.ownerId
-     * @deny (delete) if request.auth.uid != resource.data.ownerId
-     * @principle Enforces document ownership for writes.
+     * @allow (get) User can read their own workspace.
+     * @allow (create) User can create a workspace for themselves. The workspace `ownerId` is the creator.
+     * @allow (update) User can update their own workspace.
+     * @allow (delete) User can delete their own workspace.
+     * @deny (get) User cannot read other user's workspaces.
+     * @deny (create) User cannot create workspaces for other users.
+     * @deny (update) User cannot update other user's workspaces.
+     * @deny (delete) User cannot delete other user's workspaces.
+     * @principle Enforces document ownership for workspaces.
      */
     match /users/{userId}/workspaces/{workspaceId} {
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
       function isOwner(userId) {
         return request.auth.uid == userId;
       }
 
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-      allow create: if isOwner(userId) && request.resource.data.ownerId == request.auth.uid;
-      allow update: if isOwner(userId) && resource.data.ownerId == request.auth.uid;
-      allow delete: if isOwner(userId) && resource.data.ownerId == request.auth.uid;
+      allow get: if isSignedIn() && isOwner(userId);
+      allow list: if false;
+      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.ownerId == request.auth.uid;
+      allow update: if isSignedIn() && isOwner(userId) && resource.data.ownerId == request.auth.uid;
+      allow delete: if isSignedIn() && isOwner(userId) && resource.data.ownerId == request.auth.uid;
     }
 
-    /**
-     * @description Allows a workspace owner to manage tasks within their workspace.
-     * @path /users/{userId}/workspaces/{workspaceId}/tasks/{taskId}
-     * @allow (get, list, create) if request.auth.uid == userId
-     * @allow (update, delete) if request.auth.uid == userId
-     * @deny (get) if request.auth.uid != userId
-     * @deny (list) if request.auth.uid != userId
-     * @deny (create) if request.auth.uid != userId
-     * @deny (update) if request.auth.uid != userId
-     * @deny (delete) if request.auth.uid != userId
-     * @principle Enforces workspace ownership for all task operations.
-     */
+     /**
+      * @description Controls access to task documents within a workspace.
+      * @path /users/{userId}/workspaces/{workspaceId}/tasks/{taskId}
+      * @allow (get) User can read a task in their workspace.
+      * @allow (create) User can create a task in their workspace.
+      * @allow (update) User can update a task in their workspace.
+      * @allow (delete) User can delete a task in their workspace.
+      * @deny (get) User cannot read tasks in other user's workspaces.
+      * @deny (create) User cannot create tasks in other user's workspaces.
+      * @deny (update) User cannot update tasks in other user's workspaces.
+      * @deny (delete) User cannot delete tasks in other user's workspaces.
+      * @principle Enforces document ownership for tasks, inheriting from the workspace.
+      */
     match /users/{userId}/workspaces/{workspaceId}/tasks/{taskId} {
-      function isOwner(userId) {
-        return request.auth.uid == userId;
-      }
+        function isSignedIn() {
+          return request.auth != null;
+        }
 
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-      allow create: if isOwner(userId);
-      allow update: if isOwner(userId);
-      allow delete: if isOwner(userId);
+        function isOwner(userId) {
+          return request.auth.uid == userId;
+        }
+
+        function workspaceOwnerId() {
+          return get(/databases/$(database)/documents/users/$(userId)/workspaces/$(workspaceId)).data.ownerId
+        }
+
+
+        allow get: if isSignedIn() && isOwner(userId) && workspaceOwnerId() == request.auth.uid;
+        allow list: if false;
+        allow create: if isSignedIn() && isOwner(userId) && workspaceOwnerId() == request.auth.uid;
+        allow update: if isSignedIn() && isOwner(userId) && workspaceOwnerId() == request.auth.uid;
+        allow delete: if isSignedIn() && isOwner(userId) && workspaceOwnerId() == request.auth.uid;
     }
 
     /**
-     * @description Allows a workspace owner to manage notes within their workspace.
+     * @description Controls access to note documents within a workspace.
      * @path /users/{userId}/workspaces/{workspaceId}/notes/{noteId}
-     * @allow (get, list, create) if request.auth.uid == userId
-     * @allow (update, delete) if request.auth.uid == userId
-     * @deny (get) if request.auth.uid != userId
-     * @deny (list) if request.auth.uid != userId
-     * @deny (create) if request.auth.uid != userId
-     * @deny (update) if request.auth.uid != userId
-     * @deny (delete) if request.auth.uid != userId
-     * @principle Enforces workspace ownership for all note operations.
+     * @allow (get) User can read a note in their workspace.
+     * @allow (create) User can create a note in their workspace.
+     * @allow (update) User can update a note in their workspace.
+     * @allow (delete) User can delete a note in their workspace.
+     * @deny (get) User cannot read notes in other user's workspaces.
+     * @deny (create) User cannot create notes in other user's workspaces.
+     * @deny (update) User cannot update notes in other user's workspaces.
+     * @deny (delete) User cannot delete notes in other user's workspaces.
+     * @principle Enforces document ownership for notes, inheriting from the workspace.
      */
     match /users/{userId}/workspaces/{workspaceId}/notes/{noteId} {
-      function isOwner(userId) {
-        return request.auth.uid == userId;
-      }
+        function isSignedIn() {
+          return request.auth != null;
+        }
 
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-      allow create: if isOwner(userId);
-      allow update: if isOwner(userId);
-      allow delete: if isOwner(userId);
+        function isOwner(userId) {
+          return request.auth.uid == userId;
+        }
+
+        function workspaceOwnerId() {
+          return get(/databases/$(database)/documents/users/$(userId)/workspaces/$(workspaceId)).data.ownerId
+        }
+
+        allow get: if isSignedIn() && isOwner(userId) && workspaceOwnerId() == request.auth.uid;
+        allow list: if false;
+        allow create: if isSignedIn() && isOwner(userId) && workspaceOwnerId() == request.auth.uid;
+        allow update: if isSignedIn() && isOwner(userId) && workspaceOwnerId() == request.auth.uid;
+        allow delete: if isSignedIn() && isOwner(userId) && workspaceOwnerId() == request.auth.uid;
     }
   }
 }
