@@ -19,12 +19,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
+import { useRouter } from "next/navigation";
 
 const NotesPageContent = memo(function NotesPageContentInternal() {
   const { user } = useUser();
   const tasksHook = useTasks();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const { toast } = useToast();
+  const router = useRouter();
 
   const [isNoteDialogOpen, setIsNoteDialogOpen] = useState(false);
   const [editingNote, setEditingNote] = useState<Note | null>(null);
@@ -152,7 +154,7 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
   }
 
   const handleBackFromLocked = () => {
-    tasksHook.switchWorkspace(null); // Switch to no workspace
+    router.push('/');
     setIsUnlockDialogOpen(false);
   }
 
