@@ -28,7 +28,6 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   const { user } = useUser();
   const tasksHook = useTasksClient();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [isNavigating, setIsNavigating] = useState(false);
   const router = useRouter();
   
   const { 
@@ -49,28 +48,23 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   useEffect(() => {
-    // When the route changes, update the view state and end navigation animation
+    // When the route changes, update the view state
     if (pathname === '/notes') {
       setCurrentView('notes');
-    } else if (pathname === '/') {
+    } else { // This will cover '/' and '/profile'
       setCurrentView('progress');
     }
-    setIsNavigating(false);
   }, [pathname]);
 
   const handleSetCurrentView = (view: 'progress' | 'notes') => {
     const newPath = view === 'notes' ? '/notes' : '/';
     if (pathname !== newPath) {
-        setIsNavigating(true);
-        // Delay navigation slightly to allow exit animation to start
-        setTimeout(() => {
-            router.push(newPath);
-        }, 150);
+        router.push(newPath);
     }
   }
 
 
-  if (loading) {
+  if (loading && !tasksHook.activeWorkspaceId) {
     return (
       <AnimatePresence>
           <motion.div
@@ -94,17 +88,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             currentView={currentView}
             setCurrentView={handleSetCurrentView}
         >
-          <AnimatePresence mode="wait">
-            <motion.div
-                key={pathname}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.2 }}
-            >
-              {!isNavigating && children}
-            </motion.div>
-          </AnimatePresence>
+          {children}
         </MainLayoutComponent>
 
         {isFirstTime && <WelcomeDialog open={isFirstTime} onOpenChange={setIsFirstTime} />}
@@ -124,5 +108,3 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     </TasksContext.Provider>
   );
 }
-
-

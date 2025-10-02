@@ -25,8 +25,6 @@ function Layout({ children, tasksHook, setIsSettingsOpen, currentView, setCurren
     const { toggleSidebar } = useSidebar();
     const pathname = usePathname();
 
-    const isProfilePage = pathname === '/profile';
-
     return (
         <>
             <FirestoreWorkspaceSidebar tasksHook={tasksHook} />
@@ -41,40 +39,47 @@ function Layout({ children, tasksHook, setIsSettingsOpen, currentView, setCurren
 
                         <div className="flex items-center gap-4">
                             <h1 className="text-2xl font-bold text-center text-foreground hidden sm:block">Listily</h1>
-                             {!isProfilePage && (
-                                <nav className={cn("relative flex items-center gap-2 rounded-full bg-secondary p-1")}>
-                                    <span 
-                                        onClick={() => setCurrentView('progress')}
-                                        className={cn(
-                                            "relative z-10 cursor-pointer rounded-full px-4 py-1 text-sm font-medium transition-colors",
-                                            currentView !== 'progress' && "text-muted-foreground hover:text-foreground"
-                                        )}>
-                                        Progress
-                                    </span>
-                                    <span 
-                                        onClick={() => setCurrentView('notes')}
-                                        className={cn(
-                                            "relative z-10 cursor-pointer rounded-full px-4 py-1 text-sm font-medium transition-colors",
-                                            currentView !== 'notes' && "text-muted-foreground hover:text-foreground"
-                                        )}>
-                                        Notes
-                                    </span>
-                                    {currentView === 'progress' && (
+                            <nav className={cn("relative flex items-center gap-2 rounded-full bg-secondary p-1")}>
+                                <span 
+                                    onClick={() => setCurrentView('progress')}
+                                    className={cn(
+                                        "relative z-10 cursor-pointer rounded-full px-4 py-1 text-sm font-medium transition-colors",
+                                        currentView !== 'progress' && "text-muted-foreground hover:text-foreground"
+                                    )}>
+                                    Progress
+                                </span>
+                                <span 
+                                    onClick={() => setCurrentView('notes')}
+                                    className={cn(
+                                        "relative z-10 cursor-pointer rounded-full px-4 py-1 text-sm font-medium transition-colors",
+                                        currentView !== 'notes' && "text-muted-foreground hover:text-foreground"
+                                    )}>
+                                    Notes
+                                </span>
+                                <AnimatePresence>
+                                    {currentView === 'progress' ? (
                                         <motion.div
+                                            key="progress-indicator"
                                             layoutId="nav-indicator"
                                             className="absolute left-1 h-[calc(100%-8px)] w-[90px] rounded-full bg-background shadow-sm"
+                                            initial={{ opacity: 0 }}
+                                            animate={{ opacity: 1, transition: { duration: 0.3 } }}
+                                            exit={{ opacity: 0, transition: { duration: 0.3 } }}
                                             transition={{ type: 'spring', stiffness: 300, damping: 30 }}
                                         />
-                                    )}
-                                    {currentView === 'notes' && (
+                                    ) : (
                                         <motion.div
+                                            key="notes-indicator"
                                             layoutId="nav-indicator"
                                             className="absolute left-[98px] h-[calc(100%-8px)] w-[75px] rounded-full bg-background shadow-sm"
+                                            initial={{ opacity: 0 }}
+                                            animate={{ opacity: 1, transition: { duration: 0.3 } }}
+                                            exit={{ opacity: 0, transition: { duration: 0.3 } }}
                                             transition={{ type: 'spring', stiffness: 300, damping: 30 }}
                                         />
                                     )}
-                                </nav>
-                            )}
+                                </AnimatePresence>
+                            </nav>
                         </div>
 
                         <div className="flex items-center gap-2">
@@ -82,7 +87,17 @@ function Layout({ children, tasksHook, setIsSettingsOpen, currentView, setCurren
                         </div>
                     </header>
                     <main className="flex-1 overflow-y-auto relative">
-                        {children}
+                        <AnimatePresence mode="wait">
+                            <motion.div
+                                key={pathname}
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -10 }}
+                                transition={{ duration: 0.2 }}
+                            >
+                                {children}
+                            </motion.div>
+                        </AnimatePresence>
                     </main>
                 </div>
             </SidebarInset>
@@ -92,20 +107,9 @@ function Layout({ children, tasksHook, setIsSettingsOpen, currentView, setCurren
 
 
 export function MainLayout({ children, tasksHook, setIsSettingsOpen, currentView, setCurrentView }: MainLayoutProps) {
-    const pathname = usePathname();
     return (
         <Layout tasksHook={tasksHook} setIsSettingsOpen={setIsSettingsOpen} currentView={currentView} setCurrentView={setCurrentView}>
-            <AnimatePresence mode="wait">
-                <motion.div
-                    key={pathname}
-                    initial={{ opacity: 0, y: 15 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -15 }}
-                    transition={{ duration: 0.25 }}
-                >
-                    {children}
-                </motion.div>
-            </AnimatePresence>
+            {children}
         </Layout>
     )
 }
