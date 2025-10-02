@@ -48,10 +48,10 @@ export function useTasks() {
   const { data: tasks, loading: tasksLoading } = useCollection<Task>(tasksRef);
 
   const notesRef = useMemo(() => {
-    if (!activeWorkspaceId || !user) return null;
-    
-    const workspace = workspaces?.find(ws => ws.id === activeWorkspaceId);
-    if (workspace?.password && !unlockedWorkspaces.has(activeWorkspaceId)) {
+    if (!activeWorkspaceId || !user || !firestore) return null;
+
+    const currentWorkspace = workspaces?.find(ws => ws.id === activeWorkspaceId);
+    if (currentWorkspace?.password && !unlockedWorkspaces.has(activeWorkspaceId)) {
       return null;
     }
     return collection(firestore, 'users', user.uid, 'workspaces', activeWorkspaceId, 'notes');
@@ -279,24 +279,28 @@ export function useTasks() {
   const editNote = useCallback((id: string, newTitle: string, newContent: string, isNew?: boolean) => {
     if (!notesRef) return;
     const noteDocRef = doc(notesRef, id);
-    const dataToSave = { 
+    
+    let data;
+    if (isNew) {
+      data = { 
         title: newTitle.trim() || 'Untitled Note', 
         content: newContent,
         createdAt: serverTimestamp(),
-    };
-    const dataToUpdate = { 
+      };
+    } else {
+      data = { 
         title: newTitle.trim() || 'Untitled Note', 
         content: newContent,
-    };
+      };
+    }
     
-    // If it's a new note, we use setDoc to create it. Otherwise, we update.
-    const operation = isNew ? setDoc(noteDocRef, dataToSave) : setDoc(noteDocRef, dataToUpdate, { merge: true });
+    const operation = isNew ? setDoc(noteDocRef, data) : setDoc(noteDocRef, data, { merge: true });
 
     operation.catch(async (serverError) => {
         const permissionError = new FirestorePermissionError({
             path: noteDocRef.path,
             operation: isNew ? 'create' : 'update',
-            requestResourceData: isNew ? dataToSave : dataToUpdate,
+            requestResourceData: data,
         });
         errorEmitter.emit('permission-error', permissionError);
     });
