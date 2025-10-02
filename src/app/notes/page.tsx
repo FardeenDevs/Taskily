@@ -51,7 +51,6 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
     unlockedWorkspaces,
     unlockWorkspace,
     lockWorkspace,
-    switchWorkspace
   } = tasksHook;
 
 
@@ -90,19 +89,19 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
   };
   
  const handleSaveNote = useCallback((id: string, newTitle: string, newContent: string, isNew?: boolean) => {
-    editNote(id, newTitle, content, isNew);
+    editNote(id, newTitle, newContent, isNew);
   }, [editNote]);
 
 
  const handleCloseNoteDialog = (open: boolean) => {
+    setIsNoteDialogOpen(open);
     if (!open) {
       if (editingNote) {
-        const { id, title, content, isNew } = editingNote;
-        handleSaveNote(id, title, content, isNew);
+        // Save the current state of the note when closing
+        handleSaveNote(editingNote.id, editingNote.title, editingNote.content, editingNote.isNew);
       }
       setEditingNote(null);
     }
-    setIsNoteDialogOpen(open);
   };
 
   const sortedNotes = useMemo(() => {
@@ -115,15 +114,15 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
     });
   }, [notes]);
   
-  const handleUnlock = () => {
+  const handleUnlock = async () => {
     if (!activeWorkspace) return;
-    if (unlockWorkspace(activeWorkspace.id, passwordInput)) {
+    if (await unlockWorkspace(activeWorkspace.id, passwordInput)) {
         setIsUnlockDialogOpen(false);
         setPasswordInput("");
         setFailedPasswordAttempts(0);
         toast({ title: "Listspace Unlocked" });
     } else {
-        toast({ variant: "destructive", title: "Incorrect Password" });
+        toast({ variant: "destructive", title: "Incorrect Password or Code" });
         setPasswordInput("");
         setFailedPasswordAttempts(prev => prev + 1);
     }
@@ -142,27 +141,20 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
 
   const onUnlockDialogClose = (open: boolean) => {
       if (!open && isLocked) {
-        const stillLocked = !!activeWorkspace?.password && !unlockedWorkspaces.has(activeWorkspace.id);
-        if(stillLocked) return;
+        // If the dialog is closed while still locked (e.g. by pressing Esc),
+        // we navigate away to prevent being stuck on a locked page.
+        handleBackFromLocked();
+      } else {
+        setIsUnlockDialogOpen(open);
       }
-      setIsUnlockDialogOpen(open);
   }
 
 
   if (loading || isNavigating) {
     return (
-      <AnimatePresence>
-          <motion.div
-              key="loader"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="fixed inset-0 z-50 flex items-center justify-center bg-background"
-          >
-              <div className="h-16 w-16 animate-spin rounded-full border-4 border-solid border-primary border-t-transparent"></div>
-          </motion.div>
-      </AnimatePresence>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background">
+            <div className="h-16 w-16 animate-spin rounded-full border-4 border-solid border-primary border-t-transparent"></div>
+        </div>
     );
   }
 
@@ -219,21 +211,21 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
           <AlertDialogHeader>
             <AlertDialogTitle>This Listspace is Locked</AlertDialogTitle>
             <AlertDialogDescription>
-              Please enter the password to view your notes.
+              Please enter the password or a backup code to view your notes.
               {activeWorkspace?.passwordHint && failedPasswordAttempts >= 3 && (
                 <div className="text-xs text-muted-foreground mt-2">Hint: {activeWorkspace.passwordHint}</div>
               )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="py-2">
-            <Label htmlFor="password-unlock" className="sr-only">Password</Label>
+            <Label htmlFor="password-unlock" className="sr-only">Password or Backup Code</Label>
             <Input 
                 id="password-unlock" 
                 type="password" 
                 value={passwordInput} 
                 onChange={(e) => setPasswordInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleUnlock()}
-                placeholder="Enter password..." 
+                placeholder="Enter password or backup code..." 
             />
           </div>
           <AlertDialogFooter>

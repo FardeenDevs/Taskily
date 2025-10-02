@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, MoreVertical, Pencil, Trash2, LayoutGrid, Archive, Lock, Unlock, ShieldQuestion, AlertTriangle } from "lucide-react";
+import { Plus, MoreVertical, Pencil, Trash2, LayoutGrid, Archive, Lock, Unlock, Copy, Check } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -37,6 +37,7 @@ import { Label } from "@/components/ui/label";
 import { Workspace } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/firebase";
+import { BackupCodesDialog } from "./backup-codes-dialog";
 
 
 type WorkspaceSidebarProps = {
@@ -61,7 +62,7 @@ export function FirestoreWorkspaceSidebar({ tasksHook }: WorkspaceSidebarProps) 
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [clearDialogOpen, setClearDialogOpen] = useState(false);
-  const [forgotPasswordDialogOpen, setForgotPasswordDialogOpen] = useState(false);
+  const [backupCodes, setBackupCodes] = useState<string[] | null>(null);
 
   
   const [editName, setEditName] = useState("");
@@ -77,11 +78,14 @@ export function FirestoreWorkspaceSidebar({ tasksHook }: WorkspaceSidebarProps) 
   
   const handleEditWorkspace = () => {
     if (selectedWorkspace) {
-      const success = editWorkspace(selectedWorkspace.id, editName, currentPassword, newPassword, newPasswordHint);
+      const { success, newBackupCodes } = editWorkspace(selectedWorkspace.id, editName, currentPassword, newPassword, newPasswordHint);
       if (success) {
         setEditDialogOpen(false);
         setSelectedWorkspace(null);
         toast({ title: "Listspace updated!" });
+        if (newBackupCodes) {
+            setBackupCodes(newBackupCodes);
+        }
       } else {
         toast({ variant: "destructive", title: "Incorrect Current Password" });
       }
@@ -111,6 +115,10 @@ export function FirestoreWorkspaceSidebar({ tasksHook }: WorkspaceSidebarProps) 
     setNewPassword("");
     setNewPasswordHint(workspace.passwordHint || "");
     setEditDialogOpen(true);
+  }
+  
+  const closeBackupDialog = () => {
+    setBackupCodes(null);
   }
 
   return (
@@ -210,6 +218,9 @@ export function FirestoreWorkspaceSidebar({ tasksHook }: WorkspaceSidebarProps) 
             </DialogContent>
         </Dialog>
 
+        {/* Backup Codes Dialog */}
+        <BackupCodesDialog codes={backupCodes} open={!!backupCodes} onOpenChange={closeBackupDialog} />
+
         {/* Delete Workspace Dialog */}
         <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
             <AlertDialogContent>
@@ -233,9 +244,9 @@ export function FirestoreWorkspaceSidebar({ tasksHook }: WorkspaceSidebarProps) 
             <AlertDialogContent>
                 <AlertDialogHeader>
                 <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                <AlertDialogDescription>
+                <DialogDescription>
                     This will permanently delete all tasks and notes in this listspace. This action cannot be undone.
-                </AlertDialogDescription>
+                </DialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                 <AlertDialogCancel>Cancel</AlertDialogCancel>

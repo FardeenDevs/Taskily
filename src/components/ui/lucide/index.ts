@@ -39,6 +39,7 @@ export {
     Unlock,
     ShieldQuestion,
     AlertTriangle,
+    Copy,
 } from 'lucide-react';
 
     

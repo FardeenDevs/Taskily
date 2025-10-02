@@ -21,6 +21,7 @@ export interface Workspace {
     ownerId: string;
     password?: string;
     passwordHint?: string;
+    backupCodes?: string[];
 }
 
 export interface Note {
