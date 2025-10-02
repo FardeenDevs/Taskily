@@ -1,0 +1,120 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "User Profile",
+      "description": "Represents a user's public profile information.",
+      "type": "object",
+      "properties": {
+        "displayName": {
+          "type": "string",
+          "description": "The user's display name."
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "The user's email address."
+        },
+        "photoURL": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL of the user's profile picture."
+        }
+      },
+      "required": ["displayName", "email"]
+    },
+    "Workspace": {
+      "title": "Workspace",
+      "description": "A container for tasks and notes, owned by a user.",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The name of the workspace."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The date and time the workspace was created."
+        },
+        "ownerId": {
+            "type": "string",
+            "description": "The UID of the user who owns this workspace."
+        }
+      },
+      "required": ["name", "createdAt", "ownerId"]
+    },
+    "Task": {
+      "title": "Task",
+      "description": "A single to-do item within a workspace.",
+      "type": "object",
+      "properties": {
+        "text": {
+          "type": "string"
+        },
+        "completed": {
+          "type": "boolean"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "priority": {
+          "type": "string",
+          "enum": ["P1", "P2", "P3", "P4", "P5"]
+        },
+        "effort": {
+          "type": "string",
+          "enum": ["E1", "E2", "E3", "E4", "E5"]
+        }
+      },
+      "required": ["text", "completed", "createdAt"]
+    },
+    "Note": {
+      "title": "Note",
+      "description": "A single note within a workspace.",
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "content": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["title", "createdAt"]
+    }
+  },
+  "auth": {
+    "providers": ["google.com"]
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": {
+        "$ref": "#/entities/UserProfile"
+      },
+      "description": "Stores public profile information for each user."
+    },
+    "/workspaces/{workspaceId}": {
+        "schema": {
+            "$ref": "#/entities/Workspace"
+        },
+        "description": "A root collection of all workspaces. Security rules will enforce that only the owner can access their workspaces."
+    },
+    "/workspaces/{workspaceId}/tasks/{taskId}": {
+      "schema": {
+        "$ref": "#/entities/Task"
+      },
+      "description": "A subcollection of tasks belonging to a specific workspace."
+    },
+    "/workspaces/{workspaceId}/notes/{noteId}": {
+      "schema": {
+        "$ref": "#/entities/Note"
+      },
+      "description": "A subcollection of notes belonging to a specific workspace."
+    }
+  }
+}
