@@ -151,8 +151,8 @@ export default function LoginPage() {
   }
 
   return (
-    <Dialog>
-      <div className="flex min-h-screen items-center justify-center bg-app-gradient p-4">
+    <div className="flex min-h-screen items-center justify-center bg-app-gradient p-4">
+      <Dialog>
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -311,9 +311,7 @@ export default function LoginPage() {
                   </form>
               </Form>
           </DialogContent>
-      </div>
-    </Dialog>
+      </Dialog>
+    </div>
   );
 }
-
-    
