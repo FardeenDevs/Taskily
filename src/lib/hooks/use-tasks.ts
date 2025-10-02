@@ -6,7 +6,7 @@ import { type Task, type Workspace, type Priority, type Effort, type Note } from
 import { useToast } from "@/hooks/use-toast";
 import { useUser, useAuth, useFirestore, useCollection, useDoc } from "@/firebase";
 import { collection, addDoc, doc, setDoc, deleteDoc, writeBatch, serverTimestamp, getDocs, getDoc, query, where } from "firebase/firestore";
-import { onAuthStateChanged, updateProfile, deleteUser as deleteFirebaseUser, reauthenticateWithCredential, EmailAuthProvider } from "firebase/auth";
+import { onAuthStateChanged, updateProfile } from "firebase/auth";
 import { useSidebar } from "@/components/ui/sidebar";
 import { errorEmitter } from "@/firebase/error-emitter";
 import { FirestorePermissionError } from "@/firebase/errors";
@@ -448,7 +448,6 @@ export function useTasks() {
         // 1. Delete all user's sub-collection data
         const batch = writeBatch(firestore);
 
-        // Delete all workspaces and their subcollections
         const userWorkspacesQuery = query(collection(firestore, 'users', user.uid, 'workspaces'), where('ownerId', '==', user.uid));
         const querySnapshot = await getDocs(userWorkspacesQuery);
 
@@ -463,10 +462,14 @@ export function useTasks() {
 
             batch.delete(workspaceDoc.ref);
         }
+
+        const userDocRef = doc(firestore, 'users', user.uid);
+        batch.delete(userDocRef);
+
         await batch.commit();
 
         // 2. Delete the user from Authentication
-        await deleteFirebaseUser(user);
+        await user.delete();
 
         toast({ title: "Account Deleted", description: "Your account and all associated data have been permanently deleted." });
 
@@ -529,3 +532,5 @@ export function useTasks() {
     switchWorkspace,
   };
 }
+
+    
