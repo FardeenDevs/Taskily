@@ -3,6 +3,7 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 import { ThemeProvider } from '@/app/components/theme-provider';
 import { ClientProviders } from '@/app/components/client-providers';
+import { PageTransitionOverlay } from './components/page-transition-overlay';
 
 export const metadata: Metadata = {
   title: 'Listily',
@@ -23,6 +24,7 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased bg-app-gradient">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <PageTransitionOverlay />
           <ClientProviders>
             {children}
           </ClientProviders>

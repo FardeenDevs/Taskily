@@ -9,10 +9,9 @@ export function PageTransition({ children }: { children: React.ReactNode }) {
         <AnimatePresence mode="wait">
             <motion.div
                 key={pathname}
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -15 }}
-                transition={{ duration: 0.25 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1, transition: { delay: 0.2, duration: 0.2 } }}
+                exit={{ opacity: 0, transition: { duration: 0.2 } }}
                 className="h-full"
             >
                 {children}
