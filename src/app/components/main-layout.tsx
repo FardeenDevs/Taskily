@@ -39,8 +39,7 @@ function Layout({ children, tasksHook, setIsSettingsOpen, currentView, setCurren
                         <div className="flex items-center gap-4">
                             <h1 className="text-2xl font-bold text-center text-foreground hidden sm:block">Listily</h1>
                             <nav className={cn(
-                                "flex items-center gap-2 rounded-full bg-secondary p-1",
-                                pathname === '/profile' && 'invisible' // Hide on profile page
+                                "flex items-center gap-2 rounded-full bg-secondary p-1"
                             )}>
                                 <span 
                                     onClick={() => setCurrentView('progress')}
@@ -82,5 +81,6 @@ export function MainLayout({ children, tasksHook, setIsSettingsOpen, currentView
         </Layout>
     )
 }
+
 
 
