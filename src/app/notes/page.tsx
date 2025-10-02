@@ -1,10 +1,9 @@
-
 "use client";
 
 import { useTasks } from "@/lib/hooks/use-tasks";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { WelcomeDialog } from "@/app/components/welcome-dialog";
-import { Plus, ShieldAlert, Lock, Unlock, ShieldQuestion } from "lucide-react";
+import { Plus, Lock, Unlock } from "lucide-react";
 import { useState, memo, useMemo, useEffect, useCallback } from "react";
 import { SettingsDialog } from "@/app/components/settings-dialog";
 import { Button } from "@/components/ui/button";
@@ -92,15 +91,25 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
   };
   
   const handleSaveNote = (id: string, title: string, content: string, isNew?: boolean) => {
-    // If it's a new note that is still empty, delete it instead of saving
-    if (isNew && title.trim() === 'New Note' && content.trim() === '') {
-        deleteNote(id);
-        setClientNotes(prev => prev.filter(n => n.id !== id));
-    } else {
-        editNote(id, title, content, isNew);
-        // After saving, find the note in clientNotes and remove the 'isNew' flag
-        setClientNotes(prev => prev.map(n => n.id === id ? { ...n, title, content, isNew: false } : n));
-    }
+    editNote(id, title, content, isNew);
+    
+    // Optimistically update the client state
+    setClientNotes(prev => {
+        // If it's a new note that's now being saved
+        if (isNew) {
+            return prev.map(n => 
+                n.id === id 
+                ? { ...n, title, content, isNew: false, createdAt: new Date().toISOString() } // set a temporary timestamp
+                : n
+            );
+        }
+        // If it's an existing note being updated
+        return prev.map(n => 
+            n.id === id 
+            ? { ...n, title, content } 
+            : n
+        );
+    });
   };
 
   const handleCloseNoteDialog = (open: boolean) => {
@@ -222,7 +231,7 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
             <AlertDialogDescription>
               Please enter the password to view your notes.
             </AlertDialogDescription>
-            {activeWorkspace?.passwordHint && failedPasswordAttempts >= 3 && (
+             {activeWorkspace?.passwordHint && failedPasswordAttempts >= 3 && (
                 <div className="text-sm text-muted-foreground pt-2">
                     <span className="text-xs font-semibold">Hint:</span> {activeWorkspace.passwordHint}
                 </div>
@@ -256,5 +265,3 @@ export default function NotesPage() {
         </SidebarProvider>
     );
 }
-
-    
