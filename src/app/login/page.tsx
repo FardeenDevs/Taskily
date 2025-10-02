@@ -134,7 +134,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-end bg-app-gradient p-4 pr-16">
+    <div className="flex min-h-screen items-center justify-center bg-app-gradient p-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
