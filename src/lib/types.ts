@@ -19,9 +19,6 @@ export interface Workspace {
     name: string;
     createdAt: string;
     ownerId: string;
-    password?: string;
-    passwordHint?: string;
-    backupCodes?: string[];
 }
 
 export interface Note {
@@ -38,5 +35,3 @@ export interface AppSettings {
   defaultEffort: Effort;
   defaultWorkspaceId: string | null;
 }
-
-    

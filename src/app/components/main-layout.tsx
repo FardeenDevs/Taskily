@@ -6,7 +6,7 @@ import { FirestoreWorkspaceSidebar } from "./firestore-workspace-sidebar";
 import { Button } from "@/components/ui/button";
 import { LayoutGrid } from "lucide-react";
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { cn } from "@/lib/utils";
 import { UserNav } from "./user-nav";
 import { type useTasks } from "@/lib/hooks/use-tasks";
@@ -81,4 +81,3 @@ export function MainLayout({ children, tasksHook, setIsSettingsOpen, setIsNaviga
         </Layout>
     )
 }
-

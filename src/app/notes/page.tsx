@@ -3,19 +3,17 @@
 
 import { useTasks } from "@/lib/hooks/use-tasks";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Lock, Unlock, ShieldAlert } from "lucide-react";
-import { useState, memo, useMemo, useCallback, useEffect } from "react";
+import { Plus } from "lucide-react";
+import { useState, memo, useMemo, useCallback, useEffect, MouseEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { NotesSection } from "@/app/components/notes-section";
 import { Note } from "@/lib/types";
 import { PageTransition } from '../components/page-transition';
 import { MainLayout } from "../components/main-layout";
 import { useUser } from "@/firebase";
-import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import dynamic from "next/dynamic";
-import { MouseEvent } from "react";
 
 const WelcomeDialog = dynamic(() => import('@/app/components/welcome-dialog').then(mod => mod.WelcomeDialog));
 const SettingsDialog = dynamic(() => import('@/app/components/settings-dialog').then(mod => mod.SettingsDialog));
@@ -43,28 +41,16 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
     setIsFirstTime,
     resetApp,
     deleteAccount,
-    unlockedWorkspaces,
-    lockWorkspace,
     workspaces,
     appSettings, 
     setAppSettings,
-    activeWorkspaceId
   } = tasksHook;
 
-
-  const isLocked = useMemo(() => {
-    if (!activeWorkspace) return false;
-    return !!activeWorkspace.password && !unlockedWorkspaces.has(activeWorkspace.id);
-  }, [activeWorkspace, unlockedWorkspaces]);
-
-
   useEffect(() => {
-    // If the user lands here and the workspace is locked, redirect them to the home page
-    // where the unlock flow is now handled.
-    if (!loading && activeWorkspaceId && isLocked) {
-      router.push('/');
+    if (!loading && !isNavigating) {
+      // Any page-specific logic can go here
     }
-  }, [loading, activeWorkspaceId, isLocked, router]);
+  }, [loading, isNavigating, router]);
 
   const handleOpenEditDialog = useCallback((note: Note) => {
     setEditingNote(note);
@@ -72,13 +58,13 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
   }, []);
   
   const handleOpenNewNoteDialog = useCallback(() => {
-    if (!activeWorkspace || isLocked) return;
+    if (!activeWorkspace) return;
     const newNote = addNote();
     if (newNote) {
         setEditingNote(newNote);
         setIsNoteDialogOpen(true);
     }
-  }, [activeWorkspace, isLocked, addNote]);
+  }, [activeWorkspace, addNote]);
   
  const handleSaveNote = useCallback((id: string, newTitle: string, newContent: string, isNew?: boolean) => {
     if (isNew && !newTitle.trim() && (!newContent.trim() || newContent === '<p></p>')) {
@@ -112,17 +98,12 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
     });
   }, [notes]);
   
-  const handleLock = () => {
-    if (!activeWorkspace) return;
-    lockWorkspace(activeWorkspace.id);
-  }
-
   const handleNotesNavigation = (e: MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
     // Already on the notes page, do nothing.
   };
 
-  if (loading || isNavigating || (!loading && isLocked)) {
+  if (loading || isNavigating) {
     return (
       <AnimatePresence>
           <motion.div
@@ -150,32 +131,19 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
                         <CardTitle className="font-headline text-2xl font-bold tracking-tight text-foreground">
                         {activeWorkspace?.name || "My Notes"}
                         </CardTitle>
-                        {activeWorkspace?.password && (
-                            isLocked 
-                                ? <Lock className="h-5 w-5"/>
-                                : <Button variant="ghost" size="icon" onClick={handleLock}><Unlock className="h-5 w-5"/></Button>
-                        )}
                     </div>
-                    <Button onClick={handleOpenNewNoteDialog} variant="gradient" disabled={!activeWorkspace || isLocked}>
+                    <Button onClick={handleOpenNewNoteDialog} variant="gradient" disabled={!activeWorkspace}>
                         <Plus className="mr-2 h-4 w-4" />
                         New Note
                     </Button>
                     </CardHeader>
                     <CardContent className="flex-grow overflow-y-auto p-6 pt-0">
-                      {isLocked ? (
-                          <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/30 bg-muted/50 p-12 text-center h-64">
-                              <ShieldAlert className="h-12 w-12 text-muted-foreground/50 mb-4" />
-                              <h3 className="text-lg font-semibold text-muted-foreground">Listspace Locked</h3>
-                              <p className="text-sm text-muted-foreground">Go to the Progress page to unlock.</p>
-                          </div>
-                      ) : (
-                          <NotesSection
-                              notes={sortedNotes}
-                              onDeleteNote={handleDeleteNote}
-                              onEditNote={handleOpenEditDialog}
-                              isLocked={isLocked}
-                          />
-                      )}
+                      <NotesSection
+                          notes={sortedNotes}
+                          onDeleteNote={handleDeleteNote}
+                          onEditNote={handleOpenEditDialog}
+                          isLocked={false}
+                      />
                     </CardContent>
                 </Card>
             </PageTransition>
