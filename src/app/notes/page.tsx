@@ -205,7 +205,7 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
             <AlertDialogDescription>
               Please enter the password to view your notes.
               {activeWorkspace?.passwordHint && (
-                <p className="text-xs text-muted-foreground mt-2">Hint: {activeWorkspace.passwordHint}</p>
+                <div className="text-xs text-muted-foreground mt-2">Hint: {activeWorkspace.passwordHint}</div>
               )}
             </AlertDialogDescription>
           </AlertDialogHeader>
