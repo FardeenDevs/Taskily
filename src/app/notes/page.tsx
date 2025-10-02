@@ -59,6 +59,7 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
     workspaces,
     appSettings, 
     setAppSettings,
+    activeWorkspaceId
   } = tasksHook;
 
 
@@ -70,12 +71,12 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
   useEffect(() => {
     if (loading) return; // Wait until loading is finished
 
-    if (isLocked) {
+    if (activeWorkspace?.password && !unlockedWorkspaces.has(activeWorkspace.id)) {
       setIsUnlockDialogOpen(true);
     } else {
       setIsUnlockDialogOpen(false);
     }
-  }, [isLocked, loading]);
+  }, [activeWorkspace, unlockedWorkspaces, loading]);
 
   const handleOpenEditDialog = useCallback((note: Note) => {
     setEditingNote(note);
@@ -128,12 +129,16 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
   
   const handlePasswordUnlock = async () => {
     if (!activeWorkspace) return;
-    if (await unlockWithPassword(activeWorkspace.id, passwordInput)) {
+    const success = await unlockWithPassword(activeWorkspace.id, passwordInput);
+    if (success) {
         setIsUnlockDialogOpen(false);
         setPasswordInput("");
         setShowPassword(false);
         setFailedPasswordAttempts(0);
-        toast({ title: "Listspace Unlocked" });
+        toast({ 
+            title: "Listspace Unlocked",
+            description: "If you have been redirected to Listily Progress or opening a note has locked you out, please try entering the password again."
+        });
     } else {
         toast({ variant: "destructive", title: "Incorrect Password" });
         setPasswordInput("");
@@ -166,17 +171,19 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
   }
 
   const onUnlockDialogClose = (open: boolean) => {
-      if (!open) {
-        // We need to check if it's *still* locked after the user interaction
-        const isStillLockedAfterInteraction = !!activeWorkspace?.password && !unlockedWorkspaces.has(activeWorkspace.id);
-        if (isStillLockedAfterInteraction) {
+    if (!open) {
+      // Check if it's *still* locked after the user interaction has had a chance to process
+      setTimeout(() => {
+        const isStillLocked = activeWorkspace?.password && !unlockedWorkspaces.has(activeWorkspace.id);
+        if (isStillLocked) {
            handleBackFromLocked();
         } else {
            setIsUnlockDialogOpen(false);
         }
-      } else {
-        setIsUnlockDialogOpen(open);
-      }
+      }, 50); // A small delay to allow state to propagate
+    } else {
+      setIsUnlockDialogOpen(true);
+    }
   }
 
   const openBackupDialog = () => {
