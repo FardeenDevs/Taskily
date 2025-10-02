@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, MoreVertical, Pencil, Trash2, LayoutGrid, Archive, Lock, Unlock, ShieldQuestion } from "lucide-react";
+import { Plus, MoreVertical, Pencil, Trash2, LayoutGrid, Archive, Lock, Unlock, ShieldQuestion, AlertTriangle } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -32,7 +32,7 @@ import {
   DialogFooter,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { Workspace } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
@@ -61,6 +61,8 @@ export function FirestoreWorkspaceSidebar({ tasksHook }: WorkspaceSidebarProps) 
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [clearDialogOpen, setClearDialogOpen] = useState(false);
+  const [forgotPasswordDialogOpen, setForgotPasswordDialogOpen] = useState(false);
+
   
   const [editName, setEditName] = useState("");
   const [currentPassword, setCurrentPassword] = useState("");

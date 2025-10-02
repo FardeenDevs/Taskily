@@ -33,7 +33,6 @@ export function useTasks() {
     user ? query(collection(firestore, 'users', user.uid, 'workspaces')) : null
   , [firestore, user]);
   
-  // Firestore data hooks
   const { data: workspaces, loading: workspacesLoading } = useCollection<Workspace>(workspacesQuery);
 
   const activeWorkspaceRef = useMemo(() => 
@@ -42,16 +41,21 @@ export function useTasks() {
   
   const { data: activeWorkspace, loading: activeWorkspaceLoading } = useDoc<Workspace>(activeWorkspaceRef);
   
-  const { data: tasks, loading: tasksLoading } = useCollection<Task>(activeWorkspaceId && user ? collection(firestore, 'users', user.uid, 'workspaces', activeWorkspaceId, 'tasks') : null);
+  const tasksRef = useMemo(() => 
+    activeWorkspaceId && user ? collection(firestore, 'users', user.uid, 'workspaces', activeWorkspaceId, 'tasks') : null
+  , [activeWorkspaceId, user, firestore]);
+  
+  const { data: tasks, loading: tasksLoading } = useCollection<Task>(tasksRef);
 
   const notesRef = useMemo(() => {
     if (!activeWorkspaceId || !user) return null;
-    const isUnlocked = unlockedWorkspaces.has(activeWorkspaceId);
-    if (activeWorkspace?.password && !isUnlocked) {
+    
+    const workspace = workspaces?.find(ws => ws.id === activeWorkspaceId);
+    if (workspace?.password && !unlockedWorkspaces.has(activeWorkspaceId)) {
       return null;
     }
     return collection(firestore, 'users', user.uid, 'workspaces', activeWorkspaceId, 'notes');
-  }, [activeWorkspaceId, user, firestore, unlockedWorkspaces, activeWorkspace]);
+  }, [activeWorkspaceId, user, firestore, unlockedWorkspaces, workspaces]);
   
   const { data: notes, loading: notesLoading } = useCollection<Note>(notesRef);
 
@@ -168,8 +172,7 @@ export function useTasks() {
   }, [user, setSidebarOpen]);
 
   const addTask = useCallback((text: string, priority: Priority | null, effort: Effort | null) => {
-    if (text.trim() === "" || !activeWorkspaceId || !user) return;
-    const tasksRef = collection(firestore, 'users', user.uid, 'workspaces', activeWorkspaceId, 'tasks');
+    if (text.trim() === "" || !activeWorkspaceId || !user || !tasksRef) return;
     
     const taskData = {
       text: text.trim(),
@@ -188,11 +191,11 @@ export function useTasks() {
         });
         errorEmitter.emit('permission-error', permissionError);
     });
-  }, [activeWorkspaceId, user, firestore]);
+  }, [activeWorkspaceId, user, tasksRef]);
 
   const toggleTask = useCallback((id: string) => {
-    if (!activeWorkspaceId || !user || !tasks) return;
-    const taskDocRef = doc(firestore, 'users', user.uid, 'workspaces', activeWorkspaceId, 'tasks', id);
+    if (!tasksRef || !tasks) return;
+    const taskDocRef = doc(tasksRef, id);
     const task = tasks.find(t => t.id === id);
     if (task) {
         const updatedData = { completed: !task.completed };
@@ -206,11 +209,11 @@ export function useTasks() {
             errorEmitter.emit('permission-error', permissionError);
         });
     }
-  }, [tasks, activeWorkspaceId, user, firestore]);
+  }, [tasks, tasksRef]);
 
   const deleteTask = useCallback((id: string) => {
-    if (!activeWorkspaceId || !user) return;
-    const taskDocRef = doc(firestore, 'users', user.uid, 'workspaces', activeWorkspaceId, 'tasks', id);
+    if (!tasksRef) return;
+    const taskDocRef = doc(tasksRef, id);
     deleteDoc(taskDocRef)
     .catch(async (serverError) => {
         const permissionError = new FirestorePermissionError({
@@ -219,11 +222,11 @@ export function useTasks() {
         });
         errorEmitter.emit('permission-error', permissionError);
     });
-  }, [activeWorkspaceId, user, firestore]);
+  }, [tasksRef]);
 
   const editTask = useCallback((id: string, newText: string, newPriority: Priority | null, newEffort: Effort | null) => {
-    if (newText.trim() === "" || !activeWorkspaceId || !user) return;
-    const taskDocRef = doc(firestore, 'users', user.uid, 'workspaces', activeWorkspaceId, 'tasks', id);
+    if (newText.trim() === "" || !tasksRef) return;
+    const taskDocRef = doc(tasksRef, id);
     const updatedData = { text: newText.trim(), priority: newPriority, effort: newEffort };
     setDoc(taskDocRef, updatedData, { merge: true })
     .catch(async (serverError) => {
@@ -234,7 +237,7 @@ export function useTasks() {
         });
         errorEmitter.emit('permission-error', permissionError);
     });
-  }, [activeWorkspaceId, user, firestore]);
+  }, [tasksRef]);
 
   const clearTasks = useCallback(async (workspaceId: string) => {
     if (!user) return;
