@@ -13,25 +13,28 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
   const isLoginPage = pathname === '/login';
 
   useEffect(() => {
-    if (loading) return; // Wait until user status is determined
+    if (loading) {
+      return; // Wait until loading is false before making any decisions
+    }
 
     if (user && isLoginPage) {
-      // User is logged in and on the login page, redirect to home
+      // If we have a user and they are on the login page, redirect them away.
       router.push('/');
     } else if (!user && !isLoginPage) {
-      // User is not logged in and not on the login page, redirect to login
+      // If we have no user and they are not on the login page, redirect them there.
       router.push('/login');
     }
-  }, [user, loading, router, pathname, isLoginPage]);
+  }, [user, loading, router, isLoginPage]);
 
-  // If we're on the login page and not logged in, just show the children
-  if (isLoginPage && !user) {
+  // If we are on the login page, always render the children.
+  // The useEffect above will handle redirecting away if a user is found.
+  if (isLoginPage) {
     return <>{children}</>;
   }
-
-  // If we are on a protected page and still loading, show a spinner.
-  if (loading && !isLoginPage) {
-    return (
+  
+  // If we are on a protected page, and still loading, show a spinner.
+  if (loading) {
+     return (
         <AnimatePresence>
             <motion.div
                 key="loader"
@@ -46,13 +49,13 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // If we have a user, show the content for any page.
+  // If we have a user and are not on the login page, show the content.
   if (user) {
     return <>{children}</>;
   }
-  
-  // If we're not logged in and not on the login page, the redirect is in flight.
-  // Show a loader to prevent content flash.
+
+  // If we have no user and are not on the login page, a redirect is in progress.
+  // Show a loader to prevent flashing content.
   return (
     <div className="flex h-screen w-screen items-center justify-center">
         <div className="h-16 w-16 animate-spin rounded-full border-4 border-solid border-primary border-t-transparent"></div>
