@@ -14,10 +14,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { LogOut, User as UserIcon } from "lucide-react";
+import { LogOut, User as UserIcon, Settings } from "lucide-react";
 import { useRouter } from "next/navigation";
 
-export function UserNav() {
+interface UserNavProps {
+  setIsSettingsOpen: (isOpen: boolean) => void;
+}
+
+export function UserNav({ setIsSettingsOpen }: UserNavProps) {
   const auth = useAuth();
   const { user } = useUser();
   const router = useRouter();
@@ -64,6 +68,10 @@ export function UserNav() {
           <DropdownMenuItem disabled>
             <UserIcon className="mr-2 h-4 w-4" />
             <span>Profile</span>
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setIsSettingsOpen(true)}>
+            <Settings className="mr-2 h-4 w-4" />
+            <span>Settings</span>
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />

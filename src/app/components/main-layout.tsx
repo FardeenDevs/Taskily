@@ -4,7 +4,7 @@
 import { SidebarProvider, SidebarInset, useSidebar } from "@/components/ui/sidebar";
 import { FirestoreWorkspaceSidebar } from "./firestore-workspace-sidebar";
 import { Button } from "@/components/ui/button";
-import { LayoutGrid, Settings } from "lucide-react";
+import { LayoutGrid } from "lucide-react";
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from "@/lib/utils";
@@ -56,10 +56,7 @@ function Layout({ children, tasksHook, setIsSettingsOpen }: MainLayoutProps) {
                         </div>
 
                         <div className="flex items-center gap-2">
-                            <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground hover:text-foreground hidden md:inline-flex" onClick={() => setIsSettingsOpen(true)}>
-                                <Settings className="h-5 w-5" />
-                            </Button>
-                            <UserNav />
+                            <UserNav setIsSettingsOpen={setIsSettingsOpen} />
                         </div>
                     </header>
                     <main className="flex-1 overflow-y-auto">
