@@ -76,97 +76,99 @@ const NotesPageContent = memo(function NotesPageContent() {
   return (
     <SidebarInset>
        <FirestoreWorkspaceSidebar tasksHook={tasksHook} />
-      <header className="flex items-center justify-between p-4">
-            <div className="flex items-center gap-2">
-                 <div className="z-50 md:hidden">
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                            <LayoutGrid className="h-5 w-5" />
-                        </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent side="bottom" align="start">
-                        <DropdownMenuItem onClick={() => setSidebarOpen(true)}>
-                            <LayoutGrid className="mr-2 h-4 w-4" />
-                            <span>Listspaces</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => setIsSettingsOpen(true)}>
-                            <Settings className="mr-2 h-4 w-4" />
-                            <span>Settings</span>
-                        </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                </div>
-            
-                <div className="hidden md:block">
-                    <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(true)}>
-                        <LayoutGrid className="h-5 w-5" />
-                    </Button>
-                </div>
-            </div>
-            
-             <div className="flex items-center gap-4">
-                <h1 className="text-2xl font-bold text-center text-foreground">Listily</h1>
-                <nav className="flex items-center gap-2 rounded-full bg-secondary p-1">
-                    <Link href="/" passHref>
-                        <span className={cn(
-                            "cursor-pointer rounded-full px-4 py-1 text-sm font-medium transition-colors",
-                            pathname === '/' ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:bg-background/50"
-                        )}>
-                            Progress
-                        </span>
-                    </Link>
-                    <Link href="/notes" passHref>
-                        <span className={cn(
-                            "cursor-pointer rounded-full px-4 py-1 text-sm font-medium transition-colors",
-                            pathname === '/notes' ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:bg-background/50"
-                        )}>
-                            Notes
-                        </span>
-                    </Link>
-                </nav>
-            </div>
-
-            <div className="flex items-center gap-2">
-                 <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground hover:text-foreground" onClick={() => setIsSettingsOpen(true)}>
-                    <Settings className="h-5 w-5" />
-                </Button>
-                <UserNav />
-            </div>
-        </header>
-
-      <main className="flex min-h-screen w-full flex-col items-center justify-start p-4 pt-0 sm:p-8 sm:pt-0">
-        <WelcomeDialog open={isFirstTime} onOpenChange={setIsFirstTime} />
-        <SettingsDialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen} onResetApp={resetApp} />
-        
-        <div className="w-full max-w-4xl">
-          <AnimatePresence>
-            <motion.div layout transition={{ type: 'spring', stiffness: 300, damping: 30 }}>
-              <Card className="border-2 border-border/50 shadow-2xl shadow-primary/5 overflow-hidden">
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <CardTitle className="font-headline text-2xl font-bold tracking-tight text-foreground">
-                        {activeWorkspace?.name || "My Notes"}
-                    </CardTitle>
+      <div className="flex flex-col h-screen">
+        <header className="flex items-center justify-between p-4 flex-shrink-0">
+              <div className="flex items-center gap-2">
+                  <div className="z-50 md:hidden">
+                      <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon">
+                              <LayoutGrid className="h-5 w-5" />
+                          </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent side="bottom" align="start">
+                          <DropdownMenuItem onClick={() => setSidebarOpen(true)}>
+                              <LayoutGrid className="mr-2 h-4 w-4" />
+                              <span>Listspaces</span>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setIsSettingsOpen(true)}>
+                              <Settings className="mr-2 h-4 w-4" />
+                              <span>Settings</span>
+                          </DropdownMenuItem>
+                          </DropdownMenuContent>
+                      </DropdownMenu>
                   </div>
-                  <Button onClick={handleOpenNewNoteDialog} variant="gradient" disabled={!activeWorkspace}>
-                    <Plus className="mr-2 h-4 w-4" />
-                    New Note
+              
+                  <div className="hidden md:block">
+                      <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(true)}>
+                          <LayoutGrid className="h-5 w-5" />
+                      </Button>
+                  </div>
+              </div>
+              
+              <div className="flex items-center gap-4">
+                  <h1 className="text-2xl font-bold text-center text-foreground">Listily</h1>
+                  <nav className="flex items-center gap-2 rounded-full bg-secondary p-1">
+                      <Link href="/" passHref>
+                          <span className={cn(
+                              "cursor-pointer rounded-full px-4 py-1 text-sm font-medium transition-colors",
+                              pathname === '/' ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:bg-background/50"
+                          )}>
+                              Progress
+                          </span>
+                      </Link>
+                      <Link href="/notes" passHref>
+                          <span className={cn(
+                              "cursor-pointer rounded-full px-4 py-1 text-sm font-medium transition-colors",
+                              pathname === '/notes' ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:bg-background/50"
+                          )}>
+                              Notes
+                          </span>
+                      </Link>
+                  </nav>
+              </div>
+
+              <div className="flex items-center gap-2">
+                  <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground hover:text-foreground" onClick={() => setIsSettingsOpen(true)}>
+                      <Settings className="h-5 w-5" />
                   </Button>
-                </CardHeader>
-                <CardContent>
-                  <NotesSection
-                    notes={sortedNotes}
-                    onDeleteNote={deleteNote}
-                    onEditNote={handleOpenEditDialog}
-                    isLocked={false}
-                  />
-                </CardContent>
-              </Card>
-            </motion.div>
-          </AnimatePresence>
-        </div>
-      </main>
+                  <UserNav />
+              </div>
+          </header>
+
+        <main className="flex-1 w-full flex flex-col items-center justify-start p-4 pt-0 sm:p-8 sm:pt-0 overflow-y-auto">
+          <WelcomeDialog open={isFirstTime} onOpenChange={setIsFirstTime} />
+          <SettingsDialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen} onResetApp={resetApp} />
+          
+          <div className="w-full max-w-4xl">
+            <AnimatePresence>
+              <motion.div layout transition={{ type: 'spring', stiffness: 300, damping: 30 }}>
+                <Card className="border-2 border-border/50 shadow-2xl shadow-primary/5 overflow-hidden">
+                  <CardHeader className="flex flex-row items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <CardTitle className="font-headline text-2xl font-bold tracking-tight text-foreground">
+                          {activeWorkspace?.name || "My Notes"}
+                      </CardTitle>
+                    </div>
+                    <Button onClick={handleOpenNewNoteDialog} variant="gradient" disabled={!activeWorkspace}>
+                      <Plus className="mr-2 h-4 w-4" />
+                      New Note
+                    </Button>
+                  </CardHeader>
+                  <CardContent>
+                    <NotesSection
+                      notes={sortedNotes}
+                      onDeleteNote={deleteNote}
+                      onEditNote={handleOpenEditDialog}
+                      isLocked={false}
+                    />
+                  </CardContent>
+                </Card>
+              </motion.div>
+            </AnimatePresence>
+          </div>
+        </main>
+      </div>
       <NoteDialog
         open={isNoteDialogOpen}
         onOpenChange={(open) => {
