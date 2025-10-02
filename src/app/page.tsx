@@ -23,7 +23,7 @@ import { cn } from "@/lib/utils";
 import { AuthGate } from "./components/auth-gate";
 import { UserNav } from "./components/user-nav";
 
-const AppContentInternal = memo(function AppContentInternal() {
+const AppContent = memo(function AppContentInternal() {
   const tasksHook = useTasks();
   const { toggleSidebar } = useSidebar();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -61,149 +61,139 @@ const AppContentInternal = memo(function AppContentInternal() {
   }
 
   return (
-    <>
+    <AuthGate>
       <FirestoreWorkspaceSidebar tasksHook={tasksHook} />
       <SidebarInset>
-        <div className="flex flex-col h-screen bg-app-gradient">
-            <header className="flex-shrink-0 flex items-center justify-between p-4 border-b">
-                <div className="flex items-center gap-2">
-                    <div className="md:hidden">
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                                <LayoutGrid className="h-5 w-5" />
-                            </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent side="bottom" align="start">
-                            <DropdownMenuItem onClick={() => toggleSidebar()}>
-                                <LayoutGrid className="mr-2 h-4 w-4" />
-                                <span>Listspaces</span>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => setIsSettingsOpen(true)}>
-                                <Settings className="mr-2 h-4 w-4" />
-                                <span>Settings</span>
-                            </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    </div>
-                
-                    <div className="hidden md:block">
-                        <Button variant="ghost" size="icon" onClick={() => toggleSidebar()}>
-                            <LayoutGrid className="h-5 w-5" />
-                        </Button>
-                    </div>
-                </div>
-                
-                <div className="flex items-center gap-4">
-                    <h1 className="text-2xl font-bold text-center text-foreground hidden sm:block">Listily</h1>
-                    <nav className="flex items-center gap-2 rounded-full bg-secondary p-1">
-                        <Link href="/" passHref>
-                            <span className={cn(
-                                "cursor-pointer rounded-full px-4 py-1 text-sm font-medium transition-colors",
-                                pathname === '/' ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:bg-background/50"
-                            )}>
-                                Progress
-                            </span>
-                        </Link>
-                        <Link href="/notes" passHref>
-                            <span className={cn(
-                                "cursor-pointer rounded-full px-4 py-1 text-sm font-medium transition-colors",
-                                pathname === '/notes' ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:bg-background/50"
-                            )}>
-                                Notes
-                            </span>
-                        </Link>
-                    </nav>
-                </div>
-
-
-                <div className="flex items-center gap-2">
-                    <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground hover:text-foreground hidden md:inline-flex" onClick={() => setIsSettingsOpen(true)}>
-                        <Settings className="h-5 w-5" />
+        <div className="flex flex-col h-screen">
+          <header className="flex-shrink-0 flex items-center justify-between p-4 border-b">
+            <div className="flex items-center gap-2">
+              <div className="md:hidden">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon">
+                      <LayoutGrid className="h-5 w-5" />
                     </Button>
-                    <UserNav />
-                </div>
-            </header>
-
-            <main className="flex-1 overflow-y-auto">
-              <div className="p-4 sm:p-8 h-full">
-                <AnimatePresence>
-                    <motion.div layout transition={{ type: 'spring', stiffness: 300, damping: 30 }} className="h-full">
-                    <Card className="border-2 border-border/50 shadow-2xl shadow-primary/5 overflow-hidden h-full flex flex-col">
-                        <CardHeader>
-                            <div className="flex items-center justify-center gap-2">
-                                <CardTitle className="font-headline text-2xl font-bold tracking-tight text-foreground text-center">
-                                    {activeWorkspace?.name || "My List"}
-                                </CardTitle>
-                            </div>
-                        </CardHeader>
-                        <CardContent className="space-y-8 flex-grow overflow-y-auto p-6 pt-0">
-                            <div className="space-y-6">
-                            <TaskProgress completed={completedTasks} total={totalTasks} />
-                            <TaskInput onAddTask={addTask} />
-                            <TaskList
-                                tasks={tasks}
-                                onToggleTask={toggleTask}
-                                onDeleteTask={deleteTask}
-                                onEditTask={editTask}
-                            />
-                            </div>
-                        </CardContent>
-                        <CardFooter className="flex items-center justify-between flex-shrink-0">
-                        <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                                <Button
-                                variant="destructive"
-                                disabled={tasks.length === 0}
-                                className="disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
-                                >
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                Clear All Tasks
-                                </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                                <AlertDialogHeader>
-                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                    This will permanently delete all tasks in this list. This action cannot be undone.
-                                </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction onClick={handleClearTasks} variant="destructive">
-                                    Yes, clear all
-                                </AlertDialogAction>
-                                </AlertDialogFooter>
-                            </AlertDialogContent>
-                            </AlertDialog>
-                        <TaskSuggestions currentTasks={tasks} onAddTask={(text) => addTask(text, null, null)} />
-                        </CardFooter>
-                    </Card>
-                    </motion.div>
-                </AnimatePresence>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent side="bottom" align="start">
+                    <DropdownMenuItem onClick={() => toggleSidebar()}>
+                      <LayoutGrid className="mr-2 h-4 w-4" />
+                      <span>Listspaces</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setIsSettingsOpen(true)}>
+                      <Settings className="mr-2 h-4 w-4" />
+                      <span>Settings</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
-            </main>
+
+              <div className="hidden md:block">
+                <Button variant="ghost" size="icon" onClick={() => toggleSidebar()}>
+                  <LayoutGrid className="h-5 w-5" />
+                </Button>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-4">
+              <h1 className="text-2xl font-bold text-center text-foreground hidden sm:block">Listily</h1>
+              <nav className="flex items-center gap-2 rounded-full bg-secondary p-1">
+                <Link href="/" passHref>
+                  <span className={cn(
+                    "cursor-pointer rounded-full px-4 py-1 text-sm font-medium transition-colors",
+                    pathname === '/' ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:bg-background/50"
+                  )}>
+                    Progress
+                  </span>
+                </Link>
+                <Link href="/notes" passHref>
+                  <span className={cn(
+                    "cursor-pointer rounded-full px-4 py-1 text-sm font-medium transition-colors",
+                    pathname === '/notes' ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:bg-background/50"
+                  )}>
+                    Notes
+                  </span>
+                </Link>
+              </nav>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground hover:text-foreground hidden md:inline-flex" onClick={() => setIsSettingsOpen(true)}>
+                <Settings className="h-5 w-5" />
+              </Button>
+              <UserNav />
+            </div>
+          </header>
+
+          <main className="flex-1 overflow-y-auto">
+            <div className="p-4 sm:p-8 h-full">
+              <AnimatePresence>
+                <motion.div layout transition={{ type: 'spring', stiffness: 300, damping: 30 }} className="h-full">
+                  <Card className="border-2 border-border/50 shadow-2xl shadow-primary/5 overflow-hidden h-full flex flex-col">
+                    <CardHeader>
+                      <div className="flex items-center justify-center gap-2">
+                        <CardTitle className="font-headline text-2xl font-bold tracking-tight text-foreground text-center">
+                          {activeWorkspace?.name || "My List"}
+                        </CardTitle>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-8 flex-grow overflow-y-auto p-6 pt-0">
+                      <div className="space-y-6">
+                        <TaskProgress completed={completedTasks} total={totalTasks} />
+                        <TaskInput onAddTask={addTask} />
+                        <TaskList
+                          tasks={tasks}
+                          onToggleTask={toggleTask}
+                          onDeleteTask={deleteTask}
+                          onEditTask={editTask}
+                        />
+                      </div>
+                    </CardContent>
+                    <CardFooter className="flex items-center justify-between flex-shrink-0">
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="destructive"
+                            disabled={tasks.length === 0}
+                            className="disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Clear All Tasks
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This will permanently delete all tasks in this list. This action cannot be undone.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleClearTasks} variant="destructive">
+                              Yes, clear all
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                      <TaskSuggestions currentTasks={tasks} onAddTask={(text) => addTask(text, null, null)} />
+                    </CardFooter>
+                  </Card>
+                </motion.div>
+              </AnimatePresence>
+            </div>
+          </main>
         </div>
       </SidebarInset>
       <WelcomeDialog open={isFirstTime} onOpenChange={setIsFirstTime} />
       <SettingsDialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen} onResetApp={resetApp} />
-    </>
+    </AuthGate>
   );
 });
 
-function AppContent() {
-    const tasksHook = useTasks();
-    if (!tasksHook) return null;
-
-    return <AppContentInternal />;
-}
-
 export default function Home() {
   return (
-    <AuthGate>
-        <SidebarProvider>
-            <AppContent />
-        </SidebarProvider>
-    </AuthGate>
+    <SidebarProvider>
+      <AppContent />
+    </SidebarProvider>
   );
 }
