@@ -4,9 +4,8 @@
 import { useTasks } from "@/lib/hooks/use-tasks";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { WelcomeDialog } from "@/app/components/welcome-dialog";
-import { AnimatePresence, motion } from "framer-motion";
 import { Settings, LayoutGrid, Plus, Menu } from "lucide-react";
-import { useState, memo, useMemo, useEffect } from "react";
+import { useState, memo, useMemo, useEffect, useRef } from "react";
 import { SettingsDialog } from "@/app/components/settings-dialog";
 import { Button } from "@/components/ui/button";
 import { FirestoreWorkspaceSidebar } from "@/app/components/firestore-workspace-sidebar";
@@ -18,6 +17,8 @@ import { NotesSection } from "@/app/components/notes-section";
 import { Note } from "@/lib/types";
 import { NoteDialog } from "../components/note-dialog";
 import { UserNav } from "../components/user-nav";
+import { AuthGate } from "../components/auth-gate";
+import { PageTransition } from '../components/page-transition';
 
 const NotesPageContent = memo(function NotesPageContentInternal() {
   const tasksHook = useTasks();
@@ -62,15 +63,12 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
   };
   
   const handleSaveNote = (id: string, title: string, content: string, isNew?: boolean) => {
-    if (isNew) {
-        if (title.trim() === 'New Note' && content.trim() === '') {
-            deleteNote(id);
-            setClientNotes(prev => prev.filter(n => n.id !== id));
-        } else {
-            editNote(id, title, content, true);
-        }
+    // If it's a new note that is still empty, delete it instead of saving
+    if (isNew && title.trim() === 'New Note' && content.trim() === '') {
+        deleteNote(id);
+        setClientNotes(prev => prev.filter(n => n.id !== id));
     } else {
-        editNote(id, title, content, false);
+        editNote(id, title, content, isNew);
     }
   };
 
@@ -83,9 +81,11 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
 
   const sortedNotes = useMemo(() => {
     return [...clientNotes].sort((a, b) => {
+        const dateA = a.createdAt ? (typeof (a.createdAt as any).toDate === 'function' ? (a.createdAt as any).toDate() : new Date(a.createdAt as string)) : new Date(0);
+        const dateB = b.createdAt ? (typeof (b.createdAt as any).toDate === 'function' ? (b.createdAt as any).toDate() : new Date(b.createdAt as string)) : new Date(0);
         if (a.isNew) return -1;
         if (b.isNew) return 1;
-        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        return dateB.getTime() - dateA.getTime();
     });
   }, [clientNotes]);
 
@@ -105,13 +105,8 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
         <div className="flex flex-col h-screen">
            <header className="flex h-16 items-center justify-between border-b px-4 md:px-6 flex-shrink-0">
             <div className="flex items-center gap-2">
-              <Button variant="ghost" size="icon" className="md:hidden" onClick={toggleSidebar}>
-                  <Menu className="h-6 w-6" />
-                  <span className="sr-only">Toggle sidebar</span>
-              </Button>
-              <Button variant="ghost" size="icon" className="hidden md:flex" onClick={toggleSidebar}>
+              <Button variant="ghost" size="icon" onClick={toggleSidebar}>
                   <LayoutGrid className="h-5 w-5" />
-                  <span className="sr-only">Toggle listspaces</span>
               </Button>
             </div>
 
@@ -147,31 +142,29 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
 
           <main className="flex-1 overflow-y-auto">
              <div className="p-4 sm:p-6 md:p-8 h-full">
-              <AnimatePresence>
-                <motion.div layout transition={{ type: 'spring', stiffness: 300, damping: 30 }} className="h-full">
-                  <Card className="border-2 border-border/50 shadow-2xl shadow-primary/5 overflow-hidden h-full flex flex-col">
-                    <CardHeader className="flex flex-row items-center justify-between flex-shrink-0">
-                      <div className="flex items-center gap-2">
-                        <CardTitle className="font-headline text-2xl font-bold tracking-tight text-foreground">
-                          {activeWorkspace?.name || "My Notes"}
-                        </CardTitle>
-                      </div>
-                      <Button onClick={handleOpenNewNoteDialog} variant="gradient" disabled={!activeWorkspace}>
-                        <Plus className="mr-2 h-4 w-4" />
-                        New Note
-                      </Button>
-                    </CardHeader>
-                    <CardContent className="flex-grow overflow-y-auto p-6 pt-0">
-                      <NotesSection
-                        notes={sortedNotes}
-                        onDeleteNote={deleteNote}
-                        onEditNote={handleOpenEditDialog}
-                        isLocked={false}
-                      />
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              </AnimatePresence>
+              <PageTransition>
+                <Card className="border-2 border-border/50 shadow-2xl shadow-primary/5 overflow-hidden h-full flex flex-col">
+                  <CardHeader className="flex flex-row items-center justify-between flex-shrink-0">
+                    <div className="flex items-center gap-2">
+                      <CardTitle className="font-headline text-2xl font-bold tracking-tight text-foreground">
+                        {activeWorkspace?.name || "My Notes"}
+                      </CardTitle>
+                    </div>
+                    <Button onClick={handleOpenNewNoteDialog} variant="gradient" disabled={!activeWorkspace}>
+                      <Plus className="mr-2 h-4 w-4" />
+                      New Note
+                    </Button>
+                  </CardHeader>
+                  <CardContent className="flex-grow overflow-y-auto p-6 pt-0">
+                    <NotesSection
+                      notes={sortedNotes}
+                      onDeleteNote={deleteNote}
+                      onEditNote={handleOpenEditDialog}
+                      isLocked={false}
+                    />
+                  </CardContent>
+                </Card>
+              </PageTransition>
             </div>
           </main>
         </div>
@@ -190,6 +183,8 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
 
 export default function NotesPage() {
     return (
+      <SidebarProvider>
         <NotesPageContent />
+      </SidebarProvider>
     );
 }
