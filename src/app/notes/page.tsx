@@ -50,7 +50,8 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
     resetApp,
     deleteAccount,
     unlockedWorkspaces,
-    unlockWorkspace,
+    unlockWithPassword,
+    unlockWithBackupCode,
     lockWorkspace,
   } = tasksHook;
 
@@ -90,18 +91,22 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
   };
   
  const handleSaveNote = useCallback((id: string, newTitle: string, newContent: string, isNew?: boolean) => {
+    // If the note is new and has no title/content, don't save it.
+    if(isNew && !newTitle.trim() && !newContent.trim()) {
+        deleteNote(id, true); // local deletion
+        return;
+    }
     editNote(id, newTitle, newContent, isNew);
-  }, [editNote]);
+  }, [editNote, deleteNote]);
 
 
  const handleCloseNoteDialog = useCallback((open: boolean) => {
-    if (!open && editingNote) {
-      // If there's a note being edited and the dialog is closing, save it.
-      handleSaveNote(editingNote.id, editingNote.title, editingNote.content, editingNote.isNew);
-    }
     setIsNoteDialogOpen(open);
-    setEditingNote(null);
-  }, [editingNote, handleSaveNote]);
+    // Don't save here. Save is triggered inside the dialog on close.
+    if (!open) {
+        setEditingNote(null);
+    }
+  }, []);
 
 
   const sortedNotes = useMemo(() => {
@@ -113,20 +118,31 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
     });
   }, [notes]);
   
-  const handleUnlock = async () => {
+  const handlePasswordUnlock = async () => {
     if (!activeWorkspace) return;
-    if (await unlockWorkspace(activeWorkspace.id, passwordInput)) {
+    if (await unlockWithPassword(activeWorkspace.id, passwordInput)) {
         setIsUnlockDialogOpen(false);
-        setIsBackupCodeDialogOpen(false);
         setPasswordInput("");
         setFailedPasswordAttempts(0);
         toast({ title: "Listspace Unlocked" });
     } else {
-        toast({ variant: "destructive", title: "Incorrect Password or Code" });
+        toast({ variant: "destructive", title: "Incorrect Password" });
         setPasswordInput("");
         setFailedPasswordAttempts(prev => prev + 1);
     }
   };
+
+  const handleBackupCodeUnlock = async () => {
+    if (!activeWorkspace) return;
+     if (await unlockWithBackupCode(activeWorkspace.id, passwordInput)) {
+        setIsBackupCodeDialogOpen(false);
+        setPasswordInput("");
+        toast({ title: "Listspace Unlocked" });
+    } else {
+        toast({ variant: "destructive", title: "Incorrect or Used Backup Code" });
+        setPasswordInput("");
+    }
+  }
 
   const handleLock = () => {
     if (!activeWorkspace) return;
@@ -244,7 +260,7 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
                 type="password" 
                 value={passwordInput} 
                 onChange={(e) => setPasswordInput(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleUnlock()}
+                onKeyDown={(e) => e.key === 'Enter' && handlePasswordUnlock()}
                 placeholder="Enter password..." 
             />
             <Button variant="link" size="sm" className="p-0 h-auto text-xs" onClick={openBackupDialog}>
@@ -253,7 +269,7 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
           </div>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={handleBackFromLocked}>Back</AlertDialogCancel>
-            <AlertDialogAction onClick={handleUnlock}>Unlock</AlertDialogAction>
+            <AlertDialogAction onClick={handlePasswordUnlock}>Unlock</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -273,13 +289,13 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
                 type="text" 
                 value={passwordInput} 
                 onChange={(e) => setPasswordInput(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleUnlock()}
+                onKeyDown={(e) => e.key === 'Enter' && handleBackupCodeUnlock()}
                 placeholder="Enter backup code..." 
             />
           </div>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={backToPasswordDialog}>Back to Password</AlertDialogCancel>
-            <AlertDialogAction onClick={handleUnlock}>Unlock</AlertDialogAction>
+            <AlertDialogAction onClick={handleBackupCodeUnlock}>Unlock</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -294,5 +310,7 @@ export default function NotesPage() {
         </SidebarProvider>
     );
 }
+
+    
 
     
