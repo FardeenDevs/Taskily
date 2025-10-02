@@ -24,8 +24,8 @@ import { UserNav } from "../components/user-nav";
 
 const NotesPageContentInternal = memo(function NotesPageContentInternal() {
   const tasksHook = useTasks();
+  const { setOpen: setSidebarOpen, toggleSidebar } = useSidebar();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const { setOpen: setSidebarOpen } = useSidebar();
   const pathname = usePathname();
 
   const [isNoteDialogOpen, setIsNoteDialogOpen] = useState(false);
@@ -88,7 +88,7 @@ const NotesPageContentInternal = memo(function NotesPageContentInternal() {
                             </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent side="bottom" align="start">
-                            <DropdownMenuItem onClick={() => setSidebarOpen(true)}>
+                            <DropdownMenuItem onClick={() => toggleSidebar()}>
                                 <LayoutGrid className="mr-2 h-4 w-4" />
                                 <span>Listspaces</span>
                             </DropdownMenuItem>
@@ -101,7 +101,7 @@ const NotesPageContentInternal = memo(function NotesPageContentInternal() {
                     </div>
                 
                     <div className="hidden md:block">
-                        <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(true)}>
+                        <Button variant="ghost" size="icon" onClick={() => toggleSidebar()}>
                             <LayoutGrid className="h-5 w-5" />
                         </Button>
                     </div>
@@ -138,11 +138,11 @@ const NotesPageContentInternal = memo(function NotesPageContentInternal() {
             </header>
 
             <main className="flex-1 overflow-y-auto">
-              <div className="mx-auto w-full max-w-6xl p-4 sm:p-8">
+              <div className="p-4 sm:p-8 h-full">
                 <AnimatePresence>
-                <motion.div layout transition={{ type: 'spring', stiffness: 300, damping: 30 }}>
-                    <Card className="border-2 border-border/50 shadow-2xl shadow-primary/5 overflow-hidden">
-                    <CardHeader className="flex flex-row items-center justify-between">
+                <motion.div layout transition={{ type: 'spring', stiffness: 300, damping: 30 }} className="h-full">
+                    <Card className="border-2 border-border/50 shadow-2xl shadow-primary/5 overflow-hidden h-full flex flex-col">
+                    <CardHeader className="flex flex-row items-center justify-between flex-shrink-0">
                         <div className="flex items-center gap-2">
                         <CardTitle className="font-headline text-2xl font-bold tracking-tight text-foreground">
                             {activeWorkspace?.name || "My Notes"}
@@ -153,7 +153,7 @@ const NotesPageContentInternal = memo(function NotesPageContentInternal() {
                         New Note
                         </Button>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="flex-grow overflow-y-auto">
                         <NotesSection
                         notes={sortedNotes}
                         onDeleteNote={deleteNote}

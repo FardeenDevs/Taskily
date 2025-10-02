@@ -25,8 +25,8 @@ import { AuthGate } from "./components/auth-gate";
 import { UserNav } from "./components/user-nav";
 
 const AppContentInternal = memo(function AppContentInternal() {
-  const { setOpen: setSidebarOpen } = useSidebar();
   const tasksHook = useTasks();
+  const { setOpen: setSidebarOpen, toggleSidebar } = useSidebar();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const pathname = usePathname();
 
@@ -76,7 +76,7 @@ const AppContentInternal = memo(function AppContentInternal() {
                             </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent side="bottom" align="start">
-                            <DropdownMenuItem onClick={() => setSidebarOpen(true)}>
+                            <DropdownMenuItem onClick={() => toggleSidebar()}>
                                 <LayoutGrid className="mr-2 h-4 w-4" />
                                 <span>Listspaces</span>
                             </DropdownMenuItem>
@@ -89,7 +89,7 @@ const AppContentInternal = memo(function AppContentInternal() {
                     </div>
                 
                     <div className="hidden md:block">
-                        <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(true)}>
+                        <Button variant="ghost" size="icon" onClick={() => toggleSidebar()}>
                             <LayoutGrid className="h-5 w-5" />
                         </Button>
                     </div>
@@ -127,62 +127,62 @@ const AppContentInternal = memo(function AppContentInternal() {
             </header>
 
             <main className="flex-1 overflow-y-auto">
-                <div className="mx-auto w-full max-w-4xl p-4 sm:p-8">
-                    <AnimatePresence>
-                        <motion.div layout transition={{ type: 'spring', stiffness: 300, damping: 30 }}>
-                        <Card className="border-2 border-border/50 shadow-2xl shadow-primary/5 overflow-hidden">
-                            <CardHeader>
-                                <div className="flex items-center justify-center gap-2">
-                                    <CardTitle className="font-headline text-2xl font-bold tracking-tight text-foreground text-center">
-                                        {activeWorkspace?.name || "My List"}
-                                    </CardTitle>
-                                </div>
-                            </CardHeader>
-                            <CardContent className="space-y-8">
-                                <div className="space-y-6">
-                                <TaskProgress completed={completedTasks} total={totalTasks} />
-                                <TaskInput onAddTask={addTask} />
-                                <TaskList
-                                    tasks={tasks}
-                                    onToggleTask={toggleTask}
-                                    onDeleteTask={deleteTask}
-                                    onEditTask={editTask}
-                                />
-                                </div>
-                            </CardContent>
-                            <CardFooter className="flex items-center justify-between">
-                            <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                    <Button
-                                    variant="destructive"
-                                    disabled={tasks.length === 0}
-                                    className="disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
-                                    >
-                                    <Trash2 className="mr-2 h-4 w-4" />
-                                    Clear All Tasks
-                                    </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                        This will permanently delete all tasks in this list. This action cannot be undone.
-                                    </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                    <AlertDialogAction onClick={handleClearTasks} variant="destructive">
-                                        Yes, clear all
-                                    </AlertDialogAction>
-                                    </AlertDialogFooter>
-                                </AlertDialogContent>
-                                </AlertDialog>
-                            <TaskSuggestions currentTasks={tasks} onAddTask={(text) => addTask(text, null, null)} />
-                            </CardFooter>
-                        </Card>
-                        </motion.div>
-                    </AnimatePresence>
-                </div>
+              <div className="p-4 sm:p-8 h-full">
+                <AnimatePresence>
+                    <motion.div layout transition={{ type: 'spring', stiffness: 300, damping: 30 }} className="h-full">
+                    <Card className="border-2 border-border/50 shadow-2xl shadow-primary/5 overflow-hidden h-full flex flex-col">
+                        <CardHeader>
+                            <div className="flex items-center justify-center gap-2">
+                                <CardTitle className="font-headline text-2xl font-bold tracking-tight text-foreground text-center">
+                                    {activeWorkspace?.name || "My List"}
+                                </CardTitle>
+                            </div>
+                        </CardHeader>
+                        <CardContent className="space-y-8 flex-grow overflow-y-auto">
+                            <div className="space-y-6">
+                            <TaskProgress completed={completedTasks} total={totalTasks} />
+                            <TaskInput onAddTask={addTask} />
+                            <TaskList
+                                tasks={tasks}
+                                onToggleTask={toggleTask}
+                                onDeleteTask={deleteTask}
+                                onEditTask={editTask}
+                            />
+                            </div>
+                        </CardContent>
+                        <CardFooter className="flex items-center justify-between flex-shrink-0">
+                        <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                                <Button
+                                variant="destructive"
+                                disabled={tasks.length === 0}
+                                className="disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Clear All Tasks
+                                </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    This will permanently delete all tasks in this list. This action cannot be undone.
+                                </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={handleClearTasks} variant="destructive">
+                                    Yes, clear all
+                                </AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                            </AlertDialog>
+                        <TaskSuggestions currentTasks={tasks} onAddTask={(text) => addTask(text, null, null)} />
+                        </CardFooter>
+                    </Card>
+                    </motion.div>
+                </AnimatePresence>
+              </div>
             </main>
         </div>
       </SidebarInset>
