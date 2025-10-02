@@ -36,6 +36,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Label } from "@/components/ui/label";
 import { Workspace } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
+import { BackupCodesDialog } from "@/components/ui/backup-codes-dialog";
 
 type WorkspaceSidebarProps = {
   tasksHook: ReturnType<typeof useTasks>;
@@ -64,6 +65,7 @@ export function FirestoreWorkspaceSidebar({ tasksHook }: WorkspaceSidebarProps) 
   const [newPassword, setNewPassword] = useState("");
   const [newPasswordHint, setNewPasswordHint] = useState("");
   const [selectedWorkspace, setSelectedWorkspace] = useState<Workspace | null>(null);
+  const [backupCodesToShow, setBackupCodesToShow] = useState<string[] | null>(null);
 
   const handleAddWorkspace = () => {
     addWorkspace(newWorkspaceName);
@@ -72,11 +74,13 @@ export function FirestoreWorkspaceSidebar({ tasksHook }: WorkspaceSidebarProps) 
   
   const handleEditWorkspace = () => {
     if (selectedWorkspace) {
-      const success = editWorkspace(selectedWorkspace.id, editName, currentPassword, newPassword, newPasswordHint);
+      const { success, newBackupCodes } = editWorkspace(selectedWorkspace.id, editName, currentPassword, newPassword, newPasswordHint);
       if (success) {
         setEditDialogOpen(false);
-        setSelectedWorkspace(null);
         toast({ title: "Listspace updated!" });
+        if (newBackupCodes) {
+            setBackupCodesToShow(newBackupCodes);
+        }
       } else {
         toast({ variant: "destructive", title: "Incorrect Current Password" });
       }
@@ -106,6 +110,11 @@ export function FirestoreWorkspaceSidebar({ tasksHook }: WorkspaceSidebarProps) 
     setNewPassword("");
     setNewPasswordHint(workspace.passwordHint || "");
     setEditDialogOpen(true);
+  }
+  
+  const closeBackupDialog = () => {
+    setBackupCodesToShow(null);
+    setSelectedWorkspace(null);
   }
 
   return (
@@ -204,6 +213,9 @@ export function FirestoreWorkspaceSidebar({ tasksHook }: WorkspaceSidebarProps) 
             </DialogFooter>
             </DialogContent>
         </Dialog>
+
+        {/* Backup Codes Dialog */}
+        <BackupCodesDialog codes={backupCodesToShow} open={!!backupCodesToShow} onOpenChange={closeBackupDialog} />
 
         {/* Delete Workspace Dialog */}
         <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
