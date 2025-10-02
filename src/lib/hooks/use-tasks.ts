@@ -82,13 +82,13 @@ export function useTasks() {
   , [activeWorkspaceId, user, firestore]);
   
   const { data: activeWorkspace, loading: activeWorkspaceLoading } = useDoc<Workspace>(activeWorkspaceRef);
-
+  
   const isNotesLocked = useMemo(() => {
     if (!activeWorkspaceId || !activeWorkspace) return true;
     if (!activeWorkspace.notesPassword) return false;
     return !unlockedWorkspaces.includes(activeWorkspaceId);
   }, [activeWorkspace, activeWorkspaceId, unlockedWorkspaces]);
-  
+
   const tasksRef = useMemo(() => 
     activeWorkspaceId && user ? collection(firestore, 'users', user.uid, 'workspaces', activeWorkspaceId, 'tasks') : null
   , [activeWorkspaceId, user, firestore]);
@@ -311,28 +311,40 @@ export function useTasks() {
     });
   }, [tasksRef]);
 
-  const clearTasks = useCallback(async (workspaceId: string) => {
+  const clearWorkspace = useCallback(async (workspaceId: string) => {
     if (!user) return;
     const batch = writeBatch(firestore);
     const tasksCollectionRef = collection(firestore, 'users', user.uid, 'workspaces', workspaceId, 'tasks');
+    const notesCollectionRef = collection(firestore, 'users', user.uid, 'workspaces', workspaceId, 'notes');
     try {
-        const querySnapshot = await getDocs(tasksCollectionRef);
-        querySnapshot.forEach((doc) => {
+        const tasksSnapshot = await getDocs(tasksCollectionRef);
+        tasksSnapshot.forEach((doc) => {
             batch.delete(doc.ref);
         });
+
+        // Only try to clear notes if they are not locked or if we have access
+        const workspace = workspaces?.find(ws => ws.id === workspaceId);
+        if (!workspace?.notesPassword || unlockedWorkspaces.includes(workspaceId)) {
+            const notesSnapshot = await getDocs(notesCollectionRef);
+            notesSnapshot.forEach((doc) => {
+                batch.delete(doc.ref);
+            });
+        }
+        
         await batch.commit();
         toast({
-          title: "Tasks Cleared",
-          description: `All tasks in this listspace have been deleted.`,
+          title: "Workspace Cleared",
+          description: `All items in this workspace have been deleted.`,
         });
     } catch(e) {
+        // This might be a permission error on either listing tasks or notes
         const permissionError = new FirestorePermissionError({
-            path: tasksCollectionRef.path,
+            path: `users/${user.uid}/workspaces/${workspaceId}`,
             operation: 'list',
         });
         errorEmitter.emit('permission-error', permissionError);
     }
-  }, [firestore, user, toast]);
+  }, [firestore, user, toast, workspaces, unlockedWorkspaces]);
 
   const addNote = useCallback((): Note | undefined => {
     if (!notesRef || !activeWorkspaceId) return;
@@ -715,7 +727,7 @@ export function useTasks() {
     toggleTask,
     deleteTask,
     editTask,
-    clearTasks,
+    clearWorkspace,
     addNote,
     editNote,
     deleteNote,
@@ -730,7 +742,7 @@ export function useTasks() {
     setAppSettings,
     backupCodes,
     clearBackupCodes,
-notesBackupCodes,
+    notesBackupCodes,
     clearNotesBackupCodes,
     isNotesLocked,
     unlockNotes,
@@ -739,3 +751,4 @@ notesBackupCodes,
   };
 }
 
+    

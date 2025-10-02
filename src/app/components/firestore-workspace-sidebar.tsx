@@ -51,7 +51,7 @@ export function FirestoreWorkspaceSidebar({ tasksHook }: WorkspaceSidebarProps) 
     addWorkspace, 
     editWorkspace, 
     deleteWorkspace, 
-    clearTasks,
+    clearWorkspace,
     setNotesPassword,
     removeNotesPassword,
   } = tasksHook;
@@ -113,9 +113,9 @@ export function FirestoreWorkspaceSidebar({ tasksHook }: WorkspaceSidebarProps) 
     setSelectedWorkspace(null);
   }
 
-  const handleClearTasks = () => {
+  const handleClearWorkspace = () => {
     if (selectedWorkspace) {
-        clearTasks(selectedWorkspace.id);
+        clearWorkspace(selectedWorkspace.id);
     }
     setClearDialogOpen(false);
     setSelectedWorkspace(null);
@@ -289,7 +289,7 @@ export function FirestoreWorkspaceSidebar({ tasksHook }: WorkspaceSidebarProps) 
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={handleClearTasks} variant="destructive">
+                <AlertDialogAction onClick={handleClearWorkspace} variant="destructive">
                     Yes, clear all
                 </AlertDialogAction>
                 </AlertDialogFooter>
@@ -298,3 +298,5 @@ export function FirestoreWorkspaceSidebar({ tasksHook }: WorkspaceSidebarProps) 
     </Sidebar>
   );
 }
+
+    

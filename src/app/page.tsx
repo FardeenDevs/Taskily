@@ -24,15 +24,15 @@ export default function Home() {
     totalTasks,
     activeWorkspace,
     activeWorkspaceId,
-    clearTasks,
+    clearWorkspace,
     appSettings,
   } = useTasks();
 
-  const handleClearTasks = useCallback(() => {
+  const handleClearWorkspace = useCallback(() => {
     if (activeWorkspaceId) {
-      clearTasks(activeWorkspaceId);
+      clearWorkspace(activeWorkspaceId);
     }
-  }, [activeWorkspaceId, clearTasks]);
+  }, [activeWorkspaceId, clearWorkspace]);
 
   const handleAddTask = useCallback((text: string, priority: Priority | null, effort: Effort | null) => {
     addTask(text, priority, effort);
@@ -92,7 +92,7 @@ export default function Home() {
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleClearTasks} variant="destructive">
+                  <AlertDialogAction onClick={handleClearWorkspace} variant="destructive">
                     Yes, clear all
                   </AlertDialogAction>
                 </AlertDialogFooter>
@@ -105,3 +105,4 @@ export default function Home() {
   );
 }
 
+    
