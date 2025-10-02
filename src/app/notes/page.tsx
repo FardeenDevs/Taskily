@@ -22,7 +22,7 @@ import { NoteDialog } from "../components/note-dialog";
 import { AuthGate } from "../components/auth-gate";
 import { UserNav } from "../components/user-nav";
 
-const NotesPageContent = memo(function NotesPageContent() {
+const NotesPageContentInternal = memo(function NotesPageContentInternal() {
   const tasksHook = useTasks();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const { setOpen: setSidebarOpen } = useSidebar();
@@ -74,9 +74,9 @@ const NotesPageContent = memo(function NotesPageContent() {
   }
 
   return (
-    <SidebarProvider>
-        <SidebarInset>
-        <FirestoreWorkspaceSidebar tasksHook={tasksHook} />
+    <>
+      <FirestoreWorkspaceSidebar tasksHook={tasksHook} />
+      <SidebarInset>
         <div className="flex flex-col h-screen bg-app-gradient">
             <header className="flex-shrink-0 flex items-center justify-between p-4 border-b">
                 <div className="flex items-center gap-2">
@@ -138,10 +138,7 @@ const NotesPageContent = memo(function NotesPageContent() {
             </header>
 
             <main className="flex-1 overflow-y-auto">
-            <WelcomeDialog open={isFirstTime} onOpenChange={setIsFirstTime} />
-            <SettingsDialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen} onResetApp={resetApp} />
-            
-            <div className="mx-auto w-full max-w-6xl p-4 sm:p-8">
+              <div className="mx-auto w-full max-w-6xl p-4 sm:p-8">
                 <AnimatePresence>
                 <motion.div layout transition={{ type: 'spring', stiffness: 300, damping: 30 }}>
                     <Card className="border-2 border-border/50 shadow-2xl shadow-primary/5 overflow-hidden">
@@ -167,9 +164,12 @@ const NotesPageContent = memo(function NotesPageContent() {
                     </Card>
                 </motion.div>
                 </AnimatePresence>
-            </div>
+              </div>
             </main>
         </div>
+      </SidebarInset>
+        <WelcomeDialog open={isFirstTime} onOpenChange={setIsFirstTime} />
+        <SettingsDialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen} onResetApp={resetApp} />
         <NoteDialog
             open={isNoteDialogOpen}
             onOpenChange={(open) => {
@@ -182,10 +182,17 @@ const NotesPageContent = memo(function NotesPageContent() {
             note={editingNote}
             onSave={handleSave}
         />
-        </SidebarInset>
-    </SidebarProvider>
+    </>
   );
 });
+
+function NotesPageContent() {
+    return (
+        <SidebarProvider>
+            <NotesPageContentInternal />
+        </SidebarProvider>
+    );
+}
 
 export default function NotesPage() {
   return (
