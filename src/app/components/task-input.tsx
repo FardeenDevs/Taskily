@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useForm } from "react-hook-form";
@@ -23,19 +24,29 @@ const formSchema = z.object({
 
 interface TaskInputProps {
   onAddTask: (text: string, priority: Priority | null, effort: Effort | null) => void;
+  defaultPriority: Priority;
+  defaultEffort: Effort;
 }
 
-export const TaskInput = memo(function TaskInput({ onAddTask }: TaskInputProps) {
+export const TaskInput = memo(function TaskInput({ onAddTask, defaultPriority, defaultEffort }: TaskInputProps) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       task: "",
-      priority: "P3",
-      effort: "E3",
+      priority: defaultPriority,
+      effort: defaultEffort,
     },
   });
 
   const [isInputEmpty, setIsInputEmpty] = useState(true);
+
+  useEffect(() => {
+    form.reset({
+      task: form.getValues('task'),
+      priority: defaultPriority,
+      effort: defaultEffort
+    });
+  }, [defaultPriority, defaultEffort, form]);
 
   useEffect(() => {
     const subscription = form.watch((value) => {
@@ -50,7 +61,7 @@ export const TaskInput = memo(function TaskInput({ onAddTask }: TaskInputProps) 
       values.priority as Priority || null,
       values.effort as Effort || null
     );
-    form.reset({ task: "", priority: "P3", effort: "E3" });
+    form.reset({ task: "", priority: defaultPriority, effort: defaultEffort });
   }
 
   return (
@@ -90,7 +101,7 @@ export const TaskInput = memo(function TaskInput({ onAddTask }: TaskInputProps) 
             name="priority"
             render={({ field }) => (
               <FormItem>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Priority" />
@@ -112,7 +123,7 @@ export const TaskInput = memo(function TaskInput({ onAddTask }: TaskInputProps) 
             name="effort"
             render={({ field }) => (
               <FormItem>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Effort" />
@@ -134,3 +145,5 @@ export const TaskInput = memo(function TaskInput({ onAddTask }: TaskInputProps) 
     </Form>
   );
 });
+
+    

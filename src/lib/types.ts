@@ -32,3 +32,11 @@ export interface Note {
   workspaceId: string;
   isNew?: boolean; // Optional flag for temporary client-side notes
 }
+
+export interface AppSettings {
+  defaultPriority: Priority;
+  defaultEffort: Effort;
+  defaultWorkspaceId: string | null;
+}
+
+    

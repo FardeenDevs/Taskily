@@ -43,6 +43,9 @@ const AppContent = memo(function AppContentInternal() {
     resetApp,
     deleteAccount,
     clearTasks,
+    workspaces,
+    appSettings, 
+    setAppSettings,
   } = tasksHook;
 
   const handleClearTasks = useCallback(() => {
@@ -89,7 +92,11 @@ const AppContent = memo(function AppContentInternal() {
                 <CardContent className="space-y-8 flex-grow overflow-y-auto p-6 pt-0">
                   <div className="space-y-6">
                     <TaskProgress completed={completedTasks} total={totalTasks} />
-                    <TaskInput onAddTask={handleAddTask} />
+                    <TaskInput 
+                      onAddTask={handleAddTask} 
+                      defaultPriority={appSettings.defaultPriority}
+                      defaultEffort={appSettings.defaultEffort}
+                    />
                     <TaskList
                       tasks={tasks}
                       onToggleTask={toggleTask}
@@ -138,6 +145,9 @@ const AppContent = memo(function AppContentInternal() {
         onResetApp={resetApp} 
         onDeleteAccount={deleteAccount} 
         userEmail={user?.email}
+        workspaces={workspaces}
+        appSettings={appSettings}
+        onSettingsChange={setAppSettings}
       />}
     </>
   );
@@ -148,3 +158,5 @@ export default function Home() {
       <AppContent />
   );
 }
+
+    

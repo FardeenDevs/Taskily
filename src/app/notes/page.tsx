@@ -55,6 +55,9 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
     unlockWithPassword,
     unlockWithBackupCode,
     lockWorkspace,
+    workspaces,
+    appSettings, 
+    setAppSettings,
   } = tasksHook;
 
 
@@ -70,12 +73,7 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
       setIsUnlockDialogOpen(false);
       setFailedPasswordAttempts(0); // Reset attempts when unlocked
     }
-  }, [isLocked]);
-
-  useEffect(() => {
-    // Reset attempts when switching workspaces
-    setFailedPasswordAttempts(0);
-  }, [activeWorkspace?.id])
+  }, [isLocked, activeWorkspace?.id]);
 
 
   const handleOpenEditDialog = useCallback((note: Note) => {
@@ -244,6 +242,9 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
         onResetApp={resetApp} 
         onDeleteAccount={deleteAccount} 
         userEmail={user?.email}
+        workspaces={workspaces}
+        appSettings={appSettings}
+        onSettingsChange={setAppSettings}
       />}
        {isNoteDialogOpen && <NoteDialog
         open={isNoteDialogOpen}
@@ -317,3 +318,5 @@ export default function NotesPage() {
         <NotesPageContent />
     );
 }
+
+    

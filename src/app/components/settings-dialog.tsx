@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
 import { Sun, Moon, Trash2, UserX } from 'lucide-react'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,6 +21,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { type Priority, type Effort, type Workspace, type AppSettings } from "@/lib/types"
 
 interface SettingsDialogProps {
   open: boolean
@@ -27,9 +29,21 @@ interface SettingsDialogProps {
   onResetApp: () => void
   onDeleteAccount: () => Promise<void>
   userEmail: string | null | undefined
+  workspaces: Workspace[]
+  appSettings: AppSettings
+  onSettingsChange: (settings: Partial<AppSettings>) => void
 }
 
-export const SettingsDialog = memo(function SettingsDialog({ open, onOpenChange, onResetApp, onDeleteAccount, userEmail }: SettingsDialogProps) {
+export const SettingsDialog = memo(function SettingsDialog({
+  open,
+  onOpenChange,
+  onResetApp,
+  onDeleteAccount,
+  userEmail,
+  workspaces,
+  appSettings,
+  onSettingsChange,
+}: SettingsDialogProps) {
   const { theme, setTheme } = useTheme()
   const [isDark, setIsDark] = useState(theme === 'dark');
 
@@ -71,14 +85,14 @@ export const SettingsDialog = memo(function SettingsDialog({ open, onOpenChange,
   return (
     <>
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-w-xl">
         <DialogHeader>
           <DialogTitle>Settings</DialogTitle>
           <DialogDescription>
             Manage your application settings and preferences.
           </DialogDescription>
         </DialogHeader>
-        <div className="py-4 space-y-6">
+        <div className="py-4 space-y-6 max-h-[70vh] overflow-y-auto pr-2">
             <div className="flex items-center justify-between rounded-lg border p-4">
                 <div className="space-y-0.5">
                     <Label htmlFor="dark-mode" className="text-base">Dark Mode</Label>
@@ -94,6 +108,58 @@ export const SettingsDialog = memo(function SettingsDialog({ open, onOpenChange,
                         onCheckedChange={handleThemeChange}
                     />
                     <Moon className="h-5 w-5 text-blue-500"/>
+                </div>
+            </div>
+
+            <div className="rounded-lg border p-4 space-y-4">
+                 <div className="space-y-0.5">
+                    <Label className="text-base">Defaults</Label>
+                    <p className="text-sm text-muted-foreground">
+                       Set default values for new tasks and startup.
+                    </p>
+                </div>
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
+                    <Label htmlFor="default-priority">Default Priority</Label>
+                     <Select onValueChange={(value) => onSettingsChange({ defaultPriority: value as Priority })} value={appSettings.defaultPriority}>
+                      <SelectTrigger className="w-full sm:w-[220px]">
+                        <SelectValue placeholder="Set priority" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="P1">Priority 1 (Low)</SelectItem>
+                        <SelectItem value="P2">Priority 2</SelectItem>
+                        <SelectItem value="P3">Priority 3 (Medium)</SelectItem>
+                        <SelectItem value="P4">Priority 4</SelectItem>
+                        <SelectItem value="P5">Priority 5 (High)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                </div>
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
+                    <Label htmlFor="default-effort">Default Effort</Label>
+                     <Select onValueChange={(value) => onSettingsChange({ defaultEffort: value as Effort })} value={appSettings.defaultEffort}>
+                      <SelectTrigger className="w-full sm:w-[220px]">
+                        <SelectValue placeholder="Set effort" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="E1">Effort 1 (Very Easy)</SelectItem>
+                        <SelectItem value="E2">Effort 2 (Easy)</SelectItem>
+                        <SelectItem value="E3">Effort 3 (Medium)</SelectItem>
+                        <SelectItem value="E4">Effort 4 (Hard)</SelectItem>
+                        <SelectItem value="E5">Effort 5 (Very Hard)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                </div>
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
+                    <Label htmlFor="default-workspace">Default Listspace</Label>
+                     <Select onValueChange={(value) => onSettingsChange({ defaultWorkspaceId: value })} value={appSettings.defaultWorkspaceId ?? undefined}>
+                      <SelectTrigger className="w-full sm:w-[220px]">
+                        <SelectValue placeholder="Select a listspace" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {workspaces.map(ws => (
+                            <SelectItem key={ws.id} value={ws.id}>{ws.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                 </div>
             </div>
 
@@ -197,3 +263,5 @@ export const SettingsDialog = memo(function SettingsDialog({ open, onOpenChange,
     </>
   )
 });
+
+    

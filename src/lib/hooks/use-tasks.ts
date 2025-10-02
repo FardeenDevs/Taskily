@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { type Task, type Workspace, type Priority, type Effort, type Note } from "@/lib/types";
+import { type Task, type Workspace, type Priority, type Effort, type Note, type AppSettings } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { useUser, useAuth, useFirestore, useCollection, useDoc } from "@/firebase";
 import { collection, addDoc, doc, setDoc, deleteDoc, writeBatch, serverTimestamp, getDocs, getDoc, query, where, updateDoc } from "firebase/firestore";
@@ -13,6 +13,13 @@ import { FirestorePermissionError } from "@/firebase/errors";
 
 
 const ACTIVE_WORKSPACE_KEY = "listily-active-workspace";
+const APP_SETTINGS_KEY = "listily-app-settings";
+
+const DEFAULT_SETTINGS: AppSettings = {
+  defaultPriority: "P3",
+  defaultEffort: "E3",
+  defaultWorkspaceId: null,
+};
 
 function generateBackupCodes(): string[] {
     const codes = new Set<string>();
@@ -35,9 +42,31 @@ export function useTasks() {
   const [isFirstTime, setIsFirstTime] = useState(false);
   const [initialCheckDone, setInitialCheckDone] = useState(false);
   const [unlockedWorkspaces, setUnlockedWorkspaces] = useState<Set<string>>(new Set());
+  const [appSettings, setAppSettingsState] = useState<AppSettings>(DEFAULT_SETTINGS);
   
   const { setOpen: setSidebarOpen } = useSidebar();
   
+  // Load settings from localStorage
+  useEffect(() => {
+    if (user) {
+      const storedSettings = localStorage.getItem(`${APP_SETTINGS_KEY}-${user.uid}`);
+      if (storedSettings) {
+        setAppSettingsState(JSON.parse(storedSettings));
+      }
+    }
+  }, [user]);
+
+  // Save settings to localStorage
+  const setAppSettings = useCallback((newSettings: Partial<AppSettings>) => {
+    if (user) {
+        setAppSettingsState(prev => {
+            const updatedSettings = { ...prev, ...newSettings };
+            localStorage.setItem(`${APP_SETTINGS_KEY}-${user.uid}`, JSON.stringify(updatedSettings));
+            return updatedSettings;
+        });
+    }
+  }, [user]);
+
   // Firestore references
   const workspacesQuery = useMemo(() => 
     user ? query(collection(firestore, 'users', user.uid, 'workspaces')) : null
@@ -113,10 +142,17 @@ export function useTasks() {
          setInitialCheckDone(true);
          return;
       }
-  
+
+      const defaultWorkspaceId = appSettings.defaultWorkspaceId;
       const storedWorkspaceId = localStorage.getItem(`${ACTIVE_WORKSPACE_KEY}-${user.uid}`);
-      if (storedWorkspaceId && workspaces.some(ws => ws.id === storedWorkspaceId)) {
-        setActiveWorkspaceId(storedWorkspaceId);
+
+      const workspaceToSelect = 
+        (defaultWorkspaceId && workspaces.some(ws => ws.id === defaultWorkspaceId)) ? defaultWorkspaceId :
+        (storedWorkspaceId && workspaces.some(ws => ws.id === storedWorkspaceId)) ? storedWorkspaceId :
+        null;
+  
+      if (workspaceToSelect) {
+        setActiveWorkspaceId(workspaceToSelect);
       } else if (workspaces.length > 0) {
         const sortedWorkspaces = [...workspaces].sort((a, b) => {
           const dateA = a.createdAt ? (typeof (a.createdAt as any).toDate === 'function' ? (a.createdAt as any).toDate() : new Date(a.createdAt as string)) : new Date(0);
@@ -127,7 +163,7 @@ export function useTasks() {
       }
       setInitialCheckDone(true);
     }
-  }, [user, userLoading, workspaces, workspacesLoading, initialCheckDone]);
+  }, [user, userLoading, workspaces, workspacesLoading, initialCheckDone, appSettings.defaultWorkspaceId]);
 
   // Create default workspace if none exist after initial check
   useEffect(() => {
@@ -459,13 +495,17 @@ export function useTasks() {
             setActiveWorkspaceId(null);
         }
     }
+
+    if (id === appSettings.defaultWorkspaceId) {
+        setAppSettings({ defaultWorkspaceId: null });
+    }
     
     toast({
         title: "Listspace Deleted",
         description: "The Listspace and all its items have been removed.",
     });
 
-  }, [firestore, user, workspaces, activeWorkspaceId, switchWorkspace, toast]);
+  }, [firestore, user, workspaces, activeWorkspaceId, switchWorkspace, toast, appSettings.defaultWorkspaceId, setAppSettings]);
 
   const editWorkspace = useCallback((id: string, newName: string, currentPassword?: string, newPassword?: string, newPasswordHint?: string): { success: boolean, newBackupCodes?: string[] } => {
     if (newName.trim() === "" || !user || !workspaces) return { success: false };
@@ -685,9 +725,14 @@ export function useTasks() {
     unlockWithPassword,
     unlockWithBackupCode,
     lockWorkspace,
+    appSettings,
+    setAppSettings,
   };
 }
 
     
+
+    
+
 
     
