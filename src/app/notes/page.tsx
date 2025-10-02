@@ -23,12 +23,8 @@ import { NoteDialog } from "../components/note-dialog";
 import { AuthGate } from "../components/auth-gate";
 import { UserNav } from "../components/user-nav";
 
-
-interface NotesPageContentProps {
-  tasksHook: ReturnType<typeof useTasks>;
-}
-
-const NotesPageContent = memo(function NotesPageContent({ tasksHook }: NotesPageContentProps) {
+const NotesPageContent = memo(function NotesPageContent() {
+  const tasksHook = useTasks();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const { setOpen: setSidebarOpen } = useSidebar();
   const pathname = usePathname();
@@ -79,6 +75,7 @@ const NotesPageContent = memo(function NotesPageContent({ tasksHook }: NotesPage
 
   return (
     <SidebarInset>
+       <FirestoreWorkspaceSidebar tasksHook={tasksHook} />
       <header className="flex items-center justify-between p-4">
             <div className="flex items-center gap-2">
                  <div className="z-50 md:hidden">
@@ -187,14 +184,11 @@ const NotesPageContent = memo(function NotesPageContent({ tasksHook }: NotesPage
 });
 
 export default function NotesPage() {
-  const tasksHook = useTasks();
-
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
         <AuthGate>
             <SidebarProvider>
-                <FirestoreWorkspaceSidebar tasksHook={tasksHook} />
-                <NotesPageContent tasksHook={tasksHook} />
+                <NotesPageContent />
             </SidebarProvider>
         </AuthGate>
     </ThemeProvider>

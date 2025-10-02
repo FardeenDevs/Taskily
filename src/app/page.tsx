@@ -25,12 +25,8 @@ import { cn } from "@/lib/utils";
 import { AuthGate } from "./components/auth-gate";
 import { UserNav } from "./components/user-nav";
 
-
-interface AppContentProps {
-  tasksHook: ReturnType<typeof useTasks>;
-}
-
-const AppContent = memo(function AppContent({ tasksHook }: AppContentProps) {
+const AppContent = memo(function AppContent() {
+  const tasksHook = useTasks();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const { setOpen: setSidebarOpen } = useSidebar();
   const pathname = usePathname();
@@ -70,6 +66,7 @@ const AppContent = memo(function AppContent({ tasksHook }: AppContentProps) {
 
   return (
     <SidebarInset>
+        <FirestoreWorkspaceSidebar tasksHook={tasksHook} />
         <header className="flex items-center justify-between p-4">
             <div className="flex items-center gap-2">
                  <div className="z-50 md:hidden">
@@ -196,14 +193,11 @@ const AppContent = memo(function AppContent({ tasksHook }: AppContentProps) {
 });
 
 export default function Home() {
-  const tasksHook = useTasks();
-
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
         <AuthGate>
             <SidebarProvider>
-                <FirestoreWorkspaceSidebar tasksHook={tasksHook} />
-                <AppContent tasksHook={tasksHook} />
+                <AppContent />
             </SidebarProvider>
         </AuthGate>
     </ThemeProvider>
