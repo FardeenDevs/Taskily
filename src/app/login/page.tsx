@@ -11,11 +11,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Chrome } from 'lucide-react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Form, FormControl, FormField, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
 
 const signInSchema = z.object({
@@ -135,7 +135,6 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-end bg-app-gradient p-4 pr-16">
-      <AnimatePresence>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -255,7 +254,6 @@ export default function LoginPage() {
             </CardContent>
           </Card>
         </motion.div>
-      </AnimatePresence>
     </div>
   );
 }

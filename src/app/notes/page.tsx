@@ -4,26 +4,19 @@
 import { useTasks } from "@/lib/hooks/use-tasks";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { WelcomeDialog } from "@/app/components/welcome-dialog";
-import { Settings, LayoutGrid, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useState, memo, useMemo, useEffect } from "react";
 import { SettingsDialog } from "@/app/components/settings-dialog";
 import { Button } from "@/components/ui/button";
-import { FirestoreWorkspaceSidebar } from "@/app/components/firestore-workspace-sidebar";
-import { SidebarInset, useSidebar } from "@/components/ui/sidebar";
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { cn } from "@/lib/utils";
 import { NotesSection } from "@/app/components/notes-section";
 import { Note } from "@/lib/types";
 import { NoteDialog } from "../components/note-dialog";
-import { UserNav } from "../components/user-nav";
 import { PageTransition } from '../components/page-transition';
+import { MainLayout } from "../components/main-layout";
 
 const NotesPageContent = memo(function NotesPageContentInternal() {
   const tasksHook = useTasks();
-  const { toggleSidebar } = useSidebar();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const pathname = usePathname();
 
   const [isNoteDialogOpen, setIsNoteDialogOpen] = useState(false);
   const [editingNote, setEditingNote] = useState<Note | null>(null);
@@ -107,76 +100,32 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
   }
 
   return (
-    <>
-      <FirestoreWorkspaceSidebar tasksHook={tasksHook} />
-      <SidebarInset>
-        <div className="flex flex-col h-screen">
-           <header className="flex h-16 items-center justify-between border-b px-4 md:px-6 flex-shrink-0">
-            <div className="flex items-center gap-2">
-              <Button variant="ghost" size="icon" onClick={toggleSidebar}>
-                  <LayoutGrid className="h-5 w-5" />
+    <MainLayout tasksHook={tasksHook} setIsSettingsOpen={setIsSettingsOpen}>
+      <div className="p-4 sm:p-6 md:p-8 h-full">
+        <PageTransition>
+          <Card className="border-2 border-border/50 shadow-2xl shadow-primary/5 overflow-hidden h-full flex flex-col">
+            <CardHeader className="flex flex-row items-center justify-between flex-shrink-0">
+              <div className="flex items-center gap-2">
+                <CardTitle className="font-headline text-2xl font-bold tracking-tight text-foreground">
+                  {activeWorkspace?.name || "My Notes"}
+                </CardTitle>
+              </div>
+              <Button onClick={handleOpenNewNoteDialog} variant="gradient" disabled={!activeWorkspace}>
+                <Plus className="mr-2 h-4 w-4" />
+                New Note
               </Button>
-            </div>
-
-            <div className="flex items-center gap-4">
-              <h1 className="text-2xl font-bold text-center text-foreground hidden sm:block">Listily</h1>
-              <nav className="flex items-center gap-2 rounded-full bg-secondary p-1">
-                <Link href="/" passHref>
-                  <span className={cn(
-                    "cursor-pointer rounded-full px-4 py-1 text-sm font-medium transition-colors",
-                    pathname === '/' ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:bg-background/50"
-                  )}>
-                    Progress
-                  </span>
-                </Link>
-                <Link href="/notes" passHref>
-                  <span className={cn(
-                    "cursor-pointer rounded-full px-4 py-1 text-sm font-medium transition-colors",
-                    pathname === '/notes' ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:bg-background/50"
-                  )}>
-                    Notes
-                  </span>
-                </Link>
-              </nav>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground hover:text-foreground hidden md:inline-flex" onClick={() => setIsSettingsOpen(true)}>
-                <Settings className="h-5 w-5" />
-              </Button>
-              <UserNav />
-            </div>
-          </header>
-
-          <main className="flex-1 overflow-y-auto">
-             <div className="p-4 sm:p-6 md:p-8 h-full">
-              <PageTransition>
-                <Card className="border-2 border-border/50 shadow-2xl shadow-primary/5 overflow-hidden h-full flex flex-col">
-                  <CardHeader className="flex flex-row items-center justify-between flex-shrink-0">
-                    <div className="flex items-center gap-2">
-                      <CardTitle className="font-headline text-2xl font-bold tracking-tight text-foreground">
-                        {activeWorkspace?.name || "My Notes"}
-                      </CardTitle>
-                    </div>
-                    <Button onClick={handleOpenNewNoteDialog} variant="gradient" disabled={!activeWorkspace}>
-                      <Plus className="mr-2 h-4 w-4" />
-                      New Note
-                    </Button>
-                  </CardHeader>
-                  <CardContent className="flex-grow overflow-y-auto p-6 pt-0">
-                    <NotesSection
-                      notes={sortedNotes}
-                      onDeleteNote={deleteNote}
-                      onEditNote={handleOpenEditDialog}
-                      isLocked={false}
-                    />
-                  </CardContent>
-                </Card>
-              </PageTransition>
-            </div>
-          </main>
-        </div>
-      </SidebarInset>
+            </CardHeader>
+            <CardContent className="flex-grow overflow-y-auto p-6 pt-0">
+              <NotesSection
+                notes={sortedNotes}
+                onDeleteNote={deleteNote}
+                onEditNote={handleOpenEditDialog}
+                isLocked={false}
+              />
+            </CardContent>
+          </Card>
+        </PageTransition>
+      </div>
       <WelcomeDialog open={isFirstTime} onOpenChange={setIsFirstTime} />
       <SettingsDialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen} onResetApp={resetApp} onDeleteAccount={deleteAccount} />
        <NoteDialog
@@ -185,7 +134,7 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
         note={editingNote}
         onSave={handleSaveNote}
       />
-    </>
+    </MainLayout>
   );
 });
 
