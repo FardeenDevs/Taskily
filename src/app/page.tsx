@@ -92,12 +92,12 @@ const AppContent = memo(function AppContentInternal() {
     if (!activeWorkspace) return;
     const success = await unlockWithPassword(activeWorkspace.id, passwordInput);
     if (success) {
+        router.push('/notes');
         setIsUnlockDialogOpen(false);
         setPasswordInput("");
         setShowPassword(false);
         setFailedPasswordAttempts(0);
-        toast({ title: "Listspace Unlocked", description: "Redirecting to Notes..." });
-        router.push('/notes');
+        toast({ title: "Listspace Unlocked", description: "If you have been redirected to Listily Progress or opening a note has locked you out, please try entering the password again." });
     } else {
         toast({ variant: "destructive", title: "Incorrect Password" });
         setPasswordInput("");
@@ -108,10 +108,10 @@ const AppContent = memo(function AppContentInternal() {
   const handleBackupCodeUnlock = async () => {
     if (!activeWorkspace) return;
      if (await unlockWithBackupCode(activeWorkspace.id, passwordInput)) {
+        router.push('/notes');
         setIsBackupCodeDialogOpen(false);
         setPasswordInput("");
         toast({ title: "Listspace Unlocked", description: "Redirecting to Notes..." });
-        router.push('/notes');
     } else {
         toast({ variant: "destructive", title: "Incorrect or Used Backup Code" });
         setPasswordInput("");
@@ -303,7 +303,3 @@ export default function Home() {
       <AppContent />
   );
 }
-
-    
-
-    
