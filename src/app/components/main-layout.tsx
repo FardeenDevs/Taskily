@@ -8,6 +8,7 @@ import { LayoutGrid } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { UserNav } from "./user-nav";
 import { type useTasks } from "@/lib/hooks/use-tasks";
+import { usePathname } from "next/navigation";
 
 type View = 'progress' | 'notes';
 
@@ -81,4 +82,5 @@ export function MainLayout({ children, tasksHook, setIsSettingsOpen, currentView
         </Layout>
     )
 }
+
 
