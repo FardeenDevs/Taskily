@@ -61,7 +61,7 @@ const AppContent = memo(function AppContentInternal() {
   }
 
   return (
-    <AuthGate>
+    <>
       <FirestoreWorkspaceSidebar tasksHook={tasksHook} />
       <SidebarInset>
         <div className="flex flex-col h-screen">
@@ -75,7 +75,7 @@ const AppContent = memo(function AppContentInternal() {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent side="bottom" align="start">
-                    <DropdownMenuItem onClick={() => toggleSidebar()}>
+                    <DropdownMenuItem onClick={toggleSidebar}>
                       <LayoutGrid className="mr-2 h-4 w-4" />
                       <span>Listspaces</span>
                     </DropdownMenuItem>
@@ -88,7 +88,7 @@ const AppContent = memo(function AppContentInternal() {
               </div>
 
               <div className="hidden md:block">
-                <Button variant="ghost" size="icon" onClick={() => toggleSidebar()}>
+                <Button variant="ghost" size="icon" onClick={toggleSidebar}>
                   <LayoutGrid className="h-5 w-5" />
                 </Button>
               </div>
@@ -186,14 +186,16 @@ const AppContent = memo(function AppContentInternal() {
       </SidebarInset>
       <WelcomeDialog open={isFirstTime} onOpenChange={setIsFirstTime} />
       <SettingsDialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen} onResetApp={resetApp} />
-    </AuthGate>
+    </>
   );
 });
 
 export default function Home() {
   return (
     <SidebarProvider>
-      <AppContent />
+        <AuthGate>
+            <AppContent />
+        </AuthGate>
     </SidebarProvider>
   );
 }

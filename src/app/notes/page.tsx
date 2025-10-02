@@ -73,7 +73,7 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
   }
 
   return (
-    <AuthGate>
+    <>
       <FirestoreWorkspaceSidebar tasksHook={tasksHook} />
       <SidebarInset>
         <div className="flex flex-col h-screen">
@@ -87,7 +87,7 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent side="bottom" align="start">
-                    <DropdownMenuItem onClick={() => toggleSidebar()}>
+                    <DropdownMenuItem onClick={toggleSidebar}>
                       <LayoutGrid className="mr-2 h-4 w-4" />
                       <span>Listspaces</span>
                     </DropdownMenuItem>
@@ -100,7 +100,7 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
               </div>
 
               <div className="hidden md:block">
-                <Button variant="ghost" size="icon" onClick={() => toggleSidebar()}>
+                <Button variant="ghost" size="icon" onClick={toggleSidebar}>
                   <LayoutGrid className="h-5 w-5" />
                 </Button>
               </div>
@@ -181,14 +181,16 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
         note={editingNote}
         onSave={handleSave}
       />
-    </AuthGate>
+    </>
   );
 });
 
 export default function NotesPage() {
   return (
     <SidebarProvider>
-      <NotesPageContent />
+        <AuthGate>
+            <NotesPageContent />
+        </AuthGate>
     </SidebarProvider>
   );
 }
