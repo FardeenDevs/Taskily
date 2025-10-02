@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "UserProfile": {
@@ -89,7 +90,7 @@
     }
   },
   "auth": {
-    "providers": ["google.com"]
+    "providers": ["google.com", "password"]
   },
   "firestore": {
     "/users/{userId}": {
@@ -98,19 +99,19 @@
       },
       "description": "Stores public profile information for each user."
     },
-    "/workspaces/{workspaceId}": {
+    "/users/{userId}/workspaces/{workspaceId}": {
         "schema": {
             "$ref": "#/entities/Workspace"
         },
-        "description": "A root collection of all workspaces. Security rules will enforce that only the owner can access their workspaces."
+        "description": "A root collection of all workspaces for a user."
     },
-    "/workspaces/{workspaceId}/tasks/{taskId}": {
+    "/users/{userId}/workspaces/{workspaceId}/tasks/{taskId}": {
       "schema": {
         "$ref": "#/entities/Task"
       },
       "description": "A subcollection of tasks belonging to a specific workspace."
     },
-    "/workspaces/{workspaceId}/notes/{noteId}": {
+    "/users/{userId}/workspaces/{workspaceId}/notes/{noteId}": {
       "schema": {
         "$ref": "#/entities/Note"
       },

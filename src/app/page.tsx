@@ -26,9 +26,9 @@ import { AuthGate } from "./components/auth-gate";
 import { UserNav } from "./components/user-nav";
 
 const AppContent = memo(function AppContent() {
+  const { setOpen: setSidebarOpen } = useSidebar();
   const tasksHook = useTasks();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const { setOpen: setSidebarOpen } = useSidebar();
   const pathname = usePathname();
 
   const {
@@ -56,10 +56,8 @@ const AppContent = memo(function AppContent() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen w-full flex-col items-center justify-center p-4 sm:p-8">
-        <div className="w-full max-w-2xl space-y-8">
-          <Skeleton className="h-[600px] w-full rounded-lg" />
-        </div>
+      <div className="flex h-screen w-screen items-center justify-center">
+        <div className="h-16 w-16 animate-spin rounded-full border-4 border-dashed border-primary"></div>
       </div>
     );
   }
@@ -127,7 +125,7 @@ const AppContent = memo(function AppContent() {
             </div>
         </header>
 
-      <main className="flex min-h-screen w-full flex-col items-center justify-start p-4 pt-0 sm:p-8 sm:pt-0">
+      <main className="flex w-full flex-col items-center justify-start p-4 pt-0 sm:p-8 sm:pt-0">
         <WelcomeDialog open={isFirstTime} onOpenChange={setIsFirstTime} />
         <SettingsDialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen} onResetApp={resetApp} />
         
