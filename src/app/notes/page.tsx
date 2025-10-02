@@ -51,6 +51,7 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
     unlockedWorkspaces,
     unlockWorkspace,
     lockWorkspace,
+    switchWorkspace
   } = tasksHook;
 
 
@@ -88,20 +89,16 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
     }
   };
   
-  const handleSaveNote = useCallback((id: string, title: string, content: string, isNew?: boolean) => {
-    editNote(id, title, content, isNew);
+ const handleSaveNote = useCallback((id: string, newTitle: string, newContent: string, isNew?: boolean) => {
+    editNote(id, newTitle, content, isNew);
   }, [editNote]);
 
 
-  const handleCloseNoteDialog = (open: boolean) => {
+ const handleCloseNoteDialog = (open: boolean) => {
     if (!open) {
       if (editingNote) {
         const { id, title, content, isNew } = editingNote;
-        if (isNew && title === 'New Note' && content === '') {
-          deleteNote(id, true);
-        } else {
-          handleSaveNote(id, title, content, isNew);
-        }
+        handleSaveNote(id, title, content, isNew);
       }
       setEditingNote(null);
     }
@@ -145,8 +142,6 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
 
   const onUnlockDialogClose = (open: boolean) => {
       if (!open && isLocked) {
-        // Prevents closing via overlay click or Esc when locked, but allows cancel button.
-        // The cancel button will have already changed the active workspace.
         const stillLocked = !!activeWorkspace?.password && !unlockedWorkspaces.has(activeWorkspace.id);
         if(stillLocked) return;
       }
@@ -215,7 +210,7 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
       />
        <NoteDialog
         open={isNoteDialogOpen}
-        onOpenChange={setIsNoteDialogOpen}
+        onOpenChange={handleCloseNoteDialog}
         note={editingNote}
         onSave={(id, title, content, isNew) => setEditingNote({ ...editingNote!, title, content, isNew })}
       />
@@ -225,12 +220,10 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
             <AlertDialogTitle>This Listspace is Locked</AlertDialogTitle>
             <AlertDialogDescription>
               Please enter the password to view your notes.
-            </AlertDialogDescription>
-            {activeWorkspace?.passwordHint && failedPasswordAttempts >= 3 && (
-                <div className="text-sm text-muted-foreground pt-2 text-left">
-                    <span className="font-semibold text-foreground">Hint:</span> {activeWorkspace.passwordHint}
-                </div>
+              {activeWorkspace?.passwordHint && failedPasswordAttempts >= 3 && (
+                <div className="text-xs text-muted-foreground mt-2">Hint: {activeWorkspace.passwordHint}</div>
               )}
+            </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="py-2">
             <Label htmlFor="password-unlock" className="sr-only">Password</Label>
