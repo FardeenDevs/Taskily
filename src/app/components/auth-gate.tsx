@@ -13,31 +13,28 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
   const isLoginPage = pathname === '/login';
 
   useEffect(() => {
-    // This effect handles redirecting users based on their auth state.
-    // It's crucial to wait for the loading to finish before making decisions.
     if (loading) {
       return; 
     }
 
-    // If a logged-in user lands on the login page, redirect them to the home page.
     if (user && isLoginPage) {
       router.push('/');
     }
     
-    // If a user is not logged in and is NOT on the login page, redirect them there.
     if (!user && !isLoginPage) {
       router.push('/login');
     }
   }, [user, loading, router, isLoginPage, pathname]);
-
-  // If we are on the login page, we render the content (the login form) immediately.
-  // The useEffect above will handle redirecting away if a user session is found.
+  
   if (isLoginPage) {
+    // If on the login page, always render the content immediately.
+    // The useEffect handles redirecting away if a user session is found.
     return <>{children}</>;
   }
 
-  // If loading is not finished AND we are on a protected page, show a loader.
-  if (loading) {
+  if (loading || !user) {
+     // For any other page, if we're loading or there's no user, show a loader.
+     // The useEffect will handle the redirect to /login if there's no user.
      return (
         <AnimatePresence>
             <motion.div
@@ -53,16 +50,6 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // If loading is finished and we have a user on a protected page, show the content.
-  if (user) {
-    return <>{children}</>;
-  }
-
-  // If loading is finished, there's no user, and we're on a protected page,
-  // a redirect to /login is in progress. Show a loader to prevent content flash.
-  return (
-    <div className="flex h-screen w-screen items-center justify-center">
-        <div className="h-16 w-16 animate-spin rounded-full border-4 border-solid border-primary border-t-transparent"></div>
-    </div>
-  );
+  // If we are on a protected page and have a user, show the content.
+  return <>{children}</>;
 }
