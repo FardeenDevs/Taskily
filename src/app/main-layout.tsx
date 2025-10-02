@@ -51,18 +51,16 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     // When the route changes, update the view state
     if (pathname === '/notes') {
       setCurrentView('notes');
-    } else {
+    } else if (pathname === '/') {
       setCurrentView('progress');
     }
   }, [pathname]);
 
   const handleSetCurrentView = (view: 'progress' | 'notes') => {
-    // Only navigate if the view is actually changing
-    if (view !== currentView) {
-        const newPath = view === 'notes' ? '/notes' : '/';
+    const newPath = view === 'notes' ? '/notes' : '/';
+    if (pathname !== newPath) {
         router.push(newPath);
     }
-    // The useEffect above will handle setting the state
   }
 
 
@@ -110,4 +108,3 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     </TasksContext.Provider>
   );
 }
-
