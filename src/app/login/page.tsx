@@ -136,6 +136,11 @@ export default function LoginPage() {
             description: `If an account exists for ${values.email}, a password reset link has been sent.`,
         });
         forgotPasswordForm.reset();
+        // Close the dialog by finding its trigger and clicking it
+        const trigger = document.querySelector('[data-radix-collection-item]');
+        if (trigger instanceof HTMLElement) {
+          trigger.click();
+        }
     } catch (error) {
         console.error("Error sending password reset email", error);
         toast({
@@ -306,7 +311,13 @@ export default function LoginPage() {
                           )}
                       />
                       <DialogFooter>
-                          <Button type="button" variant="secondary" onClick={() => (forgotPasswordForm.reset(), (document.querySelector('[data-radix-collection-item] as HTMLElement')?.click()))}>Cancel</Button>
+                          <Button type="button" variant="secondary" onClick={() => {
+                              forgotPasswordForm.reset();
+                              const trigger = document.querySelector('[data-radix-collection-item]');
+                              if (trigger instanceof HTMLElement) {
+                                trigger.click();
+                              }
+                            }}>Cancel</Button>
                           <Button type="submit" disabled={isSubmitting}>
                               {isSubmitting ? 'Sending...' : 'Send Reset Link'}
                           </Button>
@@ -318,3 +329,5 @@ export default function LoginPage() {
     </Dialog>
   );
 }
+
+    
