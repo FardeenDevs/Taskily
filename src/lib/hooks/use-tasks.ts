@@ -89,6 +89,11 @@ export function useTasks() {
 
     if (user && !initialCheckDone) {
       if (workspaces) {
+        if (workspaces.length === 0) {
+           setInitialCheckDone(true);
+           return;
+        }
+
         const storedWorkspaceId = localStorage.getItem(`${ACTIVE_WORKSPACE_KEY}-${user.uid}`);
         if (storedWorkspaceId && workspaces.some(ws => ws.id === storedWorkspaceId)) {
           setActiveWorkspaceId(storedWorkspaceId);
@@ -103,7 +108,7 @@ export function useTasks() {
 
   // Create default workspace if none exist after initial check
   useEffect(() => {
-    if (initialCheckDone && user && workspaces?.length === 0 && workspacesQuery) {
+    if (initialCheckDone && user && firestore && workspaces?.length === 0) {
         setLoading(true);
         const defaultWorkspaceName = "My List";
         const workspaceData = {
@@ -131,7 +136,7 @@ export function useTasks() {
             setLoading(false);
         });
     }
-  }, [initialCheckDone, workspaces, workspacesQuery, user, firestore]);
+  }, [initialCheckDone, workspaces, user, firestore]);
 
 
   // Update loading state
@@ -241,36 +246,41 @@ export function useTasks() {
     }
   }, [firestore, user, toast]);
 
-  const addNote = useCallback((title: string, content: string) : string | undefined => {
-    if (!notesRef) return;
-    const newNoteRef = doc(collection(firestore, 'dummy')); // create a dummy ref to get an ID
-    const noteData = {
-        title: title || "New Note",
-        content: content,
-        createdAt: serverTimestamp(),
+  const addNote = useCallback(() : Note | undefined => {
+    if (!notesRef || !activeWorkspaceId) return;
+    const newNoteId = doc(collection(firestore, 'dummy')).id; // client-side id
+    const newNote: Note = {
+      id: newNoteId,
+      title: 'New Note',
+      content: '',
+      createdAt: new Date().toISOString(),
+      workspaceId: activeWorkspaceId,
+      isNew: true, // flag to indicate it's a temporary client-side note
     };
-    setDoc(doc(notesRef, newNoteRef.id), noteData)
-    .catch(async (serverError) => {
-        const permissionError = new FirestorePermissionError({
-            path: notesRef.path,
-            operation: 'create',
-            requestResourceData: noteData,
-        });
-        errorEmitter.emit('permission-error', permissionError);
-    });
-    return newNoteRef.id;
-  }, [notesRef, firestore]);
+    return newNote;
+  }, [notesRef, firestore, activeWorkspaceId]);
 
-  const editNote = useCallback((id: string, newTitle: string, newContent: string) => {
+  const editNote = useCallback((id: string, newTitle: string, newContent: string, isNew?: boolean) => {
     if (!notesRef) return;
     const noteDocRef = doc(notesRef, id);
-    const updatedData = { title: newTitle.trim(), content: newContent };
-    setDoc(noteDocRef, updatedData, { merge: true })
-    .catch(async (serverError) => {
+    const dataToSave = { 
+        title: newTitle.trim(), 
+        content: newContent,
+        createdAt: serverTimestamp(),
+    };
+    const dataToUpdate = { 
+        title: newTitle.trim(), 
+        content: newContent,
+    };
+    
+    // If it's a new note, we use setDoc to create it. Otherwise, we update.
+    const operation = isNew ? setDoc(noteDocRef, dataToSave) : setDoc(noteDocRef, dataToUpdate, { merge: true });
+
+    operation.catch(async (serverError) => {
         const permissionError = new FirestorePermissionError({
             path: noteDocRef.path,
-            operation: 'update',
-            requestResourceData: updatedData,
+            operation: isNew ? 'create' : 'update',
+            requestResourceData: isNew ? dataToSave : dataToUpdate,
         });
         errorEmitter.emit('permission-error', permissionError);
     });
@@ -290,11 +300,13 @@ export function useTasks() {
   }, [notesRef]);
 
   const resetApp = useCallback(async () => {
-    if (!workspacesQuery || !user) return;
+    if (!user || !firestore) return;
+    
+    const userWorkspacesQuery = query(collection(firestore, 'users', user.uid, 'workspaces'), where('ownerId', '==', user.uid));
     
     try {
         const batch = writeBatch(firestore);
-        const querySnapshot = await getDocs(workspacesQuery);
+        const querySnapshot = await getDocs(userWorkspacesQuery);
         
         for (const workspaceDoc of querySnapshot.docs) {
             const tasksCollectionRef = collection(workspaceDoc.ref, 'tasks');
@@ -303,7 +315,7 @@ export function useTasks() {
             
             const notesCollectionRef = collection(workspaceDoc.ref, 'notes');
             const notesSnapshot = await getDocs(notesCollectionRef);
-            notesSnapshot.forEach(noteDoc => batch.delete(noteDoc.ref));
+notesSnapshot.forEach(noteDoc => batch.delete(noteDoc.ref));
             
             batch.delete(workspaceDoc.ref);
         }
@@ -328,12 +340,12 @@ export function useTasks() {
         });
     } catch (e) {
          const permissionError = new FirestorePermissionError({
-            path: workspacesQuery.path,
+            path: userWorkspacesQuery.path,
             operation: 'list',
         });
         errorEmitter.emit('permission-error', permissionError);
     }
-  }, [workspacesQuery, user, toast, firestore]);
+  }, [user, toast, firestore]);
 
   const addWorkspace = useCallback((name: string) => {
     if (name.trim() === "" || !user) return;
@@ -361,7 +373,7 @@ export function useTasks() {
   }, [user, firestore, switchWorkspace]);
 
   const deleteWorkspace = useCallback(async (id: string) => {
-     if (!user || !workspaces) return;
+     if (!user || !workspaces || !firestore) return;
      if (workspaces.length <= 1) {
       toast({
         variant: "destructive",

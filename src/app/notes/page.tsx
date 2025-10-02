@@ -5,12 +5,12 @@ import { useTasks } from "@/lib/hooks/use-tasks";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { WelcomeDialog } from "@/app/components/welcome-dialog";
 import { AnimatePresence, motion } from "framer-motion";
-import { Settings, LayoutGrid, Plus } from "lucide-react";
-import { useState, memo, useMemo } from "react";
+import { Settings, LayoutGrid, Plus, Menu } from "lucide-react";
+import { useState, memo, useMemo, useEffect } from "react";
 import { SettingsDialog } from "@/app/components/settings-dialog";
 import { Button } from "@/components/ui/button";
 import { FirestoreWorkspaceSidebar } from "@/app/components/firestore-workspace-sidebar";
-import { SidebarInset, useSidebar } from "@/components/ui/sidebar";
+import { SidebarInset, useSidebar, SidebarProvider } from "@/components/ui/sidebar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -19,6 +19,8 @@ import { NotesSection } from "@/app/components/notes-section";
 import { Note } from "@/lib/types";
 import { NoteDialog } from "../components/note-dialog";
 import { UserNav } from "../components/user-nav";
+import { AuthGate } from "../components/auth-gate";
+
 
 const NotesPageContent = memo(function NotesPageContentInternal() {
   const tasksHook = useTasks();
@@ -41,6 +43,12 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
     resetApp,
   } = tasksHook;
 
+  const [clientNotes, setClientNotes] = useState<Note[]>([]);
+
+  useEffect(() => {
+    setClientNotes(notes);
+  }, [notes]);
+
   const handleOpenEditDialog = (note: Note) => {
     setEditingNote(note);
     setIsNoteDialogOpen(true);
@@ -48,19 +56,46 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
   
   const handleOpenNewNoteDialog = () => {
     if (!activeWorkspace) return;
-    const newNoteId = addNote("New Note", "");
-    if (newNoteId) {
-        // We can optionally focus the new note later
+    const newNote = addNote();
+    if (newNote) {
+        setEditingNote(newNote);
+        setClientNotes(prev => [newNote, ...prev]);
+        setIsNoteDialogOpen(true);
     }
   };
   
-  const handleSave = (id: string, title: string, content: string) => {
-    editNote(id, title, content);
+  const handleSaveNote = (id: string, title: string, content: string, isNew?: boolean) => {
+    if (isNew) {
+        if (title.trim() === 'New Note' && content.trim() === '') {
+            // It's a new, unmodified note, so just remove it from client state
+            setClientNotes(prev => prev.filter(n => n.id !== id));
+        } else {
+            // It's a new note with content, so save it to Firestore
+            editNote(id, title, content, true);
+        }
+    } else {
+        // It's an existing note, so update it
+        editNote(id, title, content, false);
+    }
   };
-  
+
+  const handleCloseNoteDialog = (open: boolean) => {
+      if (!open) {
+          if (editingNote?.isNew) {
+              handleSaveNote(editingNote.id, editingNote.title, editingNote.content, true);
+          }
+          setEditingNote(null);
+      }
+      setIsNoteDialogOpen(open);
+  };
+
   const sortedNotes = useMemo(() => {
-    return [...notes].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  }, [notes]);
+    return [...clientNotes].sort((a, b) => {
+        if (a.isNew) return -1;
+        if (b.isNew) return 1;
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    });
+  }, [clientNotes]);
 
 
   if (loading) {
@@ -76,33 +111,16 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
       <FirestoreWorkspaceSidebar tasksHook={tasksHook} />
       <SidebarInset>
         <div className="flex flex-col h-screen">
-          <header className="flex-shrink-0 flex items-center justify-between p-4 border-b">
+           <header className="flex h-16 items-center justify-between border-b px-4 md:px-6 flex-shrink-0">
             <div className="flex items-center gap-2">
-              <div className="md:hidden">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon">
-                      <LayoutGrid className="h-5 w-5" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent side="bottom" align="start">
-                    <DropdownMenuItem onClick={toggleSidebar}>
-                      <LayoutGrid className="mr-2 h-4 w-4" />
-                      <span>Listspaces</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setIsSettingsOpen(true)}>
-                      <Settings className="mr-2 h-4 w-4" />
-                      <span>Settings</span>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-
-              <div className="hidden md:block">
-                <Button variant="ghost" size="icon" onClick={toggleSidebar}>
+              <Button variant="ghost" size="icon" className="md:hidden" onClick={toggleSidebar}>
+                  <Menu className="h-6 w-6" />
+                  <span className="sr-only">Toggle sidebar</span>
+              </Button>
+              <Button variant="ghost" size="icon" className="hidden md:flex" onClick={toggleSidebar}>
                   <LayoutGrid className="h-5 w-5" />
-                </Button>
-              </div>
+                  <span className="sr-only">Toggle listspaces</span>
+              </Button>
             </div>
 
             <div className="flex items-center gap-4">
@@ -136,7 +154,7 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
           </header>
 
           <main className="flex-1 overflow-y-auto">
-            <div className="h-full p-4 sm:p-8">
+             <div className="p-4 sm:p-6 md:p-8 h-full">
               <AnimatePresence>
                 <motion.div layout transition={{ type: 'spring', stiffness: 300, damping: 30 }} className="h-full">
                   <Card className="border-2 border-border/50 shadow-2xl shadow-primary/5 overflow-hidden h-full flex flex-col">
@@ -168,22 +186,28 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
       </SidebarInset>
       <WelcomeDialog open={isFirstTime} onOpenChange={setIsFirstTime} />
       <SettingsDialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen} onResetApp={resetApp} />
-      <NoteDialog
+       <NoteDialog
         open={isNoteDialogOpen}
         onOpenChange={(open) => {
-          if (!open && editingNote && editingNote.title === "New Note" && editingNote.content === "") {
-            deleteNote(editingNote.id);
+          if (!open && editingNote) {
+             handleSaveNote(editingNote.id, title, contentRef.current, editingNote.isNew);
           }
           setIsNoteDialogOpen(open);
           setEditingNote(null);
         }}
         note={editingNote}
-        onSave={handleSave}
+        onSave={handleSaveNote}
       />
     </>
   );
 });
 
 export default function NotesPage() {
-    return <NotesPageContent />;
+    return (
+        <AuthGate>
+          <SidebarProvider>
+            <NotesPageContent />
+          </SidebarProvider>
+        </AuthGate>
+      );
 }

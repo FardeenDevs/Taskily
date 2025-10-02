@@ -26,4 +26,6 @@ export interface Note {
   content: string;
   createdAt: string;
   workspaceId: string;
+  isNew?: boolean; // Optional flag for temporary client-side notes
 }
+

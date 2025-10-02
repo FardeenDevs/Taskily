@@ -16,7 +16,7 @@ interface NoteDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   note: Note | null;
-  onSave: (id: string, newTitle: string, newContent: string) => void;
+  onSave: (id: string, newTitle: string, newContent: string, isNew?: boolean) => void;
 }
 
 export function NoteDialog({ open, onOpenChange, note, onSave }: NoteDialogProps) {
@@ -62,7 +62,7 @@ export function NoteDialog({ open, onOpenChange, note, onSave }: NoteDialogProps
   
   const handleSave = () => {
     if (note) {
-      onSave(note.id, title, contentRef.current);
+      onSave(note.id, title, contentRef.current, note.isNew);
     }
   };
 
