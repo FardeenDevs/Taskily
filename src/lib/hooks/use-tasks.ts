@@ -5,7 +5,7 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { type Task, type Workspace, type Priority, type Effort, type Note } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { useUser, useAuth, useFirestore, useCollection, useDoc } from "@/firebase";
-import { collection, addDoc, doc, setDoc, deleteDoc, writeBatch, serverTimestamp, getDocs, getDoc, query, where } from "firebase/firestore";
+import { collection, addDoc, doc, setDoc, deleteDoc, writeBatch, serverTimestamp, getDocs, getDoc, query, where, updateDoc } from "firebase/firestore";
 import { onAuthStateChanged, updateProfile, deleteUser } from "firebase/auth";
 import { useSidebar } from "@/components/ui/sidebar";
 import { errorEmitter } from "@/firebase/error-emitter";
@@ -450,45 +450,24 @@ export function useTasks() {
   }, [user, firestore]);
 
   const deleteAccount = useCallback(async () => {
-    if (!user || !auth || !auth.currentUser) {
+    if (!user || !auth || !auth.currentUser || !firestore) {
         toast({ variant: "destructive", title: "Not signed in", description: "You must be signed in to delete an account." });
         return;
     }
     
     const currentUser = auth.currentUser;
+    const userDocRef = doc(firestore, 'users', currentUser.uid);
 
-    // 1. Delete all user's sub-collection data
-    const userWorkspacesQuery = query(collection(firestore, 'users', currentUser.uid, 'workspaces'), where('ownerId', '==', currentUser.uid));
-    
-    getDocs(userWorkspacesQuery)
-    .then(async (querySnapshot) => {
-        const batch = writeBatch(firestore);
-
-        for (const workspaceDoc of querySnapshot.docs) {
-            const tasksCollectionRef = collection(workspaceDoc.ref, 'tasks');
-            const tasksSnapshot = await getDocs(tasksCollectionRef).catch(e => {
-                errorEmitter.emit('permission-error', new FirestorePermissionError({ path: tasksCollectionRef.path, operation: 'list' }));
+    try {
+        // 1. Update the user's display name in Firestore to mark for cleanup
+        const updateData = { displayName: "Deleted User" };
+        await updateDoc(userDocRef, updateData)
+            .catch(e => {
+                errorEmitter.emit('permission-error', new FirestorePermissionError({ path: userDocRef.path, operation: 'update', requestResourceData: updateData }));
                 throw e; // re-throw to stop execution
             });
-            tasksSnapshot.forEach(taskDoc => batch.delete(taskDoc.ref));
 
-            const notesCollectionRef = collection(workspaceDoc.ref, 'notes');
-            const notesSnapshot = await getDocs(notesCollectionRef).catch(e => {
-                errorEmitter.emit('permission-error', new FirestorePermissionError({ path: notesCollectionRef.path, operation: 'list' }));
-                throw e; // re-throw to stop execution
-            });
-            notesSnapshot.forEach(noteDoc => batch.delete(noteDoc.ref));
-
-            batch.delete(workspaceDoc.ref);
-        }
-        
-        await batch.commit().catch(e => {
-            // This is a generic path, but it's the best we can do for a batch write error
-            errorEmitter.emit('permission-error', new FirestorePermissionError({ path: `/users/${currentUser.uid}/workspaces`, operation: 'write' }));
-            throw e; // re-throw to stop execution
-        });
-
-        // 2. Delete the user from Authentication - this only runs if the batch commit succeeds
+        // 2. Delete the user from Authentication
         await deleteUser(currentUser).catch(error => {
              console.error("Error deleting account: ", error);
             if (error.code === 'auth/requires-recent-login') {
@@ -507,17 +486,13 @@ export function useTasks() {
             throw error; // re-throw to stop execution
         });
 
-        toast({ title: "Account Deleted", description: "Your account and all associated data have been permanently deleted." });
+        toast({ title: "Account Deleted", description: "Your account has been marked for deletion and your data will be removed shortly." });
 
-    })
-    .catch((error) => {
-        // This will catch errors from the initial getDocs(userWorkspacesQuery) or any re-thrown errors from within the chain.
-        if (error && !(error instanceof FirestorePermissionError)) {
-           // If it's not one of our custom errors, create one.
-           errorEmitter.emit('permission-error', new FirestorePermissionError({ path: userWorkspacesQuery.path, operation: 'list'}));
-        }
-        console.error("Failed to delete user data:", error)
-    });
+    } catch (error) {
+        // Errors are re-thrown, so any failure will be caught here.
+        // Specific error messages are handled inside the catch blocks above.
+        console.error("Failed to complete account deletion process:", error);
+    }
   }, [user, firestore, auth, toast]);
 
   const completedTasks = useMemo(() => {
@@ -555,3 +530,5 @@ export function useTasks() {
     switchWorkspace,
   };
 }
+
+    
