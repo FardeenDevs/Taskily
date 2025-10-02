@@ -40,4 +40,6 @@ export {
     ShieldQuestion,
     AlertTriangle,
     Copy,
+    Eye,
+    EyeOff,
 } from 'lucide-react';

@@ -201,8 +201,13 @@ export function useTasks() {
   // Update loading state
   useEffect(() => {
     const isStillLoading = userLoading || workspacesLoading || (!!activeWorkspaceId && (activeWorkspaceLoading || tasksLoading || notesLoading === undefined)) || !initialCheckDone;
-    setLoading(isStillLoading);
-  }, [userLoading, workspacesLoading, activeWorkspaceId, activeWorkspaceLoading, tasksLoading, notesLoading, initialCheckDone]);
+    // Don't set loading to true if we just unlocked a workspace
+    if (!isStillLoading && loading && notesLoading === undefined && unlockedWorkspaces.has(activeWorkspaceId || '')) {
+      // Stay on loading=false
+    } else {
+       setLoading(isStillLoading);
+    }
+  }, [userLoading, workspacesLoading, activeWorkspaceId, activeWorkspaceLoading, tasksLoading, notesLoading, initialCheckDone, unlockedWorkspaces, loading]);
 
 
   const switchWorkspace = useCallback((id: string | null) => {

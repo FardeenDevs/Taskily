@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, MoreVertical, Pencil, Trash2, LayoutGrid, Archive, Lock, Unlock } from "lucide-react";
+import { Plus, MoreVertical, Pencil, Trash2, LayoutGrid, Archive, Lock, Unlock, Eye, EyeOff } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -62,7 +62,9 @@ export function FirestoreWorkspaceSidebar({ tasksHook }: WorkspaceSidebarProps) 
   
   const [editName, setEditName] = useState("");
   const [currentPassword, setCurrentPassword] = useState("");
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [newPassword, setNewPassword] = useState("");
+  const [showNewPassword, setShowNewPassword] = useState(false);
   const [newPasswordHint, setNewPasswordHint] = useState("");
   const [selectedWorkspace, setSelectedWorkspace] = useState<Workspace | null>(null);
   const [backupCodesToShow, setBackupCodesToShow] = useState<string[] | null>(null);
@@ -108,6 +110,8 @@ export function FirestoreWorkspaceSidebar({ tasksHook }: WorkspaceSidebarProps) 
     setEditName(workspace.name);
     setCurrentPassword("");
     setNewPassword("");
+    setShowCurrentPassword(false);
+    setShowNewPassword(false);
     setNewPasswordHint(workspace.passwordHint || "");
     setEditDialogOpen(true);
   }
@@ -195,12 +199,22 @@ export function FirestoreWorkspaceSidebar({ tasksHook }: WorkspaceSidebarProps) 
                  {selectedWorkspace?.password && (
                     <div className="space-y-2">
                         <Label htmlFor="workspace-current-password">Current Password</Label>
-                        <Input id="workspace-current-password" type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} placeholder="Enter current password"/>
+                        <div className="relative">
+                            <Input id="workspace-current-password" type={showCurrentPassword ? "text" : "password"} value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} placeholder="Enter current password"/>
+                            <Button variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 text-muted-foreground" onClick={() => setShowCurrentPassword(prev => !prev)}>
+                                {showCurrentPassword ? <EyeOff /> : <Eye />}
+                            </Button>
+                        </div>
                     </div>
                  )}
                  <div className="space-y-2">
                     <Label htmlFor="workspace-new-password">New Password (optional)</Label>
-                    <Input id="workspace-new-password" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="Leave blank to remove"/>
+                    <div className="relative">
+                        <Input id="workspace-new-password" type={showNewPassword ? "text" : "password"} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="Leave blank to remove"/>
+                         <Button variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 text-muted-foreground" onClick={() => setShowNewPassword(prev => !prev)}>
+                            {showNewPassword ? <EyeOff /> : <Eye />}
+                        </Button>
+                    </div>
                 </div>
                  <div className="space-y-2">
                     <Label htmlFor="workspace-password-hint">Password Hint (optional)</Label>

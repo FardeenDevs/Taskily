@@ -3,7 +3,7 @@
 
 import { useTasks } from "@/lib/hooks/use-tasks";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Lock, Unlock } from "lucide-react";
+import { Plus, Lock, Unlock, Eye, EyeOff } from "lucide-react";
 import { useState, memo, useMemo, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { NotesSection } from "@/app/components/notes-section";
@@ -38,6 +38,7 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
   const [isUnlockDialogOpen, setIsUnlockDialogOpen] = useState(false);
   const [isBackupCodeDialogOpen, setIsBackupCodeDialogOpen] = useState(false);
   const [passwordInput, setPasswordInput] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [failedPasswordAttempts, setFailedPasswordAttempts] = useState(0);
 
   const {
@@ -130,6 +131,7 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
     if (await unlockWithPassword(activeWorkspace.id, passwordInput)) {
         setIsUnlockDialogOpen(false);
         setPasswordInput("");
+        setShowPassword(false);
         setFailedPasswordAttempts(0);
         toast({ title: "Listspace Unlocked" });
     } else {
@@ -174,6 +176,7 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
   const openBackupDialog = () => {
     setIsUnlockDialogOpen(false);
     setPasswordInput("");
+    setShowPassword(false);
     setFailedPasswordAttempts(0);
     setIsBackupCodeDialogOpen(true);
   }
@@ -265,14 +268,19 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
           </AlertDialogHeader>
           <div className="py-2 space-y-3">
             <Label htmlFor="password-unlock" className="sr-only">Password</Label>
-            <Input 
-                id="password-unlock" 
-                type="password" 
-                value={passwordInput} 
-                onChange={(e) => setPasswordInput(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handlePasswordUnlock()}
-                placeholder="Enter password..." 
-            />
+            <div className="relative">
+                <Input 
+                    id="password-unlock" 
+                    type={showPassword ? "text" : "password"}
+                    value={passwordInput} 
+                    onChange={(e) => setPasswordInput(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handlePasswordUnlock()}
+                    placeholder="Enter password..." 
+                />
+                 <Button variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 text-muted-foreground" onClick={() => setShowPassword(prev => !prev)}>
+                    {showPassword ? <EyeOff /> : <Eye />}
+                </Button>
+            </div>
             <Button variant="link" size="sm" className="p-0 h-auto text-xs" onClick={openBackupDialog}>
                 Forgot Password?
             </Button>

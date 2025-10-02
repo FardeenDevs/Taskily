@@ -28,12 +28,12 @@ export function NoteDialog({ open, onOpenChange, note, onSave }: NoteDialogProps
       StarterKit.configure({
         bulletList: {
           HTMLAttributes: {
-            class: 'list-disc pl-4',
+            class: 'list-disc pl-6',
           },
         },
         orderedList: {
           HTMLAttributes: {
-            class: 'list-decimal pl-4',
+            class: 'list-decimal pl-6',
           },
         },
       }),
