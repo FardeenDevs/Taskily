@@ -91,9 +91,9 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
   };
   
  const handleSaveNote = useCallback((id: string, newTitle: string, newContent: string, isNew?: boolean) => {
-    // If the note is new and has no title/content, don't save it.
-    if(isNew && !newTitle.trim() && !newContent.trim()) {
-        deleteNote(id, true); // local deletion
+    // If the note is new and has no title/content, delete it locally.
+    if (isNew && !newTitle.trim() && (!newContent.trim() || newContent === '<p></p>')) {
+        deleteNote(id, true); // true for local-only deletion
         return;
     }
     editNote(id, newTitle, newContent, isNew);
@@ -101,12 +101,15 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
 
 
  const handleCloseNoteDialog = useCallback((open: boolean) => {
+    if (!open && editingNote) {
+      // The `handleSaveNote` is now also called from inside the dialog on close
+      // To ensure we capture the latest editor state.
+    }
     setIsNoteDialogOpen(open);
-    // Don't save here. Save is triggered inside the dialog on close.
     if (!open) {
         setEditingNote(null);
     }
-  }, []);
+  }, [editingNote]);
 
 
   const sortedNotes = useMemo(() => {
@@ -279,7 +282,7 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
           <AlertDialogHeader>
             <AlertDialogTitle>Enter Backup Code</AlertDialogTitle>
             <AlertDialogDescription>
-              Enter one of your 10-digit backup codes to regain access.
+              Enter one of your 6-character backup codes to regain access.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="py-2">
@@ -310,6 +313,8 @@ export default function NotesPage() {
         </SidebarProvider>
     );
 }
+
+    
 
     
 

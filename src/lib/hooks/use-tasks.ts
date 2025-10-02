@@ -311,7 +311,7 @@ export function useTasks() {
         title: newTitle.trim() || 'Untitled Note', 
         content: newContent,
       };
-      setDoc(noteDocRef, dataToUpdate, { merge: true }).catch(async (serverError) => {
+      updateDoc(noteDocRef, dataToUpdate).catch(async (serverError) => {
         const permissionError = new FirestorePermissionError({
             path: noteDocRef.path,
             operation: 'update',
@@ -581,8 +581,8 @@ export function useTasks() {
     if (!workspace) return false;
     
     const backupCodes = workspace.backupCodes || [];
-    if (backupCodes.includes(code)) {
-      const updatedCodes = backupCodes.filter(c => c !== code);
+    if (backupCodes.includes(code.toUpperCase())) {
+      const updatedCodes = backupCodes.filter(c => c !== code.toUpperCase());
       const workspaceDocRef = doc(firestore, 'users', user.uid, 'workspaces', workspaceId);
       
       try {
@@ -654,5 +654,7 @@ export function useTasks() {
     lockWorkspace,
   };
 }
+
+    
 
     
