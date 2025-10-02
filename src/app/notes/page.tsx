@@ -13,6 +13,7 @@ import { Note } from "@/lib/types";
 import { NoteDialog } from "../components/note-dialog";
 import { PageTransition } from '../components/page-transition';
 import { MainLayout } from "../components/main-layout";
+import { SidebarProvider } from "@/components/ui/sidebar";
 
 const NotesPageContent = memo(function NotesPageContentInternal() {
   const tasksHook = useTasks();
@@ -140,6 +141,8 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
 
 export default function NotesPage() {
     return (
-        <NotesPageContent />
+        <SidebarProvider>
+            <NotesPageContent />
+        </SidebarProvider>
     );
 }

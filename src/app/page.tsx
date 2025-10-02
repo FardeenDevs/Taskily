@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { PageTransition } from "./components/page-transition";
 import { MainLayout } from "./components/main-layout";
+import { SidebarProvider } from "@/components/ui/sidebar";
 
 const AppContent = memo(function AppContentInternal() {
   const tasksHook = useTasks();
@@ -116,6 +117,8 @@ const AppContent = memo(function AppContentInternal() {
 
 export default function Home() {
   return (
-      <AppContent />
+      <SidebarProvider>
+        <AppContent />
+      </SidebarProvider>
   );
 }

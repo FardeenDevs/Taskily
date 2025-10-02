@@ -74,10 +74,8 @@ function Layout({ children, tasksHook, setIsSettingsOpen }: MainLayoutProps) {
 
 export function MainLayout({ children, tasksHook, setIsSettingsOpen }: MainLayoutProps) {
     return (
-        <SidebarProvider>
-            <Layout tasksHook={tasksHook} setIsSettingsOpen={setIsSettingsOpen}>
-                {children}
-            </Layout>
-        </SidebarProvider>
+        <Layout tasksHook={tasksHook} setIsSettingsOpen={setIsSettingsOpen}>
+            {children}
+        </Layout>
     )
 }
