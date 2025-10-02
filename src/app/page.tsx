@@ -10,19 +10,20 @@ import { TaskSuggestions } from "@/app/components/task-suggestions";
 import { WelcomeDialog } from "@/app/components/welcome-dialog";
 import { AnimatePresence, motion } from "framer-motion";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Settings, LayoutGrid, Trash2, ShieldAlert, ShieldCheck } from "lucide-react";
+import { Settings, LayoutGrid, Trash2 } from "lucide-react";
 import { useState, memo } from "react";
 import { SettingsDialog } from "@/app/components/settings-dialog";
 import { ThemeProvider } from "@/app/components/theme-provider";
 import { Button } from "@/components/ui/button";
-import { WorkspaceSidebar } from "@/app/components/workspace-sidebar";
+import { FirestoreWorkspaceSidebar } from "@/app/components/firestore-workspace-sidebar";
 import { SidebarProvider, SidebarInset, useSidebar } from "@/components/ui/sidebar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from "@/lib/utils";
-import { PasswordDialog } from "./components/password-dialog";
+import { AuthGate } from "./components/auth-gate";
+import { UserNav } from "./components/user-nav";
 
 
 interface AppContentProps {
@@ -45,31 +46,15 @@ const AppContent = memo(function AppContent({ tasksHook }: AppContentProps) {
     totalTasks,
     activeWorkspace,
     activeWorkspaceId,
-    previousWorkspaceId,
     isFirstTime,
     setIsFirstTime,
     resetApp,
     clearTasks,
-    isWorkspaceLocked,
-    unlockWorkspace,
-    switchWorkspace,
   } = tasksHook;
 
   const handleClearTasks = () => {
     if (activeWorkspaceId) {
       clearTasks(activeWorkspaceId);
-    }
-  };
-
-  const handleUnlock = (password: string) => {
-    if (activeWorkspace) {
-      unlockWorkspace(activeWorkspace.id, password);
-    }
-  };
-
-  const handleGoBack = () => {
-    if (previousWorkspaceId) {
-      switchWorkspace(previousWorkspaceId);
     }
   };
 
@@ -137,34 +122,24 @@ const AppContent = memo(function AppContent({ tasksHook }: AppContentProps) {
             </div>
 
 
-            <div>
+            <div className="flex items-center gap-2">
                  <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground hover:text-foreground" onClick={() => setIsSettingsOpen(true)}>
                     <Settings className="h-5 w-5" />
                 </Button>
+                <UserNav />
             </div>
         </header>
 
       <main className="flex min-h-screen w-full flex-col items-center justify-start p-4 pt-0 sm:p-8 sm:pt-0">
         <WelcomeDialog open={isFirstTime} onOpenChange={setIsFirstTime} />
         <SettingsDialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen} onResetApp={resetApp} />
-        {isWorkspaceLocked && activeWorkspace && (
-          <PasswordDialog 
-            open={isWorkspaceLocked}
-            onUnlock={handleUnlock}
-            onBack={handleGoBack}
-            workspaceName={activeWorkspace.name}
-            hint={activeWorkspace.passwordHint}
-          />
-        )}
+        
         <div className="w-full max-w-2xl">
           <AnimatePresence>
             <motion.div layout transition={{ type: 'spring', stiffness: 300, damping: 30 }}>
               <Card className="border-2 border-border/50 shadow-2xl shadow-primary/5 overflow-hidden">
                 <CardHeader>
                     <div className="flex items-center justify-center gap-2">
-                        {activeWorkspace?.password ? (
-                            isWorkspaceLocked ? <ShieldAlert className="h-6 w-6 text-destructive" /> : <ShieldCheck className="h-6 w-6 text-primary" />
-                        ) : null}
                         <CardTitle className="font-headline text-2xl font-bold tracking-tight text-foreground text-center">
                             {activeWorkspace?.name || "My List"}
                         </CardTitle>
@@ -225,10 +200,12 @@ export default function Home() {
 
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-      <SidebarProvider>
-        <WorkspaceSidebar tasksHook={tasksHook} />
-        <AppContent tasksHook={tasksHook} />
-      </SidebarProvider>
+        <AuthGate>
+            <SidebarProvider>
+                <FirestoreWorkspaceSidebar tasksHook={tasksHook} />
+                <AppContent tasksHook={tasksHook} />
+            </SidebarProvider>
+        </AuthGate>
     </ThemeProvider>
   );
 }

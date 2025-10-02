@@ -11,7 +11,7 @@ import { useState, memo, useMemo } from "react";
 import { SettingsDialog } from "@/app/components/settings-dialog";
 import { ThemeProvider } from "@/app/components/theme-provider";
 import { Button } from "@/components/ui/button";
-import { WorkspaceSidebar } from "@/app/components/workspace-sidebar";
+import { FirestoreWorkspaceSidebar } from "@/app/components/firestore-workspace-sidebar";
 import { SidebarProvider, SidebarInset, useSidebar } from "@/components/ui/sidebar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import Link from 'next/link';
@@ -20,7 +20,8 @@ import { cn } from "@/lib/utils";
 import { NotesSection } from "@/app/components/notes-section";
 import { Note } from "@/lib/types";
 import { NoteDialog } from "../components/note-dialog";
-import { PasswordDialog } from "../components/password-dialog";
+import { AuthGate } from "../components/auth-gate";
+import { UserNav } from "../components/user-nav";
 
 
 interface NotesPageContentProps {
@@ -42,13 +43,9 @@ const NotesPageContent = memo(function NotesPageContent({ tasksHook }: NotesPage
     editNote,
     deleteNote,
     activeWorkspace,
-    previousWorkspaceId,
     isFirstTime,
     setIsFirstTime,
     resetApp,
-    isWorkspaceLocked,
-    unlockWorkspace,
-    switchWorkspace,
   } = tasksHook;
 
   const handleOpenEditDialog = (note: Note) => {
@@ -57,25 +54,10 @@ const NotesPageContent = memo(function NotesPageContent({ tasksHook }: NotesPage
   };
   
   const handleOpenNewNoteDialog = () => {
+    if (!activeWorkspace) return;
     const newNoteId = addNote("New Note", "");
-    if (newNoteId) {
-      const newNote = { id: newNoteId, title: "New Note", content: "", createdAt: new Date().toISOString(), workspaceId: activeWorkspace?.id || '' };
-      handleOpenEditDialog(newNote);
-    }
   };
   
-  const handleUnlock = (password: string) => {
-    if (activeWorkspace) {
-      unlockWorkspace(activeWorkspace.id, password);
-    }
-  };
-  
-  const handleGoBack = () => {
-    if (previousWorkspaceId) {
-      switchWorkspace(previousWorkspaceId);
-    }
-  };
-
   const handleSave = (id: string, title: string, content: string) => {
     editNote(id, title, content);
   };
@@ -148,39 +130,29 @@ const NotesPageContent = memo(function NotesPageContent({ tasksHook }: NotesPage
                 </nav>
             </div>
 
-            <div>
+            <div className="flex items-center gap-2">
                  <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground hover:text-foreground" onClick={() => setIsSettingsOpen(true)}>
                     <Settings className="h-5 w-5" />
                 </Button>
+                <UserNav />
             </div>
         </header>
 
       <main className="flex min-h-screen w-full flex-col items-center justify-start p-4 pt-0 sm:p-8 sm:pt-0">
         <WelcomeDialog open={isFirstTime} onOpenChange={setIsFirstTime} />
         <SettingsDialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen} onResetApp={resetApp} />
-        {isWorkspaceLocked && activeWorkspace && (
-          <PasswordDialog 
-            open={isWorkspaceLocked}
-            onUnlock={handleUnlock}
-            onBack={handleGoBack}
-            workspaceName={activeWorkspace.name}
-            hint={activeWorkspace.passwordHint}
-          />
-        )}
+        
         <div className="w-full max-w-4xl">
           <AnimatePresence>
             <motion.div layout transition={{ type: 'spring', stiffness: 300, damping: 30 }}>
               <Card className="border-2 border-border/50 shadow-2xl shadow-primary/5 overflow-hidden">
                 <CardHeader className="flex flex-row items-center justify-between">
                   <div className="flex items-center gap-2">
-                    {activeWorkspace?.password ? (
-                        isWorkspaceLocked ? <ShieldAlert className="h-6 w-6 text-destructive" /> : <ShieldCheck className="h-6 w-6 text-primary" />
-                    ) : null}
                     <CardTitle className="font-headline text-2xl font-bold tracking-tight text-foreground">
                         {activeWorkspace?.name || "My Notes"}
                     </CardTitle>
                   </div>
-                  <Button onClick={handleOpenNewNoteDialog} variant="gradient" disabled={isWorkspaceLocked}>
+                  <Button onClick={handleOpenNewNoteDialog} variant="gradient" disabled={!activeWorkspace}>
                     <Plus className="mr-2 h-4 w-4" />
                     New Note
                   </Button>
@@ -190,7 +162,7 @@ const NotesPageContent = memo(function NotesPageContent({ tasksHook }: NotesPage
                     notes={sortedNotes}
                     onDeleteNote={deleteNote}
                     onEditNote={handleOpenEditDialog}
-                    isLocked={isWorkspaceLocked}
+                    isLocked={false}
                   />
                 </CardContent>
               </Card>
@@ -200,7 +172,13 @@ const NotesPageContent = memo(function NotesPageContent({ tasksHook }: NotesPage
       </main>
       <NoteDialog
         open={isNoteDialogOpen}
-        onOpenChange={setIsNoteDialogOpen}
+        onOpenChange={(open) => {
+          if (!open && editingNote && editingNote.title === "New Note" && editingNote.content === "") {
+            deleteNote(editingNote.id);
+          }
+          setIsNoteDialogOpen(open);
+          setEditingNote(null);
+        }}
         note={editingNote}
         onSave={handleSave}
       />
@@ -213,10 +191,12 @@ export default function NotesPage() {
 
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-      <SidebarProvider>
-        <WorkspaceSidebar tasksHook={tasksHook} />
-        <NotesPageContent tasksHook={tasksHook} />
-      </SidebarProvider>
+        <AuthGate>
+            <SidebarProvider>
+                <FirestoreWorkspaceSidebar tasksHook={tasksHook} />
+                <NotesPageContent tasksHook={tasksHook} />
+            </SidebarProvider>
+        </AuthGate>
     </ThemeProvider>
   );
 }
