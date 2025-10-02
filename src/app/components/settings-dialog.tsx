@@ -1,11 +1,12 @@
 
 "use client"
 
-import { memo, useState } from "react"
+import { memo, useState, useEffect } from "react"
 import { useTheme } from "next-themes"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
+import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
 import { Sun, Moon, Trash2, UserX } from 'lucide-react'
 import {
@@ -25,11 +26,25 @@ interface SettingsDialogProps {
   onOpenChange: (open: boolean) => void
   onResetApp: () => void
   onDeleteAccount: () => Promise<void>
+  userEmail: string | null | undefined
 }
 
-export const SettingsDialog = memo(function SettingsDialog({ open, onOpenChange, onResetApp, onDeleteAccount }: SettingsDialogProps) {
+export const SettingsDialog = memo(function SettingsDialog({ open, onOpenChange, onResetApp, onDeleteAccount, userEmail }: SettingsDialogProps) {
   const { theme, setTheme } = useTheme()
   const [isDark, setIsDark] = useState(theme === 'dark');
+
+  const [isFirstDeleteAlertOpen, setIsFirstDeleteAlertOpen] = useState(false)
+  const [isSecondDeleteDialogOpen, setIsSecondDeleteDialogOpen] = useState(false)
+  const [deleteConfirmationEmail, setDeleteConfirmationEmail] = useState("")
+
+  useEffect(() => {
+    // Reset confirmation when the main dialog is closed
+    if (!open) {
+      setIsFirstDeleteAlertOpen(false);
+      setIsSecondDeleteDialogOpen(false);
+      setDeleteConfirmationEmail("");
+    }
+  }, [open]);
 
   const handleThemeChange = (checked: boolean) => {
     const newTheme = checked ? 'dark' : 'light';
@@ -42,12 +57,19 @@ export const SettingsDialog = memo(function SettingsDialog({ open, onOpenChange,
     onOpenChange(false);
   }
 
-  const handleDeleteAccount = async () => {
+  const openSecondDeleteDialog = () => {
+    setIsFirstDeleteAlertOpen(false);
+    setIsSecondDeleteDialogOpen(true);
+  }
+
+  const handleConfirmDeleteAccount = async () => {
     await onDeleteAccount();
+    setIsSecondDeleteDialogOpen(false);
     onOpenChange(false);
   }
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
@@ -109,7 +131,7 @@ export const SettingsDialog = memo(function SettingsDialog({ open, onOpenChange,
                 </div>
                  <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
                     <p className="text-sm text-muted-foreground flex-1 text-center sm:text-left">Delete your account and all data.</p>
-                    <AlertDialog>
+                    <AlertDialog open={isFirstDeleteAlertOpen} onOpenChange={setIsFirstDeleteAlertOpen}>
                         <AlertDialogTrigger asChild>
                             <Button variant="destructive" size="sm" className="w-full sm:w-auto">
                                 <UserX className="mr-2 h-4 w-4"/>
@@ -125,8 +147,8 @@ export const SettingsDialog = memo(function SettingsDialog({ open, onOpenChange,
                             </AlertDialogHeader>
                             <AlertDialogFooter>
                                 <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction onClick={handleDeleteAccount} variant="destructive">
-                                    Yes, delete my account
+                                <AlertDialogAction onClick={openSecondDeleteDialog} variant="destructive">
+                                    Continue
                                 </AlertDialogAction>
                             </AlertDialogFooter>
                         </AlertDialogContent>
@@ -140,5 +162,38 @@ export const SettingsDialog = memo(function SettingsDialog({ open, onOpenChange,
         </DialogFooter>
       </DialogContent>
     </Dialog>
+    
+    {/* Second, more serious, delete confirmation */}
+    <Dialog open={isSecondDeleteDialogOpen} onOpenChange={setIsSecondDeleteDialogOpen}>
+        <DialogContent>
+             <DialogHeader>
+                <DialogTitle>Are you absolutely sure?</DialogTitle>
+                <DialogDescription>
+                    This action cannot be undone. This will permanently delete your account and remove your data from our servers.
+                </DialogDescription>
+            </DialogHeader>
+            <div className="py-4 space-y-2">
+                <Label htmlFor="email-confirm">Please type <span className="font-bold text-foreground">{userEmail}</span> to confirm.</Label>
+                <Input 
+                    id="email-confirm" 
+                    type="email" 
+                    value={deleteConfirmationEmail}
+                    onChange={(e) => setDeleteConfirmationEmail(e.target.value)}
+                    placeholder="Enter your email"
+                />
+            </div>
+            <DialogFooter>
+                <Button variant="secondary" onClick={() => setIsSecondDeleteDialogOpen(false)}>Cancel</Button>
+                <Button 
+                    variant="destructive"
+                    onClick={handleConfirmDeleteAccount}
+                    disabled={deleteConfirmationEmail !== userEmail}
+                >
+                    I understand the consequences, delete my account
+                </Button>
+            </DialogFooter>
+        </DialogContent>
+    </Dialog>
+    </>
   )
 });
