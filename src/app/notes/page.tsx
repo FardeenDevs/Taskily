@@ -34,6 +34,7 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
   const [editingNote, setEditingNote] = useState<Note | null>(null);
   
   const [isUnlockDialogOpen, setIsUnlockDialogOpen] = useState(false);
+  const [isBackupCodeDialogOpen, setIsBackupCodeDialogOpen] = useState(false);
   const [passwordInput, setPasswordInput] = useState("");
   const [failedPasswordAttempts, setFailedPasswordAttempts] = useState(0);
 
@@ -93,23 +94,21 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
   }, [editNote]);
 
 
- const handleCloseNoteDialog = (open: boolean) => {
-    setIsNoteDialogOpen(open);
-    if (!open) {
-      if (editingNote) {
-        // Save the current state of the note when closing
-        handleSaveNote(editingNote.id, editingNote.title, editingNote.content, editingNote.isNew);
-      }
-      setEditingNote(null);
+ const handleCloseNoteDialog = useCallback((open: boolean) => {
+    if (!open && editingNote) {
+      // If there's a note being edited and the dialog is closing, save it.
+      handleSaveNote(editingNote.id, editingNote.title, editingNote.content, editingNote.isNew);
     }
-  };
+    setIsNoteDialogOpen(open);
+    setEditingNote(null);
+  }, [editingNote, handleSaveNote]);
+
 
   const sortedNotes = useMemo(() => {
-    return [...(notes || [])].sort((a, b) => {
+    if (!notes) return [];
+    return [...notes].sort((a, b) => {
         const dateA = a.createdAt ? (typeof (a.createdAt as any).toDate === 'function' ? (a.createdAt as any).toDate() : new Date(a.createdAt as string)) : new Date(0);
         const dateB = b.createdAt ? (typeof (b.createdAt as any).toDate === 'function' ? (b.createdAt as any).toDate() : new Date(b.createdAt as string)) : new Date(0);
-        if (a.isNew) return -1;
-        if (b.isNew) return 1;
         return dateB.getTime() - dateA.getTime();
     });
   }, [notes]);
@@ -118,6 +117,7 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
     if (!activeWorkspace) return;
     if (await unlockWorkspace(activeWorkspace.id, passwordInput)) {
         setIsUnlockDialogOpen(false);
+        setIsBackupCodeDialogOpen(false);
         setPasswordInput("");
         setFailedPasswordAttempts(0);
         toast({ title: "Listspace Unlocked" });
@@ -137,24 +137,44 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
   const handleBackFromLocked = () => {
     router.push('/');
     setIsUnlockDialogOpen(false);
+    setIsBackupCodeDialogOpen(false);
   }
 
   const onUnlockDialogClose = (open: boolean) => {
       if (!open && isLocked) {
-        // If the dialog is closed while still locked (e.g. by pressing Esc),
-        // we navigate away to prevent being stuck on a locked page.
         handleBackFromLocked();
       } else {
         setIsUnlockDialogOpen(open);
       }
   }
 
+  const openBackupDialog = () => {
+    setIsUnlockDialogOpen(false);
+    setPasswordInput("");
+    setFailedPasswordAttempts(0);
+    setIsBackupCodeDialogOpen(true);
+  }
+
+  const backToPasswordDialog = () => {
+    setIsBackupCodeDialogOpen(false);
+    setPasswordInput("");
+    setIsUnlockDialogOpen(true);
+  }
 
   if (loading || isNavigating) {
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background">
-            <div className="h-16 w-16 animate-spin rounded-full border-4 border-solid border-primary border-t-transparent"></div>
-        </div>
+      <AnimatePresence>
+          <motion.div
+              key="loader"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 z-50 flex items-center justify-center bg-background"
+          >
+              <div className="h-16 w-16 animate-spin rounded-full border-4 border-solid border-primary border-t-transparent"></div>
+          </motion.div>
+      </AnimatePresence>
     );
   }
 
@@ -204,32 +224,61 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
         open={isNoteDialogOpen}
         onOpenChange={handleCloseNoteDialog}
         note={editingNote}
-        onSave={(id, title, content, isNew) => setEditingNote({ ...editingNote!, title, content, isNew })}
+        onSave={handleSaveNote}
       />
        <AlertDialog open={isUnlockDialogOpen} onOpenChange={onUnlockDialogClose}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>This Listspace is Locked</AlertDialogTitle>
             <AlertDialogDescription>
-              Please enter the password or a backup code to view your notes.
+              Please enter the password to view your notes.
               {activeWorkspace?.passwordHint && failedPasswordAttempts >= 3 && (
                 <div className="text-xs text-muted-foreground mt-2">Hint: {activeWorkspace.passwordHint}</div>
               )}
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <div className="py-2">
-            <Label htmlFor="password-unlock" className="sr-only">Password or Backup Code</Label>
+          <div className="py-2 space-y-3">
+            <Label htmlFor="password-unlock" className="sr-only">Password</Label>
             <Input 
                 id="password-unlock" 
                 type="password" 
                 value={passwordInput} 
                 onChange={(e) => setPasswordInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleUnlock()}
-                placeholder="Enter password or backup code..." 
+                placeholder="Enter password..." 
             />
+            <Button variant="link" size="sm" className="p-0 h-auto text-xs" onClick={openBackupDialog}>
+                Forgot Password?
+            </Button>
           </div>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={handleBackFromLocked}>Back</AlertDialogCancel>
+            <AlertDialogAction onClick={handleUnlock}>Unlock</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={isBackupCodeDialogOpen} onOpenChange={setIsBackupCodeDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Enter Backup Code</AlertDialogTitle>
+            <AlertDialogDescription>
+              Enter one of your 10-digit backup codes to regain access.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="py-2">
+            <Label htmlFor="backup-code-unlock" className="sr-only">Backup Code</Label>
+            <Input 
+                id="backup-code-unlock" 
+                type="text" 
+                value={passwordInput} 
+                onChange={(e) => setPasswordInput(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleUnlock()}
+                placeholder="Enter backup code..." 
+            />
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={backToPasswordDialog}>Back to Password</AlertDialogCancel>
             <AlertDialogAction onClick={handleUnlock}>Unlock</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -245,3 +294,5 @@ export default function NotesPage() {
         </SidebarProvider>
     );
 }
+
+    
