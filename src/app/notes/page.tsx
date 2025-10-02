@@ -3,16 +3,15 @@
 
 import { useTasks } from "@/app/main-layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus } from "lucide-react";
-import { useState, useMemo, useCallback } from "react";
+import { Plus, Lock } from "lucide-react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { NotesSection } from "@/app/components/notes-section";
 import { Note } from "@/lib/types";
+import { PasswordPromptDialog } from "@/app/components/password-prompt-dialog";
 import dynamic from "next/dynamic";
 
-
 const NoteDialog = dynamic(() => import('@/app/components/note-dialog').then(mod => mod.NoteDialog));
-
 
 export default function NotesPage() {
   const {
@@ -21,10 +20,21 @@ export default function NotesPage() {
     editNote,
     deleteNote,
     activeWorkspace,
+    isNotesLocked,
+    unlockNotes,
   } = useTasks();
 
   const [isNoteDialogOpen, setIsNoteDialogOpen] = useState(false);
   const [editingNote, setEditingNote] = useState<Note | null>(null);
+  const [isPasswordPromptOpen, setIsPasswordPromptOpen] = useState(false);
+
+  useEffect(() => {
+    if (activeWorkspace && activeWorkspace.notesPassword && isNotesLocked) {
+      setIsPasswordPromptOpen(true);
+    } else {
+      setIsPasswordPromptOpen(false);
+    }
+  }, [activeWorkspace, isNotesLocked]);
 
   const handleOpenEditDialog = useCallback((note: Note) => {
     setEditingNote(note);
@@ -52,7 +62,6 @@ export default function NotesPage() {
       deleteNote(id);
   }, [deleteNote]);
 
-
  const handleCloseNoteDialog = useCallback((open: boolean) => {
     setIsNoteDialogOpen(open);
     if (!open) {
@@ -60,6 +69,16 @@ export default function NotesPage() {
     }
   }, []);
 
+  const handleUnlock = async (password: string) => {
+    if (activeWorkspace) {
+        const success = await unlockNotes(activeWorkspace.id, password);
+        if (success) {
+            setIsPasswordPromptOpen(false);
+        }
+        return success;
+    }
+    return false;
+  }
 
   const sortedNotes = useMemo(() => {
     if (!notes) return [];
@@ -70,6 +89,8 @@ export default function NotesPage() {
     });
   }, [notes]);
 
+  const isLocked = !activeWorkspace || (!!activeWorkspace.notesPassword && isNotesLocked);
+
   return (
     <>
         <div className="p-4 sm:p-6 md:p-8 h-full">
@@ -79,8 +100,9 @@ export default function NotesPage() {
                     <CardTitle className="font-headline text-2xl font-bold tracking-tight text-foreground">
                     {activeWorkspace?.name || "My Notes"}
                     </CardTitle>
+                    {activeWorkspace?.notesPassword && <Lock className="h-5 w-5 text-muted-foreground" />}
                 </div>
-                <Button onClick={handleOpenNewNoteDialog} variant="gradient" disabled={!activeWorkspace}>
+                <Button onClick={handleOpenNewNoteDialog} variant="gradient" disabled={isLocked}>
                     <Plus className="mr-2 h-4 w-4" />
                     New Note
                 </Button>
@@ -90,7 +112,7 @@ export default function NotesPage() {
                         notes={sortedNotes}
                         onDeleteNote={handleDeleteNote}
                         onEditNote={handleOpenEditDialog}
-                        isLocked={!activeWorkspace}
+                        isLocked={isLocked}
                     />
                 </CardContent>
             </Card>
@@ -100,6 +122,12 @@ export default function NotesPage() {
         onOpenChange={handleCloseNoteDialog}
         note={editingNote}
         onSave={handleSaveNote}
+      />}
+      {isPasswordPromptOpen && activeWorkspace && <PasswordPromptDialog 
+        open={isPasswordPromptOpen}
+        onOpenChange={setIsPasswordPromptOpen}
+        workspaceName={activeWorkspace.name}
+        onUnlock={handleUnlock}
       />}
     </>
   );

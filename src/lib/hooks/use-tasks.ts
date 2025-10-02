@@ -5,7 +5,7 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { type Task, type Workspace, type Priority, type Effort, type Note, type AppSettings } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { useUser, useAuth, useFirestore, useCollection, useDoc } from "@/firebase";
-import { collection, addDoc, doc, setDoc, deleteDoc, writeBatch, serverTimestamp, getDocs, getDoc, query, where, updateDoc } from "firebase/firestore";
+import { collection, addDoc, doc, setDoc, deleteDoc, writeBatch, serverTimestamp, getDocs, getDoc, query, where, updateDoc, arrayRemove } from "firebase/firestore";
 import { onAuthStateChanged, updateProfile, deleteUser, type User as FirebaseUser } from "firebase/auth";
 import { useSidebar } from "@/components/ui/sidebar";
 import { errorEmitter } from "@/firebase/error-emitter";
@@ -44,6 +44,8 @@ export function useTasks() {
   const [initialCheckDone, setInitialCheckDone] = useState(false);
   const [appSettings, setAppSettingsState] = useState<AppSettings>(DEFAULT_SETTINGS);
   const [backupCodes, setBackupCodes] = useState<string[] | null>(null);
+  const [notesBackupCodes, setNotesBackupCodes] = useState<string[] | null>(null);
+  const [unlockedWorkspaces, setUnlockedWorkspaces] = useState<string[]>([]);
   
   const { setOpen: setSidebarOpen } = useSidebar();
   
@@ -68,6 +70,12 @@ export function useTasks() {
     }
   }, [user]);
 
+  const isNotesLocked = useMemo(() => {
+    if (!activeWorkspaceId || !activeWorkspace) return true;
+    if (!activeWorkspace.notesPassword) return false;
+    return !unlockedWorkspaces.includes(activeWorkspaceId);
+  }, [activeWorkspace, activeWorkspaceId, unlockedWorkspaces]);
+
   // Firestore references
   const workspacesQuery = useMemo(() => 
     user ? query(collection(firestore, 'users', user.uid, 'workspaces')) : null
@@ -88,8 +96,8 @@ export function useTasks() {
   const { data: tasks, loading: tasksLoading } = useCollection<Task>(tasksRef);
 
   const notesRef = useMemo(() => 
-    activeWorkspaceId && user ? collection(firestore, 'users', user.uid, 'workspaces', activeWorkspaceId, 'notes') : null
-  , [activeWorkspaceId, user, firestore]);
+    (activeWorkspaceId && user && !isNotesLocked) ? collection(firestore, 'users', user.uid, 'workspaces', activeWorkspaceId, 'notes') : null
+  , [activeWorkspaceId, user, firestore, isNotesLocked]);
   
   const { data: notes, loading: notesLoading } = useCollection<Note>(notesRef);
 
@@ -143,6 +151,10 @@ export function useTasks() {
 
   const clearBackupCodes = useCallback(() => {
     setBackupCodes(null);
+  }, []);
+
+  const clearNotesBackupCodes = useCallback(() => {
+    setNotesBackupCodes(null);
   }, []);
 
   // Determine initial active workspace
@@ -540,6 +552,69 @@ export function useTasks() {
 
   }, [user, firestore, workspaces]);
 
+  const setNotesPassword = useCallback(async (workspaceId: string, password: string) => {
+    if (!user) return;
+    const workspaceDocRef = doc(firestore, 'users', user.uid, 'workspaces', workspaceId);
+    
+    // In a real app, you would hash the password before storing it.
+    // For this prototype, we'll store it directly, but this is NOT secure.
+    const newBackupCodes = generateBackupCodes();
+    const dataToUpdate = {
+        notesPassword: password, // Again, HASH THIS in a real app
+        notesBackupCodes: newBackupCodes
+    };
+
+    await updateDoc(workspaceDocRef, dataToUpdate)
+        .then(() => {
+            setNotesBackupCodes(newBackupCodes); // Show new backup codes to user
+            setUnlockedWorkspaces(prev => [...prev, workspaceId]); // Automatically unlock
+        })
+        .catch(e => {
+            errorEmitter.emit('permission-error', new FirestorePermissionError({ path: workspaceDocRef.path, operation: 'update', requestResourceData: dataToUpdate }));
+        });
+  }, [user, firestore]);
+
+  const removeNotesPassword = useCallback(async (workspaceId: string) => {
+    if (!user) return;
+    const workspaceDocRef = doc(firestore, 'users', user.uid, 'workspaces', workspaceId);
+    const dataToUpdate = {
+        notesPassword: null,
+        notesBackupCodes: null
+    };
+    await updateDoc(workspaceDocRef, dataToUpdate).catch(e => {
+        errorEmitter.emit('permission-error', new FirestorePermissionError({ path: workspaceDocRef.path, operation: 'update', requestResourceData: dataToUpdate }));
+    });
+  }, [user, firestore]);
+
+  const unlockNotes = useCallback(async (workspaceId: string, passwordOrCode: string): Promise<boolean> => {
+    const workspace = workspaces?.find(ws => ws.id === workspaceId);
+    if (!workspace || !workspace.notesPassword) return false;
+
+    // Check if it's the main password
+    if (workspace.notesPassword === passwordOrCode) {
+        setUnlockedWorkspaces(prev => [...prev, workspaceId]);
+        return true;
+    }
+
+    // Check if it's a backup code
+    if (workspace.notesBackupCodes?.includes(passwordOrCode)) {
+        if (!user) return false;
+        const workspaceDocRef = doc(firestore, 'users', user.uid, 'workspaces', workspaceId);
+        const dataToUpdate = {
+            notesBackupCodes: arrayRemove(passwordOrCode)
+        };
+        await updateDoc(workspaceDocRef, dataToUpdate).catch(e => {
+            errorEmitter.emit('permission-error', new FirestorePermissionError({ path: workspaceDocRef.path, operation: 'update', requestResourceData: dataToUpdate }));
+            throw e; // Prevent unlocking if DB update fails
+        });
+        setUnlockedWorkspaces(prev => [...prev, workspaceId]);
+        toast({ title: "Backup Code Used", description: "This code has been removed from your list of available codes." });
+        return true;
+    }
+
+    return false; // Invalid password or code
+  }, [user, firestore, workspaces, toast]);
+
   const deleteAccount = useCallback(async () => {
     if (!user || !auth.currentUser || !firestore) {
         toast({ variant: "destructive", title: "Not signed in", description: "You must be signed in to delete an account." });
@@ -623,7 +698,7 @@ export function useTasks() {
 
   return {
     tasks: tasks || [],
-    notes: notes || [],
+    notes: isNotesLocked ? [] : (notes || []),
     workspaces: (workspaces || []).sort((a,b) => {
         const dateA = a.createdAt ? (typeof (a.createdAt as any).toDate === 'function' ? (a.createdAt as any).toDate() : new Date(a.createdAt as string)) : new Date(0);
         const dateB = b.createdAt ? (typeof (b.createdAt as any).toDate === 'function' ? (b.createdAt as any).toDate() : new Date(b.createdAt as string)) : new Date(0);
@@ -655,5 +730,11 @@ export function useTasks() {
     setAppSettings,
     backupCodes,
     clearBackupCodes,
+    notesBackupCodes,
+    clearNotesBackupCodes,
+    isNotesLocked,
+    unlockNotes,
+    setNotesPassword,
+    removeNotesPassword,
   };
 }

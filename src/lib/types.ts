@@ -19,6 +19,8 @@ export interface Workspace {
     name: string;
     createdAt: string;
     ownerId: string;
+    notesPassword?: string | null;
+    notesBackupCodes?: string[] | null;
 }
 
 export interface Note {

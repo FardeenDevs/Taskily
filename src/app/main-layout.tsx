@@ -9,6 +9,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import dynamic from "next/dynamic";
 import { BackupCodesDialog } from "@/components/ui/backup-codes-dialog";
+import { NotesBackupCodesDialog } from "@/components/ui/notes-backup-codes-dialog";
 
 type useTasksType = ReturnType<typeof useTasksClient>;
 const TasksContext = React.createContext<useTasksType | null>(null);
@@ -41,6 +42,8 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
       setAppSettings,
       backupCodes,
       clearBackupCodes,
+      notesBackupCodes,
+      clearNotesBackupCodes
     } = tasksHook;
 
   const [currentView, setCurrentView] = useState<'progress' | 'notes'>('progress');
@@ -94,6 +97,8 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         {isFirstTime && <WelcomeDialog open={isFirstTime} onOpenChange={setIsFirstTime} />}
         
         {backupCodes && <BackupCodesDialog open={!!backupCodes} onOpenChange={clearBackupCodes} codes={backupCodes} />}
+
+        {notesBackupCodes && <NotesBackupCodesDialog open={!!notesBackupCodes} onOpenChange={clearNotesBackupCodes} codes={notesBackupCodes} />}
         
         {isSettingsOpen && <SettingsDialog 
             open={isSettingsOpen} 

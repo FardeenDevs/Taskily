@@ -54,6 +54,17 @@
         "ownerId": {
             "type": "string",
             "description": "The UID of the user who owns this workspace."
+        },
+        "notesPassword": {
+            "type": "string",
+            "description": "An optional password to protect the notes within this workspace."
+        },
+        "notesBackupCodes": {
+            "type": "array",
+            "description": "An array of single-use backup codes for the notes password.",
+            "items": {
+                "type": "string"
+            }
         }
       },
       "required": ["name", "createdAt", "ownerId"]
