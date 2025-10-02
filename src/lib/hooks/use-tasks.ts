@@ -5,12 +5,11 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { type Task, type Workspace, type Priority, type Effort, type Note } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { useUser, useAuth, useFirestore, useCollection, useDoc } from "@/firebase";
-import { collection, addDoc, doc, setDoc, deleteDoc, writeBatch, serverTimestamp, getDocs } from "firebase/firestore";
+import { collection, addDoc, doc, setDoc, deleteDoc, writeBatch, serverTimestamp, getDocs, getDoc } from "firebase/firestore";
 import { onAuthStateChanged, updateProfile } from "firebase/auth";
 import { useSidebar } from "@/components/ui/sidebar";
 import { errorEmitter } from "@/firebase/error-emitter";
 import { FirestorePermissionError } from "@/firebase/errors";
-import { getDoc } from "firebase/firestore";
 
 
 const ACTIVE_WORKSPACE_KEY = "listily-active-workspace";
