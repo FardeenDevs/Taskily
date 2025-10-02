@@ -29,11 +29,10 @@ export function useTasks() {
   const { setOpen: setSidebarOpen } = useSidebar();
   
   // Firestore references
-  const userDocRef = useMemo(() => user ? doc(firestore, 'users', user.uid) : null, [firestore, user]);
-  const workspacesRef = useMemo(() => user ? collection(userDocRef!, 'workspaces') : null, [userDocRef]);
-  const activeWorkspaceRef = useMemo(() => activeWorkspaceId && workspacesRef ? doc(workspacesRef, activeWorkspaceId) : null, [workspacesRef, activeWorkspaceId]);
-  const tasksRef = useMemo(() => activeWorkspaceRef ? collection(activeWorkspaceRef, 'tasks') : null, [activeWorkspaceRef]);
-  const notesRef = useMemo(() => activeWorkspaceRef ? collection(activeWorkspaceRef, 'notes') : null, [activeWorkspaceRef]);
+  const workspacesRef = user ? collection(firestore, 'users', user.uid, 'workspaces') : null;
+  const activeWorkspaceRef = activeWorkspaceId && workspacesRef ? doc(workspacesRef, activeWorkspaceId) : null;
+  const tasksRef = activeWorkspaceRef ? collection(activeWorkspaceRef, 'tasks') : null;
+  const notesRef = activeWorkspaceRef ? collection(activeWorkspaceRef, 'notes') : null;
   
   // Firestore data hooks
   const { data: workspaces, loading: workspacesLoading } = useCollection<Workspace>(workspacesRef);
@@ -56,7 +55,7 @@ export function useTasks() {
             photoURL: user.photoURL,
           };
           
-          setDoc(userDocRef, profileData)
+          await setDoc(userDocRef, profileData)
             .catch(async (serverError) => {
                 const permissionError = new FirestorePermissionError({
                     path: userDocRef.path,
@@ -425,5 +424,7 @@ export function useTasks() {
     switchWorkspace,
   };
 }
+
+    
 
     
