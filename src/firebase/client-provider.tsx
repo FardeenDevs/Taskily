@@ -1,3 +1,4 @@
+
 "use client";
 import React, { ReactNode, useEffect, useState } from "react";
 import { FirebaseProvider } from "./provider";
@@ -20,14 +21,23 @@ export function FirebaseClientProvider({
   } | null>(null);
 
   useEffect(() => {
+    // This function initializes Firebase and sets the instances in state.
+    // It runs only once on the client-side.
     const instances = initializeFirebase();
     setFirebaseInstances(instances);
   }, []);
 
+  // If Firebase is not yet initialized, we can show a loading state
+  // or simply not render the children that depend on it.
   if (!firebaseInstances) {
-    return <>{children}</>;
+    return (
+        <div className="flex h-screen w-screen items-center justify-center">
+            <div className="h-16 w-16 animate-spin rounded-full border-4 border-dashed border-primary"></div>
+        </div>
+    );
   }
 
+  // Once Firebase is initialized, render the provider and its children.
   return (
     <FirebaseProvider
       app={firebaseInstances.app}
