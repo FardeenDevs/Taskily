@@ -3,7 +3,6 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 import { ThemeProvider } from '@/app/components/theme-provider';
 import { ClientProviders } from '@/app/components/client-providers';
-import { AuthGate } from './components/auth-gate';
 import { SidebarProvider } from '@/components/ui/sidebar';
 
 export const metadata: Metadata = {
@@ -27,9 +26,7 @@ export default function RootLayout({
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <ClientProviders>
             <SidebarProvider>
-              <AuthGate>
-                {children}
-              </AuthGate>
+              {children}
             </SidebarProvider>
           </ClientProviders>
           <Toaster />

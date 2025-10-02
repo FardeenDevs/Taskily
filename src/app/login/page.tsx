@@ -53,6 +53,7 @@ export default function LoginPage() {
   }, [user, loading, router]);
 
   const signInWithGoogle = async () => {
+    if (!auth) return;
     const provider = new GoogleAuthProvider();
     try {
       await signInWithPopup(auth, provider);
@@ -67,6 +68,7 @@ export default function LoginPage() {
   };
 
   const handleSignIn = async (values: z.infer<typeof signInSchema>) => {
+    if (!auth) return;
     setIsSubmitting(true);
     try {
       await signInWithEmailAndPassword(auth, values.email, values.password);
@@ -93,6 +95,7 @@ export default function LoginPage() {
   };
   
   const handleSignUp = async (values: z.infer<typeof signUpSchema>) => {
+    if (!auth) return;
     setIsSubmitting(true);
     try {
         await createUserWithEmailAndPassword(auth, values.email, values.password);
@@ -114,6 +117,15 @@ export default function LoginPage() {
 
 
   if (loading || user) {
+    return (
+        <div className="flex h-screen w-screen items-center justify-center">
+            <div className="h-16 w-16 animate-spin rounded-full border-4 border-dashed border-primary"></div>
+        </div>
+    );
+  }
+  
+  if (!auth) {
+    // Firebase might still be initializing
     return (
         <div className="flex h-screen w-screen items-center justify-center">
             <div className="h-16 w-16 animate-spin rounded-full border-4 border-dashed border-primary"></div>
