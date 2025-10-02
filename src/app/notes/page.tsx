@@ -4,7 +4,7 @@
 import { useTasks } from "@/lib/hooks/use-tasks";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { WelcomeDialog } from "@/app/components/welcome-dialog";
-import { Plus, ShieldAlert, Lock, Unlock } from "lucide-react";
+import { Plus, ShieldAlert, Lock, Unlock, ShieldQuestion } from "lucide-react";
 import { useState, memo, useMemo, useEffect, useCallback } from "react";
 import { SettingsDialog } from "@/app/components/settings-dialog";
 import { Button } from "@/components/ui/button";
@@ -145,9 +145,16 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
   }
 
   const onUnlockDialogClose = (open: boolean) => {
+      // Prevent closing the dialog with Esc or overlay click if locked and it wasn't triggered by a button.
+      // This is a bit of a hack, but it prevents the user from getting stuck if they click outside.
+      // A better solution would be to control this from within the Dialog/AlertDialog itself.
       if (!open && isLocked) {
-        // Prevent closing the dialog with Esc or overlay click if locked
-        return;
+        // Find if the active element is a cancel button
+        if (document.activeElement?.ariaLabel?.includes('Cancel')) {
+             tasksHook.switchWorkspace(null); // Switch to no workspace
+        } else {
+            return;
+        }
       }
       setIsUnlockDialogOpen(open);
   }
@@ -216,7 +223,7 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
             <AlertDialogDescription>
               Please enter the password to view your notes.
             </AlertDialogDescription>
-              {activeWorkspace?.passwordHint && failedPasswordAttempts >= 3 && (
+            {activeWorkspace?.passwordHint && failedPasswordAttempts >= 3 && (
                 <p className="text-sm text-muted-foreground pt-2">
                     <span className="text-xs font-semibold">Hint:</span> {activeWorkspace.passwordHint}
                 </p>

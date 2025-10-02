@@ -47,12 +47,11 @@ export function useTasks() {
   const notesRef = useMemo(() => {
     if (!activeWorkspaceId || !user) return null;
     const isUnlocked = unlockedWorkspaces.has(activeWorkspaceId);
-    const workspace = workspaces?.find(ws => ws.id === activeWorkspaceId);
-    if (workspace?.password && !isUnlocked) {
+    if (activeWorkspace?.password && !isUnlocked) {
       return null;
     }
     return collection(firestore, 'users', user.uid, 'workspaces', activeWorkspaceId, 'notes');
-  }, [activeWorkspaceId, user, firestore, unlockedWorkspaces, workspaces]);
+  }, [activeWorkspaceId, user, firestore, unlockedWorkspaces, activeWorkspace]);
   
   const { data: notes, loading: notesLoading } = useCollection<Note>(notesRef);
 
@@ -154,10 +153,14 @@ export function useTasks() {
   }, [userLoading, workspacesLoading, activeWorkspaceId, activeWorkspaceLoading, tasksLoading, notesLoading, initialCheckDone]);
 
 
-  const switchWorkspace = useCallback((id: string) => {
+  const switchWorkspace = useCallback((id: string | null) => {
     if (user) {
         setActiveWorkspaceId(id);
-        localStorage.setItem(`${ACTIVE_WORKSPACE_KEY}-${user.uid}`, id);
+        if (id) {
+          localStorage.setItem(`${ACTIVE_WORKSPACE_KEY}-${user.uid}`, id);
+        } else {
+          localStorage.removeItem(`${ACTIVE_WORKSPACE_KEY}-${user.uid}`);
+        }
         if (setSidebarOpen) {
           setSidebarOpen(false);
         }
