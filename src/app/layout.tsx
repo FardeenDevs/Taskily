@@ -9,6 +9,7 @@ import { SidebarProvider } from '@/components/ui/sidebar';
 export const metadata: Metadata = {
   title: 'Listily',
   description: 'Get things done, one task at a time.',
+  manifest: '/manifest.json',
 };
 
 export default function RootLayout({
