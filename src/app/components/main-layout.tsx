@@ -15,9 +15,10 @@ type MainLayoutProps = {
     children: React.ReactNode;
     tasksHook: ReturnType<typeof useTasks>;
     setIsSettingsOpen: (isOpen: boolean) => void;
+    setIsNavigating: (isNavigating: boolean) => void;
 }
 
-function Layout({ children, tasksHook, setIsSettingsOpen }: MainLayoutProps) {
+function Layout({ children, tasksHook, setIsSettingsOpen, setIsNavigating }: MainLayoutProps) {
     const { toggleSidebar } = useSidebar();
     const pathname = usePathname();
 
@@ -36,7 +37,7 @@ function Layout({ children, tasksHook, setIsSettingsOpen }: MainLayoutProps) {
                         <div className="flex items-center gap-4">
                             <h1 className="text-2xl font-bold text-center text-foreground hidden sm:block">Listily</h1>
                             <nav className="flex items-center gap-2 rounded-full bg-secondary p-1">
-                                <Link href="/" passHref>
+                                <Link href="/" passHref onClick={() => setIsNavigating(true)}>
                                     <span className={cn(
                                         "cursor-pointer rounded-full px-4 py-1 text-sm font-medium transition-colors",
                                         pathname === '/' ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:bg-background/50"
@@ -44,7 +45,7 @@ function Layout({ children, tasksHook, setIsSettingsOpen }: MainLayoutProps) {
                                         Progress
                                     </span>
                                 </Link>
-                                <Link href="/notes" passHref>
+                                <Link href="/notes" passHref onClick={() => setIsNavigating(true)}>
                                     <span className={cn(
                                         "cursor-pointer rounded-full px-4 py-1 text-sm font-medium transition-colors",
                                         pathname === '/notes' ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:bg-background/50"
@@ -69,9 +70,9 @@ function Layout({ children, tasksHook, setIsSettingsOpen }: MainLayoutProps) {
 }
 
 
-export function MainLayout({ children, tasksHook, setIsSettingsOpen }: MainLayoutProps) {
+export function MainLayout({ children, tasksHook, setIsSettingsOpen, setIsNavigating }: MainLayoutProps) {
     return (
-        <Layout tasksHook={tasksHook} setIsSettingsOpen={setIsSettingsOpen}>
+        <Layout tasksHook={tasksHook} setIsSettingsOpen={setIsSettingsOpen} setIsNavigating={setIsNavigating}>
             {children}
         </Layout>
     )

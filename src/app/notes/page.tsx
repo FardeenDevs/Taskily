@@ -26,6 +26,7 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
   const { user } = useUser();
   const tasksHook = useTasks();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isNavigating, setIsNavigating] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
 
@@ -88,22 +89,23 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
   };
   
   const handleSaveNote = useCallback((id: string, title: string, content: string, isNew?: boolean) => {
-    if(isNew && title === 'New Note' && content === '') {
-      deleteNote(id, true); // delete temporary client-side note if it's empty
-      return;
-    }
     editNote(id, title, content, isNew);
-  }, [editNote, deleteNote]);
+  }, [editNote]);
 
 
   const handleCloseNoteDialog = (open: boolean) => {
-    if (!open && editingNote) {
-       handleSaveNote(editingNote.id, editingNote.title, editingNote.content, editingNote.isNew);
-    }
-    setIsNoteDialogOpen(open);
     if (!open) {
+      if (editingNote) {
+        const { id, title, content, isNew } = editingNote;
+        if (isNew && title === 'New Note' && content === '') {
+          deleteNote(id, true);
+        } else {
+          handleSaveNote(id, title, content, isNew);
+        }
+      }
       setEditingNote(null);
     }
+    setIsNoteDialogOpen(open);
   };
 
   const sortedNotes = useMemo(() => {
@@ -143,20 +145,24 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
 
   const onUnlockDialogClose = (open: boolean) => {
       if (!open && isLocked) {
-        return; // Prevents closing via overlay click or Esc when locked
+        // Prevents closing via overlay click or Esc when locked, but allows cancel button.
+        // The cancel button will have already changed the active workspace.
+        const stillLocked = !!activeWorkspace?.password && !unlockedWorkspaces.has(activeWorkspace.id);
+        if(stillLocked) return;
       }
       setIsUnlockDialogOpen(open);
   }
 
 
-  if (loading && !activeWorkspace) {
+  if (loading || isNavigating) {
     return (
       <AnimatePresence>
           <motion.div
               key="loader"
-              initial={{ opacity: 1 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.5 }}
+              transition={{ duration: 0.2 }}
               className="fixed inset-0 z-50 flex items-center justify-center bg-background"
           >
               <div className="h-16 w-16 animate-spin rounded-full border-4 border-solid border-primary border-t-transparent"></div>
@@ -167,7 +173,7 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
 
   return (
     <>
-      <MainLayout tasksHook={tasksHook} setIsSettingsOpen={setIsSettingsOpen}>
+      <MainLayout tasksHook={tasksHook} setIsSettingsOpen={setIsSettingsOpen} setIsNavigating={setIsNavigating}>
         <div className="p-4 sm:p-6 md:p-8 h-full">
             <PageTransition>
                 <Card className="border-2 border-border/50 shadow-2xl shadow-primary/5 overflow-hidden h-full flex flex-col">
@@ -209,9 +215,9 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
       />
        <NoteDialog
         open={isNoteDialogOpen}
-        onOpenChange={handleCloseNoteDialog}
+        onOpenChange={setIsNoteDialogOpen}
         note={editingNote}
-        onSave={handleSaveNote}
+        onSave={(id, title, content, isNew) => setEditingNote({ ...editingNote!, title, content, isNew })}
       />
        <AlertDialog open={isUnlockDialogOpen} onOpenChange={onUnlockDialogClose}>
         <AlertDialogContent>
@@ -221,9 +227,9 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
               Please enter the password to view your notes.
             </AlertDialogDescription>
             {activeWorkspace?.passwordHint && failedPasswordAttempts >= 3 && (
-                <p className="text-sm text-muted-foreground pt-2">
-                    <span className="font-semibold">Hint:</span> {activeWorkspace.passwordHint}
-                </p>
+                <div className="text-sm text-muted-foreground pt-2 text-left">
+                    <span className="font-semibold text-foreground">Hint:</span> {activeWorkspace.passwordHint}
+                </div>
               )}
           </AlertDialogHeader>
           <div className="py-2">

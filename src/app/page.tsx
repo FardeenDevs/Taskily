@@ -23,6 +23,7 @@ const AppContent = memo(function AppContentInternal() {
   const { user } = useUser();
   const tasksHook = useTasks();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isNavigating, setIsNavigating] = useState(false);
 
   const {
     tasks,
@@ -48,14 +49,15 @@ const AppContent = memo(function AppContentInternal() {
     }
   };
 
-  if (loading) {
+  if (loading || isNavigating) {
     return (
       <AnimatePresence>
           <motion.div
               key="loader"
-              initial={{ opacity: 1 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.5 }}
+              transition={{ duration: 0.2 }}
               className="fixed inset-0 z-50 flex items-center justify-center bg-background"
           >
               <div className="h-16 w-16 animate-spin rounded-full border-4 border-solid border-primary border-t-transparent"></div>
@@ -66,7 +68,7 @@ const AppContent = memo(function AppContentInternal() {
 
   return (
     <>
-      <MainLayout tasksHook={tasksHook} setIsSettingsOpen={setIsSettingsOpen}>
+      <MainLayout tasksHook={tasksHook} setIsSettingsOpen={setIsSettingsOpen} setIsNavigating={setIsNavigating}>
           <div className="mx-auto max-w-5xl w-full h-full p-4 sm:p-8">
             <PageTransition>
               <Card className="border-2 border-border/50 shadow-2xl shadow-primary/5 overflow-hidden h-full flex flex-col">

@@ -309,7 +309,8 @@ export function useTasks() {
     }
   }, [notesRef]);
 
-  const deleteNote = useCallback((id: string) => {
+  const deleteNote = useCallback((id: string, isLocal?: boolean) => {
+    if (isLocal) return; // Just a local deletion, no DB call needed
     if (!notesRef) return;
     const noteDocRef = doc(notesRef, id);
     deleteDoc(noteDocRef)
