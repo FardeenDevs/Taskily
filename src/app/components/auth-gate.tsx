@@ -28,7 +28,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
     if (!user && !isLoginPage) {
       router.push('/login');
     }
-  }, [user, loading, router, isLoginPage]);
+  }, [user, loading, router, isLoginPage, pathname]);
 
   // If we are on the login page, we render the content (the login form) immediately.
   // The useEffect above will handle redirecting away if a user session is found.
@@ -36,7 +36,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
     return <>{children}</>;
   }
 
-  // If we are on a protected page, and still waiting for auth state, show a loader.
+  // If loading is not finished AND we are on a protected page, show a loader.
   if (loading) {
      return (
         <AnimatePresence>
@@ -53,13 +53,13 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // If loading is finished and we have a user, show the protected content.
+  // If loading is finished and we have a user on a protected page, show the content.
   if (user) {
     return <>{children}</>;
   }
 
-  // If loading is finished and there is no user, a redirect to /login is in progress.
-  // Show a loader to prevent flashing of protected content.
+  // If loading is finished, there's no user, and we're on a protected page,
+  // a redirect to /login is in progress. Show a loader to prevent content flash.
   return (
     <div className="flex h-screen w-screen items-center justify-center">
         <div className="h-16 w-16 animate-spin rounded-full border-4 border-solid border-primary border-t-transparent"></div>
