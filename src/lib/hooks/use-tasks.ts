@@ -456,8 +456,9 @@ export function useTasks() {
     }
     
     const currentUser = auth.currentUser;
+    const userDocRef = doc(firestore, 'users', currentUser.uid);
 
-    // 1. Delete all user's sub-collection data
+    // 1. Delete all user's sub-collection data and the user document itself
     const userWorkspacesQuery = query(collection(firestore, 'users', currentUser.uid, 'workspaces'), where('ownerId', '==', currentUser.uid));
     
     getDocs(userWorkspacesQuery)
@@ -482,9 +483,12 @@ export function useTasks() {
             batch.delete(workspaceDoc.ref);
         }
         
+        // Delete the root user document
+        batch.delete(userDocRef);
+
         await batch.commit().catch(e => {
             // This is a generic path, but it's the best we can do for a batch write error
-            errorEmitter.emit('permission-error', new FirestorePermissionError({ path: `/users/${currentUser.uid}/workspaces`, operation: 'write' }));
+            errorEmitter.emit('permission-error', new FirestorePermissionError({ path: `/users/${currentUser.uid}`, operation: 'write' }));
             throw e; // re-throw to stop execution
         });
 
