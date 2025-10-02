@@ -40,6 +40,11 @@ export function useTasks() {
   const tasksRef = useMemo(() => 
     activeWorkspaceId && user ? collection(firestore, 'users', user.uid, 'workspaces', activeWorkspaceId, 'tasks') : null
   , [activeWorkspaceId, user, firestore]);
+  
+  // Firestore data hooks
+  const { data: workspaces, loading: workspacesLoading } = useCollection<Workspace>(workspacesQuery);
+  const { data: activeWorkspace, loading: activeWorkspaceLoading } = useDoc<Workspace>(activeWorkspaceRef);
+  const { data: tasks, loading: tasksLoading } = useCollection<Task>(tasksRef);
 
   const notesRef = useMemo(() => {
     if (!activeWorkspaceId || !user) return null;
@@ -51,10 +56,6 @@ export function useTasks() {
     return collection(firestore, 'users', user.uid, 'workspaces', activeWorkspaceId, 'notes');
   }, [activeWorkspaceId, user, firestore, unlockedWorkspaces, workspaces]);
   
-  // Firestore data hooks
-  const { data: workspaces, loading: workspacesLoading } = useCollection<Workspace>(workspacesQuery);
-  const { data: activeWorkspace, loading: activeWorkspaceLoading } = useDoc<Workspace>(activeWorkspaceRef);
-  const { data: tasks, loading: tasksLoading } = useCollection<Task>(tasksRef);
   const { data: notes, loading: notesLoading } = useCollection<Note>(notesRef);
 
   // Handle user profile creation for new sign-ups
