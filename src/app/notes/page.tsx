@@ -20,6 +20,7 @@ import { Label } from "@/components/ui/label";
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
 
 const NotesPageContent = memo(function NotesPageContentInternal() {
   const { user } = useUser();
@@ -49,7 +50,6 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
     unlockedWorkspaces,
     unlockWorkspace,
     lockWorkspace,
-    switchWorkspace,
   } = tasksHook;
 
 
@@ -87,25 +87,27 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
     }
   };
   
-  const handleSaveNote = (id: string, title: string, content: string, isNew?: boolean) => {
-    // Prevent saving an empty new note if user just closes the dialog
+  const handleSaveNote = useCallback((id: string, title: string, content: string, isNew?: boolean) => {
     if(isNew && title === 'New Note' && content === '') {
+      deleteNote(id, true); // delete temporary client-side note if it's empty
       return;
     }
     editNote(id, title, content, isNew);
-  };
+  }, [editNote, deleteNote]);
+
 
   const handleCloseNoteDialog = (open: boolean) => {
     if (!open && editingNote) {
-        // This is called when the dialog is closing.
-        // The `onSave` in the dialog already has the latest title/content.
-        // We call it here to persist the final state.
+       handleSaveNote(editingNote.id, editingNote.title, editingNote.content, editingNote.isNew);
     }
     setIsNoteDialogOpen(open);
+    if (!open) {
+      setEditingNote(null);
+    }
   };
 
   const sortedNotes = useMemo(() => {
-    return [...notes].sort((a, b) => {
+    return [...(notes || [])].sort((a, b) => {
         const dateA = a.createdAt ? (typeof (a.createdAt as any).toDate === 'function' ? (a.createdAt as any).toDate() : new Date(a.createdAt as string)) : new Date(0);
         const dateB = b.createdAt ? (typeof (b.createdAt as any).toDate === 'function' ? (b.createdAt as any).toDate() : new Date(b.createdAt as string)) : new Date(0);
         if (a.isNew) return -1;
@@ -149,9 +151,17 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
 
   if (loading && !activeWorkspace) {
     return (
-      <div className="flex h-screen w-screen items-center justify-center">
-        <div className="h-16 w-16 animate-spin rounded-full border-4 border-solid border-primary border-t-transparent"></div>
-      </div>
+      <AnimatePresence>
+          <motion.div
+              key="loader"
+              initial={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.5 }}
+              className="fixed inset-0 z-50 flex items-center justify-center bg-background"
+          >
+              <div className="h-16 w-16 animate-spin rounded-full border-4 border-solid border-primary border-t-transparent"></div>
+          </motion.div>
+      </AnimatePresence>
     );
   }
 
@@ -180,7 +190,7 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
                     <CardContent className="flex-grow overflow-y-auto p-6 pt-0">
                     <NotesSection
                         notes={sortedNotes}
-                        onDeleteNote={deleteNote}
+                        onDeleteNote={(id) => deleteNote(id)}
                         onEditNote={handleOpenEditDialog}
                         isLocked={isLocked}
                     />
@@ -209,12 +219,12 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
             <AlertDialogTitle>This Listspace is Locked</AlertDialogTitle>
             <AlertDialogDescription>
               Please enter the password to view your notes.
-               {activeWorkspace?.passwordHint && failedPasswordAttempts >= 3 && (
-                <div className="text-sm text-muted-foreground pt-2">
-                    <span className="text-xs font-semibold">Hint:</span> {activeWorkspace.passwordHint}
-                </div>
-              )}
             </AlertDialogDescription>
+            {activeWorkspace?.passwordHint && failedPasswordAttempts >= 3 && (
+                <p className="text-sm text-muted-foreground pt-2">
+                    <span className="font-semibold">Hint:</span> {activeWorkspace.passwordHint}
+                </p>
+              )}
           </AlertDialogHeader>
           <div className="py-2">
             <Label htmlFor="password-unlock" className="sr-only">Password</Label>
