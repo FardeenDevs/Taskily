@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, MoreVertical, Pencil, Trash2, LayoutGrid, Archive, Lock, Eye, EyeOff, ShieldQuestion } from "lucide-react";
+import { Plus, MoreVertical, Pencil, Trash2, LayoutGrid, Archive, Lock, Eye, EyeOff, ShieldQuestion, Unlock } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -54,6 +54,7 @@ export function FirestoreWorkspaceSidebar({ tasksHook }: WorkspaceSidebarProps) 
     clearWorkspace,
     setNotesPassword,
     removeNotesPassword,
+    isNotesLocked,
   } = tasksHook;
   const { setOpen } = useSidebar();
   const [newWorkspaceName, setNewWorkspaceName] = useState("");
@@ -167,7 +168,11 @@ export function FirestoreWorkspaceSidebar({ tasksHook }: WorkspaceSidebarProps) 
                 onClick={() => switchWorkspace(workspace.id)}
               >
                 <span className="truncate flex-1">{workspace.name}</span>
-                {workspace.notesPassword && <Lock className="h-3 w-3 text-muted-foreground ml-2" />}
+                 {workspace.notesPassword && (
+                    <div className="h-3 w-3 text-muted-foreground ml-2">
+                        {workspace.id === activeWorkspaceId && !isNotesLocked ? <Unlock /> : <Lock />}
+                    </div>
+                )}
               </SidebarMenuButton>
 
               <DropdownMenu>
@@ -223,7 +228,7 @@ export function FirestoreWorkspaceSidebar({ tasksHook }: WorkspaceSidebarProps) 
                     Manage the listspace name and notes protection.
                 </DialogDescription>
             </DialogHeader>
-            <div className="py-4 space-y-6">
+            <div className="py-4 space-y-6 max-h-[60vh] overflow-y-auto pr-4">
                 <div className="space-y-2">
                     <Label htmlFor="workspace-name">Name</Label>
                     <Input id="workspace-name" value={editName} onChange={(e) => setEditName(e.target.value)} />
