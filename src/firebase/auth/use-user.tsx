@@ -5,7 +5,7 @@ import { useAuthState } from 'react-firebase-hooks/auth';
 import { useAuth, useFirestore } from '@/firebase';
 import { useDoc } from '../firestore/use-doc';
 import { doc } from 'firebase/firestore';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { User as FirebaseUser } from 'firebase/auth';
 
 type UserProfile = {
@@ -23,7 +23,11 @@ export function useUser() {
   const firestore = useFirestore();
   const [user, loading, error] = useAuthState(auth);
   
-  const userDocRef = user ? doc(firestore, 'users', user.uid) : null;
+  const userDocRef = useMemo(() => {
+    if (!firestore || !user?.uid) return null;
+    return doc(firestore, 'users', user.uid);
+  }, [firestore, user?.uid]);
+
   const { data: profile, loading: profileLoading } = useDoc<UserProfile>(userDocRef);
 
   const [appUser, setAppUser] = useState<AppUser | null>(null);
