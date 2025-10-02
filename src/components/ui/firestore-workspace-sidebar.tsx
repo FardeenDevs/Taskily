@@ -81,7 +81,7 @@ export function FirestoreWorkspaceSidebar({ tasksHook }: WorkspaceSidebarProps) 
       const { success, newBackupCodes } = editWorkspace(selectedWorkspace.id, editName, currentPassword, newPassword, newPasswordHint);
       if (success) {
         setEditDialogOpen(false);
-        setSelectedWorkspace(null);
+        // Do not nullify selectedWorkspace here, so we can use its name
         toast({ title: "Listspace updated!" });
         if (newBackupCodes) {
             setBackupCodes(newBackupCodes);
@@ -119,6 +119,7 @@ export function FirestoreWorkspaceSidebar({ tasksHook }: WorkspaceSidebarProps) 
   
   const closeBackupDialog = () => {
     setBackupCodes(null);
+    setSelectedWorkspace(null); // Clear selected workspace after codes are handled.
   }
 
   return (
@@ -244,9 +245,9 @@ export function FirestoreWorkspaceSidebar({ tasksHook }: WorkspaceSidebarProps) 
             <AlertDialogContent>
                 <AlertDialogHeader>
                 <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                <DialogDescription>
+                <AlertDialogDescription>
                     This will permanently delete all tasks and notes in this listspace. This action cannot be undone.
-                </DialogDescription>
+                </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
