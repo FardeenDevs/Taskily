@@ -23,6 +23,7 @@ export function useTasks() {
   const [activeWorkspaceId, setActiveWorkspaceId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [isFirstTime, setIsFirstTime] = useState(false);
+  const [initialCheckDone, setInitialCheckDone] = useState(false);
   
   const { setOpen: setSidebarOpen } = useSidebar();
   
@@ -84,15 +85,26 @@ export function useTasks() {
 
   // Determine initial active workspace
   useEffect(() => {
+    if (userLoading) return;
+
     if (user && !workspacesLoading) {
+      if (!initialCheckDone) {
+        setInitialCheckDone(true);
+      }
+
       const storedWorkspaceId = localStorage.getItem(`${ACTIVE_WORKSPACE_KEY}-${user.uid}`);
       if (storedWorkspaceId && workspaces?.some(ws => ws.id === storedWorkspaceId)) {
         setActiveWorkspaceId(storedWorkspaceId);
       } else if (workspaces && workspaces.length > 0) {
         const sortedWorkspaces = [...workspaces].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
         setActiveWorkspaceId(sortedWorkspaces[0].id);
-      } else if (workspaces?.length === 0 && workspacesRef) {
-        // No workspaces exist, create a default one
+      }
+    }
+  }, [user, userLoading, workspaces, workspacesLoading, initialCheckDone]);
+
+  // Create default workspace if none exist after initial check
+  useEffect(() => {
+    if (initialCheckDone && workspaces?.length === 0 && workspacesRef && user) {
         setLoading(true);
         const defaultWorkspaceName = "My List";
         const workspaceData = {
@@ -116,15 +128,15 @@ export function useTasks() {
         .finally(() => {
             setLoading(false);
         });
-      }
     }
-  }, [user, workspaces, workspacesLoading, workspacesRef]);
+  }, [initialCheckDone, workspaces, workspacesRef, user]);
+
 
   // Update loading state
   useEffect(() => {
-    const isStillLoading = userLoading || workspacesLoading || (!!activeWorkspaceId && (activeWorkspaceLoading || tasksLoading || notesLoading));
+    const isStillLoading = userLoading || workspacesLoading || (!!activeWorkspaceId && (activeWorkspaceLoading || tasksLoading || notesLoading)) || !initialCheckDone;
     setLoading(isStillLoading);
-  }, [userLoading, workspacesLoading, activeWorkspaceId, activeWorkspaceLoading, tasksLoading, notesLoading]);
+  }, [userLoading, workspacesLoading, activeWorkspaceId, activeWorkspaceLoading, tasksLoading, notesLoading, initialCheckDone]);
 
   const switchWorkspace = useCallback((id: string) => {
     if (user) {
