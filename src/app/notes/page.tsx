@@ -11,7 +11,6 @@ import { SettingsDialog } from "@/app/components/settings-dialog";
 import { Button } from "@/components/ui/button";
 import { FirestoreWorkspaceSidebar } from "@/app/components/firestore-workspace-sidebar";
 import { SidebarInset, useSidebar, SidebarProvider } from "@/components/ui/sidebar";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from "@/lib/utils";
@@ -19,8 +18,6 @@ import { NotesSection } from "@/app/components/notes-section";
 import { Note } from "@/lib/types";
 import { NoteDialog } from "../components/note-dialog";
 import { UserNav } from "../components/user-nav";
-import { AuthGate } from "../components/auth-gate";
-
 
 const NotesPageContent = memo(function NotesPageContentInternal() {
   const tasksHook = useTasks();
@@ -67,23 +64,18 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
   const handleSaveNote = (id: string, title: string, content: string, isNew?: boolean) => {
     if (isNew) {
         if (title.trim() === 'New Note' && content.trim() === '') {
-            // It's a new, unmodified note, so just remove it from client state
+            deleteNote(id);
             setClientNotes(prev => prev.filter(n => n.id !== id));
         } else {
-            // It's a new note with content, so save it to Firestore
             editNote(id, title, content, true);
         }
     } else {
-        // It's an existing note, so update it
         editNote(id, title, content, false);
     }
   };
 
   const handleCloseNoteDialog = (open: boolean) => {
       if (!open) {
-          if (editingNote?.isNew) {
-              handleSaveNote(editingNote.id, editingNote.title, editingNote.content, true);
-          }
           setEditingNote(null);
       }
       setIsNoteDialogOpen(open);
@@ -188,13 +180,7 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
       <SettingsDialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen} onResetApp={resetApp} />
        <NoteDialog
         open={isNoteDialogOpen}
-        onOpenChange={(open) => {
-          if (!open && editingNote) {
-             handleSaveNote(editingNote.id, title, contentRef.current, editingNote.isNew);
-          }
-          setIsNoteDialogOpen(open);
-          setEditingNote(null);
-        }}
+        onOpenChange={handleCloseNoteDialog}
         note={editingNote}
         onSave={handleSaveNote}
       />
@@ -204,10 +190,6 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
 
 export default function NotesPage() {
     return (
-        <AuthGate>
-          <SidebarProvider>
-            <NotesPageContent />
-          </SidebarProvider>
-        </AuthGate>
-      );
+        <NotesPageContent />
+    );
 }
