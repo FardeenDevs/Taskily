@@ -200,14 +200,9 @@ export function useTasks() {
 
   // Update loading state
   useEffect(() => {
-    // Key change: notesLoading can be `true` (if locked) or `undefined` (if just unlocked, before listener attaches).
-    // The `notesRef` being null means it is locked, so we should consider notes "loaded" in that state.
-    const isNotesRefLocked = notesRef === null;
-    const notesDataLoading = isNotesRefLocked ? false : notesLoading;
-
-    const isStillLoading = userLoading || workspacesLoading || (!!activeWorkspaceId && (activeWorkspaceLoading || tasksLoading || notesDataLoading)) || !initialCheckDone;
+    const isStillLoading = userLoading || workspacesLoading || (!!activeWorkspaceId && (activeWorkspaceLoading || tasksLoading || notesLoading)) || !initialCheckDone;
     setLoading(isStillLoading);
-  }, [userLoading, workspacesLoading, activeWorkspaceId, activeWorkspaceLoading, tasksLoading, notesLoading, initialCheckDone, notesRef]);
+  }, [userLoading, workspacesLoading, activeWorkspaceId, activeWorkspaceLoading, tasksLoading, notesLoading, initialCheckDone]);
 
 
   const switchWorkspace = useCallback((id: string | null) => {
@@ -734,10 +729,3 @@ export function useTasks() {
     setAppSettings,
   };
 }
-
-    
-
-    
-
-
-    
