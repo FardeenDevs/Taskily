@@ -145,18 +145,15 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
   }
 
   const onUnlockDialogClose = (open: boolean) => {
-      // Prevent closing the dialog with Esc or overlay click if locked and it wasn't triggered by a button.
-      // This is a bit of a hack, but it prevents the user from getting stuck if they click outside.
-      // A better solution would be to control this from within the Dialog/AlertDialog itself.
       if (!open && isLocked) {
-        // Find if the active element is a cancel button
-        if (document.activeElement?.ariaLabel?.includes('Cancel')) {
-             tasksHook.switchWorkspace(null); // Switch to no workspace
-        } else {
-            return;
-        }
+        return; // Prevents closing via overlay click or Esc when locked
       }
       setIsUnlockDialogOpen(open);
+  }
+
+  const handleBackFromLocked = () => {
+    tasksHook.switchWorkspace(null); // Switch to no workspace
+    setIsUnlockDialogOpen(false);
   }
 
 
@@ -224,9 +221,9 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
               Please enter the password to view your notes.
             </AlertDialogDescription>
             {activeWorkspace?.passwordHint && failedPasswordAttempts >= 3 && (
-                <p className="text-sm text-muted-foreground pt-2">
+                <div className="text-sm text-muted-foreground pt-2">
                     <span className="text-xs font-semibold">Hint:</span> {activeWorkspace.passwordHint}
-                </p>
+                </div>
               )}
           </AlertDialogHeader>
           <div className="py-2">
@@ -241,7 +238,7 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
             />
           </div>
           <AlertDialogFooter>
-            <AlertDialogCancel>Back</AlertDialogCancel>
+            <AlertDialogCancel onClick={handleBackFromLocked}>Back</AlertDialogCancel>
             <AlertDialogAction onClick={handleUnlock}>Unlock</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
