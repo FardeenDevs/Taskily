@@ -6,7 +6,7 @@ import { type Task, type Workspace, type Priority, type Effort, type Note } from
 import { useToast } from "@/hooks/use-toast";
 import { useUser, useAuth, useFirestore, useCollection, useDoc } from "@/firebase";
 import { collection, addDoc, doc, setDoc, deleteDoc, writeBatch, serverTimestamp, getDocs, getDoc, query, where } from "firebase/firestore";
-import { onAuthStateChanged, updateProfile } from "firebase/auth";
+import { onAuthStateChanged, updateProfile, deleteUser } from "firebase/auth";
 import { useSidebar } from "@/components/ui/sidebar";
 import { errorEmitter } from "@/firebase/error-emitter";
 import { FirestorePermissionError } from "@/firebase/errors";
@@ -487,7 +487,7 @@ export function useTasks() {
         });
 
         // 2. Delete the user from Authentication - this only runs if the batch commit succeeds
-        await user.delete().catch(error => {
+        await deleteUser(user).catch(error => {
              console.error("Error deleting account: ", error);
             if (error.code === 'auth/requires-recent-login') {
                 toast({
@@ -510,7 +510,7 @@ export function useTasks() {
     })
     .catch((error) => {
         // This will catch errors from the initial getDocs(userWorkspacesQuery) or any re-thrown errors from within the chain.
-        if (!error.name.includes('FirestorePermissionError')) {
+        if (error && !(error instanceof FirestorePermissionError)) {
            // If it's not one of our custom errors, create one.
            errorEmitter.emit('permission-error', new FirestorePermissionError({ path: userWorkspacesQuery.path, operation: 'list'}));
         }
@@ -553,5 +553,3 @@ export function useTasks() {
     switchWorkspace,
   };
 }
-
-    
