@@ -36,7 +36,7 @@ const forgotPasswordSchema = z.object({
 
 export default function LoginPage() {
   const auth = useAuth();
-  const { user, loading } = useUser();
+  const { user } = useUser();
   const router = useRouter();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -58,10 +58,10 @@ export default function LoginPage() {
 
 
   useEffect(() => {
-    if (!loading && user) {
+    if (user) {
       router.push('/');
     }
-  }, [user, loading, router]);
+  }, [user, router]);
 
   const signInWithGoogle = async () => {
     if (!auth) return;
@@ -151,7 +151,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-app-gradient p-4">
+    <div className="flex min-h-screen items-center justify-end bg-app-gradient p-4">
       <Dialog>
           <motion.div
             initial={{ opacity: 0, y: 20 }}
