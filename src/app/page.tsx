@@ -19,7 +19,6 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from "@/lib/utils";
 import { UserNav } from "./components/user-nav";
-import { AuthGate } from "./components/auth-gate";
 import { PageTransition } from "./components/page-transition";
 
 const AppContent = memo(function AppContentInternal() {
@@ -42,6 +41,7 @@ const AppContent = memo(function AppContentInternal() {
     isFirstTime,
     setIsFirstTime,
     resetApp,
+    deleteAccount,
     clearTasks,
   } = tasksHook;
 
@@ -160,15 +160,13 @@ const AppContent = memo(function AppContentInternal() {
         </div>
       </SidebarInset>
       <WelcomeDialog open={isFirstTime} onOpenChange={setIsFirstTime} />
-      <SettingsDialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen} onResetApp={resetApp} />
+      <SettingsDialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen} onResetApp={resetApp} onDeleteAccount={deleteAccount} />
     </>
   );
 });
 
 export default function Home() {
   return (
-      <SidebarProvider>
-        <AppContent />
-      </SidebarProvider>
+      <AppContent />
   );
 }

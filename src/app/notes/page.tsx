@@ -4,12 +4,12 @@
 import { useTasks } from "@/lib/hooks/use-tasks";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { WelcomeDialog } from "@/app/components/welcome-dialog";
-import { Settings, LayoutGrid, Plus, Menu } from "lucide-react";
-import { useState, memo, useMemo, useEffect, useRef } from "react";
+import { Settings, LayoutGrid, Plus } from "lucide-react";
+import { useState, memo, useMemo, useEffect } from "react";
 import { SettingsDialog } from "@/app/components/settings-dialog";
 import { Button } from "@/components/ui/button";
 import { FirestoreWorkspaceSidebar } from "@/app/components/firestore-workspace-sidebar";
-import { SidebarInset, useSidebar, SidebarProvider } from "@/components/ui/sidebar";
+import { SidebarInset, useSidebar } from "@/components/ui/sidebar";
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from "@/lib/utils";
@@ -17,7 +17,6 @@ import { NotesSection } from "@/app/components/notes-section";
 import { Note } from "@/lib/types";
 import { NoteDialog } from "../components/note-dialog";
 import { UserNav } from "../components/user-nav";
-import { AuthGate } from "../components/auth-gate";
 import { PageTransition } from '../components/page-transition';
 
 const NotesPageContent = memo(function NotesPageContentInternal() {
@@ -39,6 +38,7 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
     isFirstTime,
     setIsFirstTime,
     resetApp,
+    deleteAccount
   } = tasksHook;
 
   const [clientNotes, setClientNotes] = useState<Note[]>([]);
@@ -69,12 +69,20 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
         setClientNotes(prev => prev.filter(n => n.id !== id));
     } else {
         editNote(id, title, content, isNew);
+        // After saving, find the note in clientNotes and remove the 'isNew' flag
+        setClientNotes(prev => prev.map(n => n.id === id ? { ...n, title, content, isNew: false } : n));
     }
   };
 
   const handleCloseNoteDialog = (open: boolean) => {
       if (!open) {
+          const noteToClean = editingNote;
           setEditingNote(null);
+           // If a new note was closed without being properly saved (i.e. it's still marked as new and is empty)
+          if (noteToClean && noteToClean.isNew && noteToClean.title.trim() === 'New Note' && noteToClean.content.trim() === '') {
+             deleteNote(noteToClean.id);
+             setClientNotes(prev => prev.filter(n => n.id !== noteToClean.id));
+          }
       }
       setIsNoteDialogOpen(open);
   };
@@ -170,7 +178,7 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
         </div>
       </SidebarInset>
       <WelcomeDialog open={isFirstTime} onOpenChange={setIsFirstTime} />
-      <SettingsDialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen} onResetApp={resetApp} />
+      <SettingsDialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen} onResetApp={resetApp} onDeleteAccount={deleteAccount} />
        <NoteDialog
         open={isNoteDialogOpen}
         onOpenChange={handleCloseNoteDialog}
@@ -183,8 +191,6 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
 
 export default function NotesPage() {
     return (
-      <SidebarProvider>
         <NotesPageContent />
-      </SidebarProvider>
     );
 }

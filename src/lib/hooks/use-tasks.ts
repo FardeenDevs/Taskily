@@ -6,7 +6,7 @@ import { type Task, type Workspace, type Priority, type Effort, type Note } from
 import { useToast } from "@/hooks/use-toast";
 import { useUser, useAuth, useFirestore, useCollection, useDoc } from "@/firebase";
 import { collection, addDoc, doc, setDoc, deleteDoc, writeBatch, serverTimestamp, getDocs, getDoc, query, where } from "firebase/firestore";
-import { onAuthStateChanged, updateProfile } from "firebase/auth";
+import { onAuthStateChanged, updateProfile, deleteUser as deleteFirebaseUser, reauthenticateWithCredential, EmailAuthProvider } from "firebase/auth";
 import { useSidebar } from "@/components/ui/sidebar";
 import { errorEmitter } from "@/firebase/error-emitter";
 import { FirestorePermissionError } from "@/firebase/errors";
@@ -246,7 +246,7 @@ export function useTasks() {
     }
   }, [firestore, user, toast]);
 
-  const addNote = useCallback(() : Note | undefined => {
+  const addNote = useCallback((): Note | undefined => {
     if (!notesRef || !activeWorkspaceId) return;
     const newNoteId = doc(collection(firestore, 'dummy')).id; // client-side id
     const newNote: Note = {
@@ -264,12 +264,12 @@ export function useTasks() {
     if (!notesRef) return;
     const noteDocRef = doc(notesRef, id);
     const dataToSave = { 
-        title: newTitle.trim(), 
+        title: newTitle.trim() || 'Untitled Note', 
         content: newContent,
         createdAt: serverTimestamp(),
     };
     const dataToUpdate = { 
-        title: newTitle.trim(), 
+        title: newTitle.trim() || 'Untitled Note', 
         content: newContent,
     };
     
@@ -315,7 +315,7 @@ export function useTasks() {
             
             const notesCollectionRef = collection(workspaceDoc.ref, 'notes');
             const notesSnapshot = await getDocs(notesCollectionRef);
-notesSnapshot.forEach(noteDoc => batch.delete(noteDoc.ref));
+            notesSnapshot.forEach(noteDoc => batch.delete(noteDoc.ref));
             
             batch.delete(workspaceDoc.ref);
         }
@@ -434,6 +434,66 @@ notesSnapshot.forEach(noteDoc => batch.delete(noteDoc.ref));
     });
   }, [user, firestore]);
 
+  const deleteAccount = useCallback(async () => {
+    if (!user || !firestore) {
+        toast({ variant: "destructive", title: "Not signed in", description: "You must be signed in to delete an account." });
+        return;
+    }
+
+    try {
+        // 1. Delete all user's Firestore data
+        const batch = writeBatch(firestore);
+
+        // Delete user profile
+        const userDocRef = doc(firestore, 'users', user.uid);
+        batch.delete(userDocRef);
+
+        // Delete all workspaces and their subcollections
+        const userWorkspacesQuery = query(collection(firestore, 'users', user.uid, 'workspaces'), where('ownerId', '==', user.uid));
+        const querySnapshot = await getDocs(userWorkspacesQuery);
+
+        for (const workspaceDoc of querySnapshot.docs) {
+            const tasksCollectionRef = collection(workspaceDoc.ref, 'tasks');
+            const tasksSnapshot = await getDocs(tasksCollectionRef);
+            tasksSnapshot.forEach(taskDoc => batch.delete(taskDoc.ref));
+
+            const notesCollectionRef = collection(workspaceDoc.ref, 'notes');
+            const notesSnapshot = await getDocs(notesCollectionRef);
+            notesSnapshot.forEach(noteDoc => batch.delete(noteDoc.ref));
+
+            batch.delete(workspaceDoc.ref);
+        }
+        await batch.commit();
+
+        // 2. Delete the user from Authentication
+        await deleteFirebaseUser(user);
+
+        toast({ title: "Account Deleted", description: "Your account and all associated data have been permanently deleted." });
+
+    } catch (error: any) {
+        console.error("Error deleting account: ", error);
+        if (error.code === 'auth/requires-recent-login') {
+            toast({
+                variant: "destructive",
+                title: "Action Required",
+                description: "This is a sensitive action. Please sign out and sign back in before deleting your account.",
+            });
+        } else {
+            toast({
+                variant: "destructive",
+                title: "Error Deleting Account",
+                description: "An error occurred while trying to delete your account. Please try again.",
+            });
+            // Emit a more generic error since we don't know the exact path that failed during the batch write.
+            const permissionError = new FirestorePermissionError({
+                path: `/users/${user.uid}`,
+                operation: 'delete',
+            });
+            errorEmitter.emit('permission-error', permissionError);
+        }
+    }
+  }, [user, firestore, toast]);
+
   const completedTasks = useMemo(() => {
     return (tasks || []).filter(task => task.completed).length;
   }, [tasks]);
@@ -458,11 +518,10 @@ notesSnapshot.forEach(noteDoc => batch.delete(noteDoc.ref));
     editNote,
     deleteNote,
     resetApp,
+    deleteAccount,
     addWorkspace,
     deleteWorkspace,
     editWorkspace,
     switchWorkspace,
   };
 }
-
-    

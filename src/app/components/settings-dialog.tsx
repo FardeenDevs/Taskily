@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
-import { Sun, Moon, Trash2 } from 'lucide-react'
+import { Sun, Moon, Trash2, UserX } from 'lucide-react'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,9 +24,10 @@ interface SettingsDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onResetApp: () => void
+  onDeleteAccount: () => Promise<void>
 }
 
-export const SettingsDialog = memo(function SettingsDialog({ open, onOpenChange, onResetApp }: SettingsDialogProps) {
+export const SettingsDialog = memo(function SettingsDialog({ open, onOpenChange, onResetApp, onDeleteAccount }: SettingsDialogProps) {
   const { theme, setTheme } = useTheme()
   const [isDark, setIsDark] = useState(theme === 'dark');
 
@@ -38,6 +39,11 @@ export const SettingsDialog = memo(function SettingsDialog({ open, onOpenChange,
 
   const handleReset = () => {
     onResetApp();
+    onOpenChange(false);
+  }
+
+  const handleDeleteAccount = async () => {
+    await onDeleteAccount();
     onOpenChange(false);
   }
 
@@ -69,35 +75,63 @@ export const SettingsDialog = memo(function SettingsDialog({ open, onOpenChange,
                 </div>
             </div>
 
-            <div className="flex items-center justify-between rounded-lg border border-destructive/50 p-4">
+            <div className="flex flex-col gap-4 rounded-lg border border-destructive/50 p-4">
                  <div className="space-y-0.5">
                     <Label className="text-base text-destructive">Danger Zone</Label>
                     <p className="text-sm text-muted-foreground">
-                       This will reset the entire application.
+                       These actions are permanent and cannot be undone.
                     </p>
                 </div>
-                <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                        <Button variant="destructive" size="sm">
-                            <Trash2 className="mr-2 h-4 w-4"/>
-                            Reset Application
-                        </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                        <AlertDialogHeader>
-                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                                This will permanently delete all tasks, notes, and listspaces, and remove all passwords. This action cannot be undone.
-                            </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={handleReset} className="bg-red-600 hover:bg-red-700 text-white">
-                                Yes, reset everything
-                            </AlertDialogAction>
-                        </AlertDialogFooter>
-                    </AlertDialogContent>
-                </AlertDialog>
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
+                    <p className="text-sm text-muted-foreground flex-1 text-center sm:text-left">Reset all lists, tasks, and notes.</p>
+                    <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                            <Button variant="destructive" size="sm" className="w-full sm:w-auto">
+                                <Trash2 className="mr-2 h-4 w-4"/>
+                                Reset Application
+                            </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    This will permanently delete all tasks, notes, and listspaces. This action cannot be undone.
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={handleReset} variant="destructive">
+                                    Yes, reset everything
+                                </AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
+                </div>
+                 <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
+                    <p className="text-sm text-muted-foreground flex-1 text-center sm:text-left">Delete your account and all data.</p>
+                    <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                            <Button variant="destructive" size="sm" className="w-full sm:w-auto">
+                                <UserX className="mr-2 h-4 w-4"/>
+                                Delete Account
+                            </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>Delete your account?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    This is permanent. All your data, including your profile, lists, tasks, and notes will be deleted forever. This cannot be undone.
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={handleDeleteAccount} variant="destructive">
+                                    Yes, delete my account
+                                </AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
+                </div>
             </div>
 
         </div>
