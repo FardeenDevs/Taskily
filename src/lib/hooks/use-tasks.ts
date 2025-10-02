@@ -46,6 +46,7 @@ export function useTasks() {
   const [backupCodes, setBackupCodes] = useState<string[] | null>(null);
   const [notesBackupCodes, setNotesBackupCodes] = useState<string[] | null>(null);
   const [unlockedWorkspaces, setUnlockedWorkspaces] = useState<string[]>([]);
+  const [isUnlocking, setIsUnlocking] = useState(false);
   
   const { setOpen: setSidebarOpen } = useSidebar();
   
@@ -100,6 +101,13 @@ export function useTasks() {
   , [activeWorkspaceId, user, firestore, isNotesLocked]);
   
   const { data: notes, loading: notesLoading } = useCollection<Note>(notesRef);
+
+  // When notes are finished loading after an unlock, set unlocking to false
+  useEffect(() => {
+    if (isUnlocking && !notesLoading) {
+      setIsUnlocking(false);
+    }
+  }, [notesLoading, isUnlocking]);
 
   // Handle user profile creation for new sign-ups
   useEffect(() => {
@@ -622,28 +630,39 @@ export function useTasks() {
     const workspace = workspaces?.find(ws => ws.id === workspaceId);
     if (!workspace || !workspace.notesPassword) return false;
 
+    setIsUnlocking(true);
+
     // Check if it's the main password
     if (workspace.notesPassword === passwordOrCode) {
         setUnlockedWorkspaces(prev => [...prev.filter(id => id !== workspaceId), workspaceId]);
+        // isUnlocking will be set to false by the useEffect watching notesLoading
         return true;
     }
 
     // Check if it's a backup code
     if (workspace.notesBackupCodes?.includes(passwordOrCode)) {
-        if (!user) return false;
+        if (!user) {
+            setIsUnlocking(false);
+            return false;
+        }
         const workspaceDocRef = doc(firestore, 'users', user.uid, 'workspaces', workspaceId);
         const dataToUpdate = {
             notesBackupCodes: arrayRemove(passwordOrCode)
         };
-        await updateDoc(workspaceDocRef, dataToUpdate).catch(e => {
+        try {
+            await updateDoc(workspaceDocRef, dataToUpdate);
+            setUnlockedWorkspaces(prev => [...prev.filter(id => id !== workspaceId), workspaceId]);
+            toast({ title: "Backup Code Used", description: "This code has been removed from your list of available codes." });
+            // isUnlocking will be set to false by the useEffect watching notesLoading
+            return true;
+        } catch(e) {
             errorEmitter.emit('permission-error', new FirestorePermissionError({ path: workspaceDocRef.path, operation: 'update', requestResourceData: dataToUpdate }));
-            throw e; // Prevent unlocking if DB update fails
-        });
-        setUnlockedWorkspaces(prev => [...prev.filter(id => id !== workspaceId), workspaceId]);
-        toast({ title: "Backup Code Used", description: "This code has been removed from your list of available codes." });
-        return true;
+            setIsUnlocking(false);
+            return false;
+        }
     }
 
+    setIsUnlocking(false);
     return false; // Invalid password or code
   }, [user, firestore, workspaces, toast]);
 
@@ -765,11 +784,9 @@ export function useTasks() {
     notesBackupCodes,
     clearNotesBackupCodes,
     isNotesLocked,
+    isUnlocking,
     unlockNotes,
     setNotesPassword,
     removeNotesPassword,
   };
 }
-
-    
-    

@@ -21,9 +21,10 @@ interface PasswordPromptDialogProps {
   onOpenChange: (open: boolean) => void;
   workspaceName: string;
   onUnlock: (password: string) => Promise<boolean>;
+  isUnlocking: boolean;
 }
 
-export function PasswordPromptDialog({ open, onOpenChange, workspaceName, onUnlock }: PasswordPromptDialogProps) {
+export function PasswordPromptDialog({ open, onOpenChange, workspaceName, onUnlock, isUnlocking }: PasswordPromptDialogProps) {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -35,8 +36,11 @@ export function PasswordPromptDialog({ open, onOpenChange, workspaceName, onUnlo
     if (!success) {
       setError("Incorrect password or backup code. Please try again.");
     }
-    setIsLoading(false);
+    // Don't set isLoading to false here, it will be controlled by isUnlocking prop
+    setIsLoading(false); 
   };
+
+  const totalLoading = isLoading || isUnlocking;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -55,7 +59,8 @@ export function PasswordPromptDialog({ open, onOpenChange, workspaceName, onUnlo
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleUnlockAttempt()}
+              onKeyDown={(e) => e.key === "Enter" && !totalLoading && handleUnlockAttempt()}
+              disabled={totalLoading}
             />
           </div>
           {error && (
@@ -68,9 +73,9 @@ export function PasswordPromptDialog({ open, onOpenChange, workspaceName, onUnlo
           )}
         </div>
         <DialogFooter>
-          <Button onClick={handleUnlockAttempt} disabled={isLoading || !password}>
-            {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-            Unlock
+          <Button onClick={handleUnlockAttempt} disabled={totalLoading || !password}>
+            {totalLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+            {isUnlocking ? "Unlocking..." : "Unlock"}
           </Button>
         </DialogFooter>
       </DialogContent>

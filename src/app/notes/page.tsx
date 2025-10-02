@@ -21,6 +21,7 @@ export default function NotesPage() {
     deleteNote,
     activeWorkspace,
     isNotesLocked,
+    isUnlocking,
     unlockNotes,
   } = useTasks();
 
@@ -37,9 +38,10 @@ export default function NotesPage() {
   }, [activeWorkspace, isNotesLocked]);
 
   const handleOpenEditDialog = useCallback((note: Note) => {
+    if (isUnlocking) return; // Prevent opening dialog while unlocking
     setEditingNote(note);
     setIsNoteDialogOpen(true);
-  }, []);
+  }, [isUnlocking]);
   
   const handleOpenNewNoteDialog = useCallback(() => {
     if (!activeWorkspace) return;
@@ -72,9 +74,7 @@ export default function NotesPage() {
   const handleUnlock = async (password: string) => {
     if (activeWorkspace) {
         const success = await unlockNotes(activeWorkspace.id, password);
-        if (success) {
-            setIsPasswordPromptOpen(false);
-        }
+        // Do not close the dialog here on success, let the useEffect handle it
         return success;
     }
     return false;
@@ -128,6 +128,7 @@ export default function NotesPage() {
         onOpenChange={setIsPasswordPromptOpen}
         workspaceName={activeWorkspace.name}
         onUnlock={handleUnlock}
+        isUnlocking={isUnlocking}
       />}
     </>
   );
