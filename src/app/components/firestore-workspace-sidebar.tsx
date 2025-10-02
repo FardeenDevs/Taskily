@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { type useTasks } from "@/lib/hooks/use-tasks";
 import {
   Sidebar,
@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, MoreVertical, Pencil, Trash2, LayoutGrid, Archive, Lock, Eye, EyeOff } from "lucide-react";
+import { Plus, MoreVertical, Pencil, Trash2, LayoutGrid, Archive, Lock, Eye, EyeOff, ShieldQuestion } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -69,14 +69,13 @@ export function FirestoreWorkspaceSidebar({ tasksHook }: WorkspaceSidebarProps) 
   const [isPasswordProtected, setIsPasswordProtected] = useState(false);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [oldPassword, setOldPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-
-  const handleAddWorkspace = () => {
-    addWorkspace(newWorkspaceName);
-    setNewWorkspaceName("");
-  };
   
-  const handleSaveChanges = () => {
+  const protectNotesSwitchRef = useRef<HTMLButtonElement>(null);
+
+
+  const handleSaveChanges = async () => {
     if (selectedWorkspace) {
       // Handle name change
       if (editName !== selectedWorkspace.name) {
@@ -85,7 +84,7 @@ export function FirestoreWorkspaceSidebar({ tasksHook }: WorkspaceSidebarProps) 
 
       // Handle password protection
       if (isPasswordProtected) {
-         if (password) {
+         if (password) { // Only try to set/change password if a new one is entered
             if (password !== confirmPassword) {
                 toast({ variant: "destructive", title: "Passwords do not match." });
                 return;
@@ -94,10 +93,19 @@ export function FirestoreWorkspaceSidebar({ tasksHook }: WorkspaceSidebarProps) 
                 toast({ variant: "destructive", title: "Password too short.", description: "Password must be at least 4 characters." });
                 return;
             }
-            setNotesPassword(selectedWorkspace.id, password);
+            const success = await setNotesPassword(selectedWorkspace.id, password, selectedWorkspace.notesPassword ? oldPassword : null);
+            if (!success) {
+                toast({ variant: "destructive", title: "Incorrect Password", description: "The 'Current Password' you entered is incorrect." });
+                return; // Stop if password change failed
+            }
          }
       } else if (selectedWorkspace.notesPassword) {
-        removeNotesPassword(selectedWorkspace.id);
+        // If the toggle is off but a password exists, it means we are removing it.
+        const success = await removeNotesPassword(selectedWorkspace.id, oldPassword);
+        if (!success) {
+            toast({ variant: "destructive", title: "Incorrect Password", description: "The 'Current Password' you entered is incorrect." });
+            return; // Stop if password removal failed
+        }
       }
       
       setEditDialogOpen(false);
@@ -121,13 +129,20 @@ export function FirestoreWorkspaceSidebar({ tasksHook }: WorkspaceSidebarProps) 
     setSelectedWorkspace(null);
   };
 
-  const openEditDialog = (workspace: Workspace) => {
+  const openEditDialog = (workspace: Workspace, focusPassword?: boolean) => {
     setSelectedWorkspace(workspace);
     setEditName(workspace.name);
-    setIsPasswordProtected(!!workspace.notesPassword);
+    setIsPasswordProtected(!!workspace.notesPassword || !!focusPassword);
     setPassword("");
     setConfirmPassword("");
+    setOldPassword("");
     setEditDialogOpen(true);
+    if (focusPassword) {
+        setTimeout(() => {
+            protectNotesSwitchRef.current?.focus();
+            protectNotesSwitchRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 100);
+    }
   }
 
   return (
@@ -160,6 +175,10 @@ export function FirestoreWorkspaceSidebar({ tasksHook }: WorkspaceSidebarProps) 
                     <DropdownMenuItem onSelect={() => openEditDialog(workspace)}>
                         <Pencil className="mr-2 h-4 w-4" />
                         <span>Edit</span>
+                    </DropdownMenuItem>
+                     <DropdownMenuItem onSelect={() => openEditDialog(workspace, true)}>
+                        <ShieldQuestion className="mr-2 h-4 w-4" />
+                        <span>Set Notes Password</span>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onSelect={() => { setSelectedWorkspace(workspace); setClearDialogOpen(true); }}>
@@ -214,10 +233,23 @@ export function FirestoreWorkspaceSidebar({ tasksHook }: WorkspaceSidebarProps) 
                         </div>
                         <Switch
                             id="protect-notes"
+                            ref={protectNotesSwitchRef}
                             checked={isPasswordProtected}
                             onCheckedChange={setIsPasswordProtected}
                         />
                     </div>
+                    {isPasswordProtected && selectedWorkspace?.notesPassword && (
+                         <div className="space-y-2 relative">
+                            <Label htmlFor="old-password">Current Password</Label>
+                            <Input 
+                                id="old-password" 
+                                type={showPassword ? "text" : "password"}
+                                value={oldPassword}
+                                onChange={(e) => setOldPassword(e.target.value)}
+                                placeholder="Required to make changes"
+                            />
+                        </div>
+                    )}
                     {isPasswordProtected && (
                         <div className="space-y-4 pt-2">
                             {selectedWorkspace?.notesPassword && (
@@ -249,6 +281,25 @@ export function FirestoreWorkspaceSidebar({ tasksHook }: WorkspaceSidebarProps) 
                                     type={showPassword ? "text" : "password"}
                                     value={confirmPassword}
                                     onChange={(e) => setConfirmPassword(e.target.value)}
+                                />
+                            </div>
+                        </div>
+                    )}
+                     {!isPasswordProtected && selectedWorkspace?.notesPassword && (
+                        <div className="space-y-4 pt-2">
+                            <Alert variant="default">
+                                <AlertDescription>
+                                    To remove password protection, enter your current password and click "Save Changes".
+                                </AlertDescription>
+                            </Alert>
+                             <div className="space-y-2 relative">
+                                <Label htmlFor="old-password-remove">Current Password</Label>
+                                <Input 
+                                    id="old-password-remove" 
+                                    type="password"
+                                    value={oldPassword}
+                                    onChange={(e) => setOldPassword(e.target.value)}
+                                    placeholder="Enter current password to remove"
                                 />
                             </div>
                         </div>
@@ -298,5 +349,7 @@ export function FirestoreWorkspaceSidebar({ tasksHook }: WorkspaceSidebarProps) 
     </Sidebar>
   );
 }
+
+    
 
     

@@ -231,6 +231,7 @@ export function useTasks() {
 
   const switchWorkspace = useCallback((id: string | null) => {
     if (user) {
+        setUnlockedWorkspaces([]); // Auto-lock notes on switch
         setActiveWorkspaceId(id);
         if (id) {
           localStorage.setItem(`${ACTIVE_WORKSPACE_KEY}-${user.uid}`, id);
@@ -564,39 +565,58 @@ export function useTasks() {
 
   }, [user, firestore, workspaces]);
 
-  const setNotesPassword = useCallback(async (workspaceId: string, password: string) => {
-    if (!user) return;
+  const setNotesPassword = useCallback(async (workspaceId: string, newPassword: string, oldPassword: string | null): Promise<boolean> => {
+    if (!user) return false;
+    const workspace = workspaces?.find(ws => ws.id === workspaceId);
+    if (!workspace) return false;
+
+    // If a password already exists, the old password must be correct
+    if (workspace.notesPassword && workspace.notesPassword !== oldPassword) {
+        return false;
+    }
+
     const workspaceDocRef = doc(firestore, 'users', user.uid, 'workspaces', workspaceId);
     
     // In a real app, you would hash the password before storing it.
     // For this prototype, we'll store it directly, but this is NOT secure.
     const newBackupCodes = generateBackupCodes();
     const dataToUpdate = {
-        notesPassword: password, // Again, HASH THIS in a real app
+        notesPassword: newPassword, // Again, HASH THIS in a real app
         notesBackupCodes: newBackupCodes
     };
 
-    await updateDoc(workspaceDocRef, dataToUpdate)
-        .then(() => {
-            setNotesBackupCodes(newBackupCodes); // Show new backup codes to user
-            setUnlockedWorkspaces(prev => [...prev, workspaceId]); // Automatically unlock
-        })
-        .catch(e => {
-            errorEmitter.emit('permission-error', new FirestorePermissionError({ path: workspaceDocRef.path, operation: 'update', requestResourceData: dataToUpdate }));
-        });
-  }, [user, firestore]);
+    try {
+        await updateDoc(workspaceDocRef, dataToUpdate);
+        setNotesBackupCodes(newBackupCodes); // Show new backup codes to user
+        setUnlockedWorkspaces(prev => [...prev.filter(id => id !== workspaceId), workspaceId]); // Automatically unlock
+        return true;
+    } catch(e) {
+        errorEmitter.emit('permission-error', new FirestorePermissionError({ path: workspaceDocRef.path, operation: 'update', requestResourceData: dataToUpdate }));
+        return false;
+    }
+  }, [user, firestore, workspaces]);
 
-  const removeNotesPassword = useCallback(async (workspaceId: string) => {
-    if (!user) return;
+  const removeNotesPassword = useCallback(async (workspaceId: string, oldPassword: string): Promise<boolean> => {
+    if (!user) return false;
+    const workspace = workspaces?.find(ws => ws.id === workspaceId);
+    if (!workspace || !workspace.notesPassword || workspace.notesPassword !== oldPassword) {
+      return false;
+    }
+
     const workspaceDocRef = doc(firestore, 'users', user.uid, 'workspaces', workspaceId);
     const dataToUpdate = {
         notesPassword: null,
         notesBackupCodes: null
     };
-    await updateDoc(workspaceDocRef, dataToUpdate).catch(e => {
+
+    try {
+        await updateDoc(workspaceDocRef, dataToUpdate);
+        return true;
+    } catch(e) {
         errorEmitter.emit('permission-error', new FirestorePermissionError({ path: workspaceDocRef.path, operation: 'update', requestResourceData: dataToUpdate }));
-    });
-  }, [user, firestore]);
+        return false;
+    }
+  }, [user, firestore, workspaces]);
 
   const unlockNotes = useCallback(async (workspaceId: string, passwordOrCode: string): Promise<boolean> => {
     const workspace = workspaces?.find(ws => ws.id === workspaceId);
@@ -604,7 +624,7 @@ export function useTasks() {
 
     // Check if it's the main password
     if (workspace.notesPassword === passwordOrCode) {
-        setUnlockedWorkspaces(prev => [...prev, workspaceId]);
+        setUnlockedWorkspaces(prev => [...prev.filter(id => id !== workspaceId), workspaceId]);
         return true;
     }
 
@@ -619,7 +639,7 @@ export function useTasks() {
             errorEmitter.emit('permission-error', new FirestorePermissionError({ path: workspaceDocRef.path, operation: 'update', requestResourceData: dataToUpdate }));
             throw e; // Prevent unlocking if DB update fails
         });
-        setUnlockedWorkspaces(prev => [...prev, workspaceId]);
+        setUnlockedWorkspaces(prev => [...prev.filter(id => id !== workspaceId), workspaceId]);
         toast({ title: "Backup Code Used", description: "This code has been removed from your list of available codes." });
         return true;
     }
@@ -751,4 +771,5 @@ export function useTasks() {
   };
 }
 
+    
     
