@@ -13,26 +13,30 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
   const isLoginPage = pathname === '/login';
 
   useEffect(() => {
+    // This effect handles redirecting users based on their auth state.
+    // It's crucial to wait for the loading to finish before making decisions.
     if (loading) {
-      return; // Wait until loading is false before making any decisions
+      return; 
     }
 
+    // If a logged-in user lands on the login page, redirect them to the home page.
     if (user && isLoginPage) {
-      // If we have a user and they are on the login page, redirect them away.
       router.push('/');
-    } else if (!user && !isLoginPage) {
-      // If we have no user and they are not on the login page, redirect them there.
+    }
+    
+    // If a user is not logged in and is NOT on the login page, redirect them there.
+    if (!user && !isLoginPage) {
       router.push('/login');
     }
   }, [user, loading, router, isLoginPage]);
 
-  // If we are on the login page, always render the children.
-  // The useEffect above will handle redirecting away if a user is found.
+  // If we are on the login page, we render the content (the login form) immediately.
+  // The useEffect above will handle redirecting away if a user session is found.
   if (isLoginPage) {
     return <>{children}</>;
   }
-  
-  // If we are on a protected page, and still loading, show a spinner.
+
+  // If we are on a protected page, and still waiting for auth state, show a loader.
   if (loading) {
      return (
         <AnimatePresence>
@@ -49,13 +53,13 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // If we have a user and are not on the login page, show the content.
+  // If loading is finished and we have a user, show the protected content.
   if (user) {
     return <>{children}</>;
   }
 
-  // If we have no user and are not on the login page, a redirect is in progress.
-  // Show a loader to prevent flashing content.
+  // If loading is finished and there is no user, a redirect to /login is in progress.
+  // Show a loader to prevent flashing of protected content.
   return (
     <div className="flex h-screen w-screen items-center justify-center">
         <div className="h-16 w-16 animate-spin rounded-full border-4 border-solid border-primary border-t-transparent"></div>
