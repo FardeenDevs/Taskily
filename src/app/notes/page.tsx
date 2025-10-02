@@ -2,10 +2,10 @@
 "use client";
 
 import { useTasks } from "@/lib/hooks/use-tasks";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { WelcomeDialog } from "@/app/components/welcome-dialog";
-import { Plus } from "lucide-react";
-import { useState, memo, useMemo, useEffect } from "react";
+import { Plus, ShieldAlert, Lock, Unlock } from "lucide-react";
+import { useState, memo, useMemo, useEffect, useCallback } from "react";
 import { SettingsDialog } from "@/app/components/settings-dialog";
 import { Button } from "@/components/ui/button";
 import { NotesSection } from "@/app/components/notes-section";
@@ -15,14 +15,22 @@ import { PageTransition } from '../components/page-transition';
 import { MainLayout } from "../components/main-layout";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { useUser } from "@/firebase";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
+import { useToast } from "@/hooks/use-toast";
 
 const NotesPageContent = memo(function NotesPageContentInternal() {
   const { user } = useUser();
   const tasksHook = useTasks();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const { toast } = useToast();
 
   const [isNoteDialogOpen, setIsNoteDialogOpen] = useState(false);
   const [editingNote, setEditingNote] = useState<Note | null>(null);
+  
+  const [isUnlockDialogOpen, setIsUnlockDialogOpen] = useState(false);
+  const [passwordInput, setPasswordInput] = useState("");
 
   const {
     notes,
@@ -34,10 +42,26 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
     isFirstTime,
     setIsFirstTime,
     resetApp,
-    deleteAccount
+    deleteAccount,
+    unlockedWorkspaces,
+    unlockWorkspace,
+    lockWorkspace
   } = tasksHook;
 
   const [clientNotes, setClientNotes] = useState<Note[]>([]);
+
+  const isLocked = useMemo(() => {
+    if (!activeWorkspace) return false;
+    return !!activeWorkspace.password && !unlockedWorkspaces.has(activeWorkspace.id);
+  }, [activeWorkspace, unlockedWorkspaces]);
+
+  useEffect(() => {
+    if (isLocked) {
+      setIsUnlockDialogOpen(true);
+    } else {
+      setIsUnlockDialogOpen(false);
+    }
+  }, [isLocked]);
 
   useEffect(() => {
     setClientNotes(notes);
@@ -49,7 +73,7 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
   };
   
   const handleOpenNewNoteDialog = () => {
-    if (!activeWorkspace) return;
+    if (!activeWorkspace || isLocked) return;
     const newNote = addNote();
     if (newNote) {
         setEditingNote(newNote);
@@ -92,9 +116,33 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
         return dateB.getTime() - dateA.getTime();
     });
   }, [clientNotes]);
+  
+  const handleUnlock = () => {
+    if (!activeWorkspace) return;
+    if (unlockWorkspace(activeWorkspace.id, passwordInput)) {
+        setIsUnlockDialogOpen(false);
+        setPasswordInput("");
+        toast({ title: "Listspace Unlocked" });
+    } else {
+        toast({ variant: "destructive", title: "Incorrect Password" });
+        setPasswordInput("");
+    }
+  };
+
+  const handleLock = () => {
+    if (!activeWorkspace) return;
+    lockWorkspace(activeWorkspace.id);
+    toast({ title: "Listspace Locked" });
+  }
+
+  const onUnlockDialogClose = (open: boolean) => {
+      // Don't allow closing the dialog if the workspace is locked
+      if (!open && isLocked) return;
+      setIsUnlockDialogOpen(open);
+  }
 
 
-  if (loading) {
+  if (loading && !activeWorkspace) {
     return (
       <div className="flex h-screen w-screen items-center justify-center">
         <div className="h-16 w-16 animate-spin rounded-full border-4 border-dashed border-primary"></div>
@@ -113,8 +161,13 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
                         <CardTitle className="font-headline text-2xl font-bold tracking-tight text-foreground">
                         {activeWorkspace?.name || "My Notes"}
                         </CardTitle>
+                        {activeWorkspace?.password && (
+                            isLocked 
+                                ? <Button variant="ghost" size="icon" onClick={() => setIsUnlockDialogOpen(true)}><Lock className="h-5 w-5"/></Button>
+                                : <Button variant="ghost" size="icon" onClick={handleLock}><Unlock className="h-5 w-5"/></Button>
+                        )}
                     </div>
-                    <Button onClick={handleOpenNewNoteDialog} variant="gradient" disabled={!activeWorkspace}>
+                    <Button onClick={handleOpenNewNoteDialog} variant="gradient" disabled={!activeWorkspace || isLocked}>
                         <Plus className="mr-2 h-4 w-4" />
                         New Note
                     </Button>
@@ -124,7 +177,7 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
                         notes={sortedNotes}
                         onDeleteNote={deleteNote}
                         onEditNote={handleOpenEditDialog}
-                        isLocked={false}
+                        isLocked={isLocked}
                     />
                     </CardContent>
                 </Card>
@@ -145,6 +198,33 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
         note={editingNote}
         onSave={handleSaveNote}
       />
+       <AlertDialog open={isUnlockDialogOpen} onOpenChange={onUnlockDialogClose}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>This Listspace is Locked</AlertDialogTitle>
+            <AlertDialogDescription>
+              Please enter the password to view your notes.
+              {activeWorkspace?.passwordHint && (
+                <p className="text-xs text-muted-foreground mt-2">Hint: {activeWorkspace.passwordHint}</p>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="py-2">
+            <Label htmlFor="password-unlock" className="sr-only">Password</Label>
+            <Input 
+                id="password-unlock" 
+                type="password" 
+                value={passwordInput} 
+                onChange={(e) => setPasswordInput(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleUnlock()}
+                placeholder="Enter password..." 
+            />
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={handleUnlock}>Unlock</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 });

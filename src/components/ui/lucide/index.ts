@@ -34,5 +34,7 @@ export {
     PanelLeft,
     ChevronUp,
     ArrowLeft,
-    ArrowRight
+    ArrowRight,
+    Lock,
+    Unlock,
 } from 'lucide-react';

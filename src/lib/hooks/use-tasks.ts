@@ -24,12 +24,13 @@ export function useTasks() {
   const [loading, setLoading] = useState(true);
   const [isFirstTime, setIsFirstTime] = useState(false);
   const [initialCheckDone, setInitialCheckDone] = useState(false);
+  const [unlockedWorkspaces, setUnlockedWorkspaces] = useState<Set<string>>(new Set());
   
   const { setOpen: setSidebarOpen } = useSidebar();
   
   // Firestore references
   const workspacesQuery = useMemo(() => 
-    user ? query(collection(firestore, 'users', user.uid, 'workspaces'), where('ownerId', '==', user.uid)) : null
+    user ? query(collection(firestore, 'users', user.uid, 'workspaces')) : null
   , [firestore, user]);
 
   const activeWorkspaceRef = useMemo(() => 
@@ -40,9 +41,15 @@ export function useTasks() {
     activeWorkspaceId && user ? collection(firestore, 'users', user.uid, 'workspaces', activeWorkspaceId, 'tasks') : null
   , [activeWorkspaceId, user, firestore]);
 
-  const notesRef = useMemo(() => 
-    activeWorkspaceId && user ? collection(firestore, 'users', user.uid, 'workspaces', activeWorkspaceId, 'notes') : null
-  , [activeWorkspaceId, user, firestore]);
+  const notesRef = useMemo(() => {
+    if (!activeWorkspaceId || !user) return null;
+    const isUnlocked = unlockedWorkspaces.has(activeWorkspaceId);
+    const workspace = workspaces?.find(ws => ws.id === activeWorkspaceId);
+    if (workspace?.password && !isUnlocked) {
+      return null;
+    }
+    return collection(firestore, 'users', user.uid, 'workspaces', activeWorkspaceId, 'notes');
+  }, [activeWorkspaceId, user, firestore, unlockedWorkspaces, workspaces]);
   
   // Firestore data hooks
   const { data: workspaces, loading: workspacesLoading } = useCollection<Workspace>(workspacesQuery);
@@ -89,8 +96,6 @@ export function useTasks() {
   
     if (workspaces) {
       if (workspaces.length === 0) {
-         // This case is handled by the effect below.
-         // We set initialCheckDone here to allow that effect to run.
          setInitialCheckDone(true);
          return;
       }
@@ -145,9 +150,10 @@ export function useTasks() {
 
   // Update loading state
   useEffect(() => {
-    const isStillLoading = userLoading || workspacesLoading || (!!activeWorkspaceId && (activeWorkspaceLoading || tasksLoading || notesLoading)) || !initialCheckDone;
+    const isStillLoading = userLoading || workspacesLoading || (!!activeWorkspaceId && (activeWorkspaceLoading || tasksLoading || notesLoading === undefined)) || !initialCheckDone;
     setLoading(isStillLoading);
   }, [userLoading, workspacesLoading, activeWorkspaceId, activeWorkspaceLoading, tasksLoading, notesLoading, initialCheckDone]);
+
 
   const switchWorkspace = useCallback((id: string) => {
     if (user) {
@@ -306,7 +312,7 @@ export function useTasks() {
   const resetApp = useCallback(async () => {
     if (!user || !firestore) return;
     
-    const userWorkspacesQuery = query(collection(firestore, 'users', user.uid, 'workspaces'), where('ownerId', '==', user.uid));
+    const userWorkspacesQuery = query(collection(firestore, 'users', user.uid, 'workspaces'));
     
     getDocs(userWorkspacesQuery).then(async (querySnapshot) => {
         const batch = writeBatch(firestore);
@@ -434,10 +440,23 @@ export function useTasks() {
 
   }, [firestore, user, workspaces, activeWorkspaceId, switchWorkspace, toast]);
 
-  const editWorkspace = useCallback((id: string, newName: string) => {
+  const editWorkspace = useCallback((id: string, newName: string, newPassword?: string, newPasswordHint?: string) => {
     if (newName.trim() === "" || !user) return;
     const workspaceDocRef = doc(firestore, 'users', user.uid, 'workspaces', id);
-    const updatedData = { name: newName.trim() };
+    const updatedData: Partial<Workspace> = { name: newName.trim() };
+
+    if (newPassword) {
+        updatedData.password = newPassword;
+    } else {
+        updatedData.password = ""; // Or use deleteField() for cleaner removal
+    }
+
+    if (newPasswordHint) {
+        updatedData.passwordHint = newPasswordHint;
+    } else {
+        updatedData.passwordHint = "";
+    }
+
     setDoc(workspaceDocRef, updatedData, { merge: true })
     .catch(async (serverError) => {
         const permissionError = new FirestorePermissionError({
@@ -450,7 +469,7 @@ export function useTasks() {
   }, [user, firestore]);
 
   const deleteAccount = useCallback(async () => {
-    if (!user || !auth || !auth.currentUser || !firestore) {
+    if (!user || !auth.currentUser || !firestore) {
         toast({ variant: "destructive", title: "Not signed in", description: "You must be signed in to delete an account." });
         return;
     }
@@ -459,7 +478,6 @@ export function useTasks() {
     const userDocRef = doc(firestore, 'users', currentUser.uid);
 
     try {
-        // 1. Update the user's display name in Firestore to mark for cleanup
         const updateData = { displayName: "Deleted User" };
         await updateDoc(userDocRef, updateData)
             .catch(e => {
@@ -467,9 +485,8 @@ export function useTasks() {
                 throw e; // re-throw to stop execution
             });
 
-        // 2. Delete the user from Authentication
         await deleteUser(currentUser).catch(error => {
-             console.error("Error deleting account: ", error);
+            console.error("Error deleting account: ", error);
             if (error.code === 'auth/requires-recent-login') {
                 toast({
                     variant: "destructive",
@@ -483,14 +500,12 @@ export function useTasks() {
                     description: "An error occurred while trying to delete your account. Please try again.",
                 });
             }
-            throw error; // re-throw to stop execution
+            throw error;
         });
 
-        toast({ title: "Account Deleted", description: "Your account has been marked for deletion and your data will be removed shortly." });
+        toast({ title: "Account Deleted", description: "Your account has been successfully deleted." });
 
     } catch (error) {
-        // Errors are re-thrown, so any failure will be caught here.
-        // Specific error messages are handled inside the catch blocks above.
         console.error("Failed to complete account deletion process:", error);
     }
   }, [user, firestore, auth, toast]);
@@ -498,6 +513,23 @@ export function useTasks() {
   const completedTasks = useMemo(() => {
     return (tasks || []).filter(task => task.completed).length;
   }, [tasks]);
+
+  const unlockWorkspace = useCallback((workspaceId: string, passwordAttempt: string) => {
+    const workspace = workspaces?.find(ws => ws.id === workspaceId);
+    if (workspace && workspace.password === passwordAttempt) {
+      setUnlockedWorkspaces(prev => new Set(prev).add(workspaceId));
+      return true;
+    }
+    return false;
+  }, [workspaces]);
+
+  const lockWorkspace = useCallback((workspaceId: string) => {
+    setUnlockedWorkspaces(prev => {
+      const newSet = new Set(prev);
+      newSet.delete(workspaceId);
+      return newSet;
+    });
+  }, []);
 
   return {
     tasks: tasks || [],
@@ -528,7 +560,8 @@ export function useTasks() {
     deleteWorkspace,
     editWorkspace,
     switchWorkspace,
+    unlockedWorkspaces,
+    unlockWorkspace,
+    lockWorkspace,
   };
 }
-
-    

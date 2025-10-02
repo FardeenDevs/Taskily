@@ -40,6 +40,14 @@
         "ownerId": {
             "type": "string",
             "description": "The UID of the user who owns this workspace."
+        },
+        "password": {
+            "type": "string",
+            "description": "An optional password to protect the workspace's notes."
+        },
+        "passwordHint": {
+            "type": "string",
+            "description": "An optional hint for the password."
         }
       },
       "required": ["name", "createdAt", "ownerId"]

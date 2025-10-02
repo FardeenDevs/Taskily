@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, MoreVertical, Pencil, Trash2, LayoutGrid, Archive } from "lucide-react";
+import { Plus, MoreVertical, Pencil, Trash2, LayoutGrid, Archive, Lock, Unlock } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -58,6 +58,8 @@ export function FirestoreWorkspaceSidebar({ tasksHook }: WorkspaceSidebarProps) 
   const [clearDialogOpen, setClearDialogOpen] = useState(false);
 
   const [editName, setEditName] = useState("");
+  const [editPassword, setEditPassword] = useState("");
+  const [editPasswordHint, setEditPasswordHint] = useState("");
   const [selectedWorkspace, setSelectedWorkspace] = useState<Workspace | null>(null);
 
   const handleAddWorkspace = () => {
@@ -67,7 +69,7 @@ export function FirestoreWorkspaceSidebar({ tasksHook }: WorkspaceSidebarProps) 
   
   const handleEditWorkspace = () => {
     if (selectedWorkspace) {
-      editWorkspace(selectedWorkspace.id, editName);
+      editWorkspace(selectedWorkspace.id, editName, editPassword, editPasswordHint);
     }
     setEditDialogOpen(false);
     setSelectedWorkspace(null);
@@ -92,6 +94,8 @@ export function FirestoreWorkspaceSidebar({ tasksHook }: WorkspaceSidebarProps) 
   const openEditDialog = (workspace: Workspace) => {
     setSelectedWorkspace(workspace);
     setEditName(workspace.name);
+    setEditPassword(workspace.password || "");
+    setEditPasswordHint(workspace.passwordHint || "");
     setEditDialogOpen(true);
   }
 
@@ -111,7 +115,8 @@ export function FirestoreWorkspaceSidebar({ tasksHook }: WorkspaceSidebarProps) 
                 isActive={workspace.id === activeWorkspaceId}
                 onClick={() => switchWorkspace(workspace.id)}
               >
-                {workspace.name}
+                {workspace.password ? <Lock className="h-4 w-4 text-muted-foreground" /> : <Unlock className="h-4 w-4 text-muted-foreground/50" />}
+                <span className="truncate">{workspace.name}</span>
               </SidebarMenuButton>
 
               <DropdownMenu>
@@ -123,7 +128,7 @@ export function FirestoreWorkspaceSidebar({ tasksHook }: WorkspaceSidebarProps) 
                 <DropdownMenuContent>
                     <DropdownMenuItem onSelect={() => openEditDialog(workspace)}>
                         <Pencil className="mr-2 h-4 w-4" />
-                        <span>Edit Name</span>
+                        <span>Edit / Password</span>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onSelect={() => { setSelectedWorkspace(workspace); setClearDialogOpen(true); }}>
@@ -155,15 +160,28 @@ export function FirestoreWorkspaceSidebar({ tasksHook }: WorkspaceSidebarProps) 
         </div>
       </SidebarGroup>
 
-       {/* Edit Name Dialog */}
+       {/* Edit Name / Password Dialog */}
        <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
             <DialogContent>
             <DialogHeader>
-                <DialogTitle>Edit Listspace Name</DialogTitle>
+                <DialogTitle>Edit Listspace</DialogTitle>
+                <DialogDescription>
+                    You can set an optional password to protect your notes.
+                </DialogDescription>
             </DialogHeader>
-            <div className="py-4">
-                <Label htmlFor="workspace-name">Name</Label>
-                <Input id="workspace-name" value={editName} onChange={(e) => setEditName(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleEditWorkspace()} />
+            <div className="py-4 space-y-4">
+                <div className="space-y-2">
+                    <Label htmlFor="workspace-name">Name</Label>
+                    <Input id="workspace-name" value={editName} onChange={(e) => setEditName(e.target.value)} />
+                </div>
+                 <div className="space-y-2">
+                    <Label htmlFor="workspace-password">Password (optional)</Label>
+                    <Input id="workspace-password" type="password" value={editPassword} onChange={(e) => setEditPassword(e.target.value)} placeholder="Leave blank to remove"/>
+                </div>
+                 <div className="space-y-2">
+                    <Label htmlFor="workspace-password-hint">Password Hint (optional)</Label>
+                    <Input id="workspace-password-hint" value={editPasswordHint} onChange={(e) => setEditPasswordHint(e.target.value)} placeholder="e.g., My first pet's name" />
+                </div>
             </div>
             <DialogFooter>
                 <Button type="button" variant="secondary" onClick={() => setEditDialogOpen(false)}>Cancel</Button>
