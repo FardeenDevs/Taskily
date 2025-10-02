@@ -37,4 +37,7 @@ export {
     ArrowRight,
     Lock,
     Unlock,
+    ShieldQuestion,
 } from 'lucide-react';
+
+    

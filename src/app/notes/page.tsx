@@ -31,6 +31,7 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
   
   const [isUnlockDialogOpen, setIsUnlockDialogOpen] = useState(false);
   const [passwordInput, setPasswordInput] = useState("");
+  const [failedPasswordAttempts, setFailedPasswordAttempts] = useState(0);
 
   const {
     notes,
@@ -60,8 +61,14 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
       setIsUnlockDialogOpen(true);
     } else {
       setIsUnlockDialogOpen(false);
+      setFailedPasswordAttempts(0); // Reset attempts when unlocked
     }
   }, [isLocked]);
+
+  useEffect(() => {
+    // Reset attempts when switching workspaces
+    setFailedPasswordAttempts(0);
+  }, [activeWorkspace?.id])
 
   useEffect(() => {
     setClientNotes(notes);
@@ -122,10 +129,12 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
     if (unlockWorkspace(activeWorkspace.id, passwordInput)) {
         setIsUnlockDialogOpen(false);
         setPasswordInput("");
+        setFailedPasswordAttempts(0);
         toast({ title: "Listspace Unlocked" });
     } else {
         toast({ variant: "destructive", title: "Incorrect Password" });
         setPasswordInput("");
+        setFailedPasswordAttempts(prev => prev + 1);
     }
   };
 
@@ -136,8 +145,10 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
   }
 
   const onUnlockDialogClose = (open: boolean) => {
-      // Don't allow closing the dialog if the workspace is locked
-      if (!open && isLocked) return;
+      if (!open && isLocked) {
+        // Prevent closing the dialog with Esc or overlay click if locked
+        return;
+      }
       setIsUnlockDialogOpen(open);
   }
 
@@ -205,9 +216,9 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
             <AlertDialogDescription>
               Please enter the password to view your notes.
             </AlertDialogDescription>
-              {activeWorkspace?.passwordHint && (
-                <p className="text-sm text-muted-foreground">
-                    <span className="text-xs">Hint: {activeWorkspace.passwordHint}</span>
+              {activeWorkspace?.passwordHint && failedPasswordAttempts >= 3 && (
+                <p className="text-sm text-muted-foreground pt-2">
+                    <span className="text-xs font-semibold">Hint:</span> {activeWorkspace.passwordHint}
                 </p>
               )}
           </AlertDialogHeader>
@@ -223,6 +234,7 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
             />
           </div>
           <AlertDialogFooter>
+            <AlertDialogCancel>Back</AlertDialogCancel>
             <AlertDialogAction onClick={handleUnlock}>Unlock</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -238,3 +250,5 @@ export default function NotesPage() {
         </SidebarProvider>
     );
 }
+
+    

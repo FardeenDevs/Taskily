@@ -32,6 +32,9 @@ export function useTasks() {
   const workspacesQuery = useMemo(() => 
     user ? query(collection(firestore, 'users', user.uid, 'workspaces')) : null
   , [firestore, user]);
+  
+  // Firestore data hooks
+  const { data: workspaces, loading: workspacesLoading } = useCollection<Workspace>(workspacesQuery);
 
   const activeWorkspaceRef = useMemo(() => 
     activeWorkspaceId && user ? doc(firestore, 'users', user.uid, 'workspaces', activeWorkspaceId) : null
@@ -41,8 +44,6 @@ export function useTasks() {
     activeWorkspaceId && user ? collection(firestore, 'users', user.uid, 'workspaces', activeWorkspaceId, 'tasks') : null
   , [activeWorkspaceId, user, firestore]);
   
-  // Firestore data hooks
-  const { data: workspaces, loading: workspacesLoading } = useCollection<Workspace>(workspacesQuery);
   const { data: activeWorkspace, loading: activeWorkspaceLoading } = useDoc<Workspace>(activeWorkspaceRef);
   const { data: tasks, loading: tasksLoading } = useCollection<Task>(tasksRef);
 
@@ -441,21 +442,33 @@ export function useTasks() {
 
   }, [firestore, user, workspaces, activeWorkspaceId, switchWorkspace, toast]);
 
-  const editWorkspace = useCallback((id: string, newName: string, newPassword?: string, newPasswordHint?: string) => {
-    if (newName.trim() === "" || !user) return;
+  const editWorkspace = useCallback((id: string, newName: string, currentPassword?: string, newPassword?: string, newPasswordHint?: string): boolean => {
+    if (newName.trim() === "" || !user || !workspaces) return false;
+
+    const workspace = workspaces.find(ws => ws.id === id);
+    if (!workspace) return false;
+
+    // If a current password is required and it doesn't match, fail.
+    // currentPassword being undefined is for the "forgot password" flow.
+    if (workspace.password && currentPassword !== undefined && workspace.password !== currentPassword) {
+      return false;
+    }
+    
     const workspaceDocRef = doc(firestore, 'users', user.uid, 'workspaces', id);
     const updatedData: Partial<Workspace> = { name: newName.trim() };
 
-    if (newPassword) {
-        updatedData.password = newPassword;
-    } else {
-        updatedData.password = ""; // Or use deleteField() for cleaner removal
-    }
-
-    if (newPasswordHint) {
-        updatedData.passwordHint = newPasswordHint;
-    } else {
-        updatedData.passwordHint = "";
+    // Only update password fields if we are intending to.
+    if (newPassword !== undefined) {
+      updatedData.password = newPassword;
+      updatedData.passwordHint = newPasswordHint || "";
+      // If we just removed a password, ensure it's unlocked in the current session
+      if (!newPassword) {
+        setUnlockedWorkspaces(prev => {
+          const newSet = new Set(prev);
+          newSet.add(id);
+          return newSet;
+        });
+      }
     }
 
     setDoc(workspaceDocRef, updatedData, { merge: true })
@@ -467,7 +480,10 @@ export function useTasks() {
         });
         errorEmitter.emit('permission-error', permissionError);
     });
-  }, [user, firestore]);
+
+    return true;
+
+  }, [user, firestore, workspaces]);
 
   const deleteAccount = useCallback(async () => {
     if (!user || !auth.currentUser || !firestore) {
@@ -566,3 +582,5 @@ export function useTasks() {
     lockWorkspace,
   };
 }
+
+    
