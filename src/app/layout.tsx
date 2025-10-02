@@ -3,6 +3,8 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 import { ThemeProvider } from '@/app/components/theme-provider';
 import { ClientProviders } from '@/app/components/client-providers';
+import { AuthGate } from './components/auth-gate';
+import { SidebarProvider } from '@/components/ui/sidebar';
 
 export const metadata: Metadata = {
   title: 'Listily',
@@ -24,7 +26,11 @@ export default function RootLayout({
       <body className="font-body antialiased bg-app-gradient">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <ClientProviders>
-            {children}
+            <SidebarProvider>
+              <AuthGate>
+                {children}
+              </AuthGate>
+            </SidebarProvider>
           </ClientProviders>
           <Toaster />
         </ThemeProvider>

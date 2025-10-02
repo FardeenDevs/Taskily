@@ -14,13 +14,12 @@ import { useState, memo } from "react";
 import { SettingsDialog } from "@/app/components/settings-dialog";
 import { Button } from "@/components/ui/button";
 import { FirestoreWorkspaceSidebar } from "@/app/components/firestore-workspace-sidebar";
-import { SidebarProvider, SidebarInset, useSidebar } from "@/components/ui/sidebar";
+import { SidebarInset, useSidebar } from "@/components/ui/sidebar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from "@/lib/utils";
-import { AuthGate } from "./components/auth-gate";
 import { UserNav } from "./components/user-nav";
 
 const AppContent = memo(function AppContentInternal() {
@@ -123,9 +122,9 @@ const AppContent = memo(function AppContentInternal() {
               <UserNav />
             </div>
           </header>
-
+          
           <main className="flex-1 overflow-y-auto">
-            <div className="p-4 sm:p-8 h-full">
+            <div className="mx-auto max-w-5xl w-full h-full p-4 sm:p-8">
               <AnimatePresence>
                 <motion.div layout transition={{ type: 'spring', stiffness: 300, damping: 30 }} className="h-full">
                   <Card className="border-2 border-border/50 shadow-2xl shadow-primary/5 overflow-hidden h-full flex flex-col">
@@ -191,11 +190,5 @@ const AppContent = memo(function AppContentInternal() {
 });
 
 export default function Home() {
-  return (
-    <SidebarProvider>
-        <AuthGate>
-            <AppContent />
-        </AuthGate>
-    </SidebarProvider>
-  );
+  return <AppContent />;
 }

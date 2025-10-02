@@ -10,7 +10,7 @@ import { useState, memo, useMemo } from "react";
 import { SettingsDialog } from "@/app/components/settings-dialog";
 import { Button } from "@/components/ui/button";
 import { FirestoreWorkspaceSidebar } from "@/app/components/firestore-workspace-sidebar";
-import { SidebarProvider, SidebarInset, useSidebar } from "@/components/ui/sidebar";
+import { SidebarInset, useSidebar } from "@/components/ui/sidebar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -18,7 +18,6 @@ import { cn } from "@/lib/utils";
 import { NotesSection } from "@/app/components/notes-section";
 import { Note } from "@/lib/types";
 import { NoteDialog } from "../components/note-dialog";
-import { AuthGate } from "../components/auth-gate";
 import { UserNav } from "../components/user-nav";
 
 const NotesPageContent = memo(function NotesPageContentInternal() {
@@ -137,7 +136,7 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
           </header>
 
           <main className="flex-1 overflow-y-auto">
-            <div className="p-4 sm:p-8 h-full">
+            <div className="h-full p-4 sm:p-8">
               <AnimatePresence>
                 <motion.div layout transition={{ type: 'spring', stiffness: 300, damping: 30 }} className="h-full">
                   <Card className="border-2 border-border/50 shadow-2xl shadow-primary/5 overflow-hidden h-full flex flex-col">
@@ -186,11 +185,5 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
 });
 
 export default function NotesPage() {
-  return (
-    <SidebarProvider>
-        <AuthGate>
-            <NotesPageContent />
-        </AuthGate>
-    </SidebarProvider>
-  );
+    return <NotesPageContent />;
 }
