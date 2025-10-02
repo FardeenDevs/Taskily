@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, MoreVertical, Pencil, Trash2, LayoutGrid, Archive, Lock, Unlock, ShieldQuestion } from "lucide-react";
+import { Plus, MoreVertical, Pencil, Trash2, LayoutGrid, Archive, Lock, Unlock } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -58,7 +58,6 @@ export function FirestoreWorkspaceSidebar({ tasksHook }: WorkspaceSidebarProps) 
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [clearDialogOpen, setClearDialogOpen] = useState(false);
-  const [forgotPasswordDialogOpen, setForgotPasswordDialogOpen] = useState(false);
 
   const [editName, setEditName] = useState("");
   const [currentPassword, setCurrentPassword] = useState("");
@@ -108,17 +107,6 @@ export function FirestoreWorkspaceSidebar({ tasksHook }: WorkspaceSidebarProps) 
     setNewPasswordHint(workspace.passwordHint || "");
     setEditDialogOpen(true);
   }
-  
-  const handleForgotPassword = () => {
-    if (selectedWorkspace) {
-      editWorkspace(selectedWorkspace.id, selectedWorkspace.name, undefined, "", "");
-      toast({ title: "Password Removed", description: "You can now access your notes."});
-    }
-    setForgotPasswordDialogOpen(false);
-    setEditDialogOpen(false);
-    setSelectedWorkspace(null);
-  }
-
 
   return (
     <Sidebar>
@@ -210,36 +198,12 @@ export function FirestoreWorkspaceSidebar({ tasksHook }: WorkspaceSidebarProps) 
                     <Input id="workspace-password-hint" value={newPasswordHint} onChange={(e) => setNewPasswordHint(e.target.value)} placeholder="e.g., My first pet's name" />
                 </div>
             </div>
-            <DialogFooter className="flex-row justify-between items-center">
-                 <Button type="button" variant="link" className="p-0 h-auto" onClick={() => setForgotPasswordDialogOpen(true)} disabled={!selectedWorkspace?.password}>
-                    <ShieldQuestion className="mr-2 h-4 w-4" />
-                    Forgot Password?
-                </Button>
-                <div>
-                    <Button type="button" variant="secondary" onClick={() => setEditDialogOpen(false)} className="mr-2">Cancel</Button>
-                    <Button onClick={handleEditWorkspace}>Save</Button>
-                </div>
+            <DialogFooter>
+                <Button type="button" variant="secondary" onClick={() => setEditDialogOpen(false)}>Cancel</Button>
+                <Button onClick={handleEditWorkspace}>Save</Button>
             </DialogFooter>
             </DialogContent>
         </Dialog>
-        
-        {/* Forgot Password Dialog */}
-        <AlertDialog open={forgotPasswordDialogOpen} onOpenChange={setForgotPasswordDialogOpen}>
-            <AlertDialogContent>
-                <AlertDialogHeader>
-                    <AlertDialogTitle>Remove Password?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                       This will permanently remove the password for this listspace. You will be able to access your notes immediately. Are you sure?
-                    </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleForgotPassword} variant="destructive">
-                        Yes, remove password
-                    </AlertDialogAction>
-                </AlertDialogFooter>
-            </AlertDialogContent>
-        </AlertDialog>
 
         {/* Delete Workspace Dialog */}
         <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
@@ -279,5 +243,3 @@ export function FirestoreWorkspaceSidebar({ tasksHook }: WorkspaceSidebarProps) 
     </Sidebar>
   );
 }
-
-    
