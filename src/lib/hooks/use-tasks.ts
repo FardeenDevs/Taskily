@@ -70,12 +70,6 @@ export function useTasks() {
     }
   }, [user]);
 
-  const isNotesLocked = useMemo(() => {
-    if (!activeWorkspaceId || !activeWorkspace) return true;
-    if (!activeWorkspace.notesPassword) return false;
-    return !unlockedWorkspaces.includes(activeWorkspaceId);
-  }, [activeWorkspace, activeWorkspaceId, unlockedWorkspaces]);
-
   // Firestore references
   const workspacesQuery = useMemo(() => 
     user ? query(collection(firestore, 'users', user.uid, 'workspaces')) : null
@@ -88,6 +82,12 @@ export function useTasks() {
   , [activeWorkspaceId, user, firestore]);
   
   const { data: activeWorkspace, loading: activeWorkspaceLoading } = useDoc<Workspace>(activeWorkspaceRef);
+
+  const isNotesLocked = useMemo(() => {
+    if (!activeWorkspaceId || !activeWorkspace) return true;
+    if (!activeWorkspace.notesPassword) return false;
+    return !unlockedWorkspaces.includes(activeWorkspaceId);
+  }, [activeWorkspace, activeWorkspaceId, unlockedWorkspaces]);
   
   const tasksRef = useMemo(() => 
     activeWorkspaceId && user ? collection(firestore, 'users', user.uid, 'workspaces', activeWorkspaceId, 'tasks') : null
@@ -730,7 +730,7 @@ export function useTasks() {
     setAppSettings,
     backupCodes,
     clearBackupCodes,
-    notesBackupCodes,
+notesBackupCodes,
     clearNotesBackupCodes,
     isNotesLocked,
     unlockNotes,
@@ -738,3 +738,4 @@ export function useTasks() {
     removeNotesPassword,
   };
 }
+
