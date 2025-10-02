@@ -7,9 +7,13 @@ import { useToast } from "@/hooks/use-toast";
 import { useUser, useAuth } from "@/firebase";
 import { useFirestore } from "@/firebase";
 import { collection, addDoc, doc, setDoc, deleteDoc, writeBatch, serverTimestamp, query, where, getDocs, onSnapshot, getDoc } from "firebase/firestore";
+import { updateProfile } from "firebase/auth";
 import { useCollection, useDoc } from "@/firebase";
 import { useSidebar } from "@/components/ui/sidebar";
-import { onAuthStateChanged, updateProfile } from "firebase/auth";
+import { onAuthStateChanged } from "firebase/auth";
+import { errorEmitter } from "@/firebase/error-emitter";
+import { FirestorePermissionError } from "@/firebase/errors";
+
 
 const ACTIVE_WORKSPACE_KEY = "listily-active-workspace";
 
@@ -41,15 +45,27 @@ export function useTasks() {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
-        const userDoc = await getDoc(doc(firestore, 'users', user.uid));
+        const userDocRef = doc(firestore, 'users', user.uid);
+        const userDoc = await getDoc(userDocRef);
         if (!userDoc.exists()) {
           // New user, create profile
           const displayName = user.displayName || 'New User';
-          await setDoc(doc(firestore, 'users', user.uid), {
+          const profileData = {
             displayName: displayName,
             email: user.email,
             photoURL: user.photoURL,
-          });
+          };
+          
+          setDoc(userDocRef, profileData)
+            .catch(async (serverError) => {
+                const permissionError = new FirestorePermissionError({
+                    path: userDocRef.path,
+                    operation: 'create',
+                    requestResourceData: profileData,
+                });
+                errorEmitter.emit('permission-error', permissionError);
+            });
+
           if (!user.displayName) {
              await updateProfile(user, { displayName: 'New User' });
           }
@@ -72,14 +88,25 @@ export function useTasks() {
         // No workspaces exist, create a default one
         setLoading(true);
         const defaultWorkspaceName = "My List";
-        addDoc(workspacesRef, {
+        const workspaceData = {
             name: defaultWorkspaceName,
             createdAt: serverTimestamp(),
             ownerId: user.uid
-        }).then(docRef => {
+        };
+        addDoc(workspacesRef, workspaceData)
+        .then(docRef => {
             setActiveWorkspaceId(docRef.id);
             setIsFirstTime(true);
-        }).finally(() => {
+        })
+        .catch(async (serverError) => {
+            const permissionError = new FirestorePermissionError({
+                path: workspacesRef.path,
+                operation: 'create',
+                requestResourceData: workspaceData,
+            });
+            errorEmitter.emit('permission-error', permissionError);
+        })
+        .finally(() => {
             setLoading(false);
         });
       }
@@ -103,12 +130,22 @@ export function useTasks() {
   const addTask = useCallback((text: string, priority: Priority | null, effort: Effort | null) => {
     if (text.trim() === "" || !tasksRef) return;
 
-    addDoc(tasksRef, {
+    const taskData = {
       text: text.trim(),
       completed: false,
       createdAt: serverTimestamp(),
       priority,
       effort,
+    };
+
+    addDoc(tasksRef, taskData)
+     .catch(async (serverError) => {
+        const permissionError = new FirestorePermissionError({
+            path: tasksRef.path,
+            operation: 'create',
+            requestResourceData: taskData,
+        });
+        errorEmitter.emit('permission-error', permissionError);
     });
   }, [tasksRef]);
 
@@ -117,99 +154,182 @@ export function useTasks() {
     const taskDocRef = doc(tasksRef, id);
     const task = tasks?.find(t => t.id === id);
     if (task) {
-        setDoc(taskDocRef, { completed: !task.completed }, { merge: true });
+        const updatedData = { completed: !task.completed };
+        setDoc(taskDocRef, updatedData, { merge: true })
+        .catch(async (serverError) => {
+            const permissionError = new FirestorePermissionError({
+                path: taskDocRef.path,
+                operation: 'update',
+                requestResourceData: updatedData,
+            });
+            errorEmitter.emit('permission-error', permissionError);
+        });
     }
   }, [tasks, tasksRef]);
 
   const deleteTask = useCallback((id: string) => {
     if (!tasksRef) return;
-    deleteDoc(doc(tasksRef, id));
+    const taskDocRef = doc(tasksRef, id);
+    deleteDoc(taskDocRef)
+    .catch(async (serverError) => {
+        const permissionError = new FirestorePermissionError({
+            path: taskDocRef.path,
+            operation: 'delete',
+        });
+        errorEmitter.emit('permission-error', permissionError);
+    });
   }, [tasksRef]);
 
   const editTask = useCallback((id: string, newText: string, newPriority: Priority | null, newEffort: Effort | null) => {
     if (newText.trim() === "" || !tasksRef) return;
-    setDoc(doc(tasksRef, id), { text: newText.trim(), priority: newPriority, effort: newEffort }, { merge: true });
+    const taskDocRef = doc(tasksRef, id);
+    const updatedData = { text: newText.trim(), priority: newPriority, effort: newEffort };
+    setDoc(taskDocRef, updatedData, { merge: true })
+    .catch(async (serverError) => {
+        const permissionError = new FirestorePermissionError({
+            path: taskDocRef.path,
+            operation: 'update',
+            requestResourceData: updatedData,
+        });
+        errorEmitter.emit('permission-error', permissionError);
+    });
   }, [tasksRef]);
 
   const clearTasks = useCallback(async (workspaceId: string) => {
     if (!workspacesRef) return;
     const batch = writeBatch(firestore);
     const tasksCollectionRef = collection(workspacesRef, workspaceId, 'tasks');
-    const querySnapshot = await getDocs(tasksCollectionRef);
-    querySnapshot.forEach((doc) => {
-        batch.delete(doc.ref);
-    });
-    await batch.commit();
-    toast({
-      title: "Tasks Cleared",
-      description: `All tasks in this listspace have been deleted.`,
-    });
+    try {
+        const querySnapshot = await getDocs(tasksCollectionRef);
+        querySnapshot.forEach((doc) => {
+            batch.delete(doc.ref);
+        });
+        await batch.commit();
+        toast({
+          title: "Tasks Cleared",
+          description: `All tasks in this listspace have been deleted.`,
+        });
+    } catch(e) {
+        const permissionError = new FirestorePermissionError({
+            path: tasksCollectionRef.path,
+            operation: 'list',
+        });
+        errorEmitter.emit('permission-error', permissionError);
+    }
   }, [firestore, workspacesRef, toast]);
 
   const addNote = useCallback((title: string, content: string) : string | undefined => {
     if (!notesRef) return;
     const newNoteRef = doc(collection(firestore, 'dummy')); // create a dummy ref to get an ID
-    setDoc(doc(notesRef, newNoteRef.id), {
+    const noteData = {
         title: title || "New Note",
         content: content,
         createdAt: serverTimestamp(),
+    };
+    setDoc(doc(notesRef, newNoteRef.id), noteData)
+    .catch(async (serverError) => {
+        const permissionError = new FirestorePermissionError({
+            path: notesRef.path,
+            operation: 'create',
+            requestResourceData: noteData,
+        });
+        errorEmitter.emit('permission-error', permissionError);
     });
     return newNoteRef.id;
   }, [notesRef, firestore]);
 
   const editNote = useCallback((id: string, newTitle: string, newContent: string) => {
     if (!notesRef) return;
-    setDoc(doc(notesRef, id), { title: newTitle.trim(), content: newContent }, { merge: true });
+    const noteDocRef = doc(notesRef, id);
+    const updatedData = { title: newTitle.trim(), content: newContent };
+    setDoc(noteDocRef, updatedData, { merge: true })
+    .catch(async (serverError) => {
+        const permissionError = new FirestorePermissionError({
+            path: noteDocRef.path,
+            operation: 'update',
+            requestResourceData: updatedData,
+        });
+        errorEmitter.emit('permission-error', permissionError);
+    });
   }, [notesRef]);
 
   const deleteNote = useCallback((id: string) => {
     if (!notesRef) return;
-    deleteDoc(doc(notesRef, id));
+    const noteDocRef = doc(notesRef, id);
+    deleteDoc(noteDocRef)
+    .catch(async (serverError) => {
+        const permissionError = new FirestorePermissionError({
+            path: noteDocRef.path,
+            operation: 'delete',
+        });
+        errorEmitter.emit('permission-error', permissionError);
+    });
   }, [notesRef]);
 
   const resetApp = useCallback(async () => {
     if (!workspacesRef || !user) return;
-    const batch = writeBatch(firestore);
-    const querySnapshot = await getDocs(workspacesRef);
     
-    for (const workspaceDoc of querySnapshot.docs) {
-        const tasksCollectionRef = collection(workspaceDoc.ref, 'tasks');
-        const tasksSnapshot = await getDocs(tasksCollectionRef);
-        tasksSnapshot.forEach(taskDoc => batch.delete(taskDoc.ref));
+    try {
+        const batch = writeBatch(firestore);
+        const querySnapshot = await getDocs(workspacesRef);
         
-        const notesCollectionRef = collection(workspaceDoc.ref, 'notes');
-        const notesSnapshot = await getDocs(notesCollectionRef);
-        notesSnapshot.forEach(noteDoc => batch.delete(noteDoc.ref));
+        for (const workspaceDoc of querySnapshot.docs) {
+            const tasksCollectionRef = collection(workspaceDoc.ref, 'tasks');
+            const tasksSnapshot = await getDocs(tasksCollectionRef);
+            tasksSnapshot.forEach(taskDoc => batch.delete(taskDoc.ref));
+            
+            const notesCollectionRef = collection(workspaceDoc.ref, 'notes');
+            const notesSnapshot = await getDocs(notesCollectionRef);
+            notesSnapshot.forEach(noteDoc => batch.delete(noteDoc.ref));
+            
+            batch.delete(workspaceDoc.ref);
+        }
         
-        batch.delete(workspaceDoc.ref);
-    }
-    
-    await batch.commit();
-    
-    // Create a new default workspace after clearing everything
-     const defaultWorkspaceName = "My List";
-     const newWorkspaceRef = await addDoc(workspacesRef, {
-         name: defaultWorkspaceName,
-         createdAt: serverTimestamp(),
-         ownerId: user.uid
-     });
+        await batch.commit();
+        
+        // Create a new default workspace after clearing everything
+         const defaultWorkspaceName = "My List";
+         const workspaceData = {
+             name: defaultWorkspaceName,
+             createdAt: serverTimestamp(),
+             ownerId: user.uid
+         };
+         const newWorkspaceRef = await addDoc(workspacesRef, workspaceData);
 
-    setActiveWorkspaceId(newWorkspaceRef.id);
-    toast({
-      title: "App Reset",
-      description: "Everything has been reset to default.",
-    });
-  }, [workspacesRef, user, toast]);
+        setActiveWorkspaceId(newWorkspaceRef.id);
+        toast({
+          title: "App Reset",
+          description: "Everything has been reset to default.",
+        });
+    } catch (e) {
+         const permissionError = new FirestorePermissionError({
+            path: workspacesRef.path,
+            operation: 'list',
+        });
+        errorEmitter.emit('permission-error', permissionError);
+    }
+  }, [workspacesRef, user, toast, firestore]);
 
   const addWorkspace = useCallback((name: string) => {
-    if (name.trim() === "" || !workspacesRef) return;
+    if (name.trim() === "" || !workspacesRef || !user) return;
     
-    addDoc(workspacesRef, {
+    const workspaceData = {
         name: name.trim(),
         createdAt: serverTimestamp(),
-        ownerId: user?.uid
-    }).then(docRef => {
+        ownerId: user.uid
+    };
+
+    addDoc(workspacesRef, workspaceData)
+    .then(docRef => {
         switchWorkspace(docRef.id);
+    })
+    .catch(async (serverError) => {
+        const permissionError = new FirestorePermissionError({
+            path: workspacesRef.path,
+            operation: 'create',
+            requestResourceData: workspaceData,
+        });
+        errorEmitter.emit('permission-error', permissionError);
     });
   }, [workspacesRef, user, switchWorkspace]);
 
@@ -225,37 +345,54 @@ export function useTasks() {
     }
 
     const workspaceDocRef = doc(workspacesRef, id);
-    const tasksCollectionRef = collection(workspaceDocRef, 'tasks');
-    const tasksSnapshot = await getDocs(tasksCollectionRef);
-    const notesCollectionRef = collection(workspaceDocRef, 'notes');
-    const notesSnapshot = await getDocs(notesCollectionRef);
+    try {
+        const tasksCollectionRef = collection(workspaceDocRef, 'tasks');
+        const tasksSnapshot = await getDocs(tasksCollectionRef);
+        const notesCollectionRef = collection(workspaceDocRef, 'notes');
+        const notesSnapshot = await getDocs(notesCollectionRef);
 
-    const batch = writeBatch(firestore);
-    tasksSnapshot.forEach(doc => batch.delete(doc.ref));
-    notesSnapshot.forEach(doc => batch.delete(doc.ref));
-    batch.delete(workspaceDocRef);
+        const batch = writeBatch(firestore);
+        tasksSnapshot.forEach(doc => batch.delete(doc.ref));
+        notesSnapshot.forEach(doc => batch.delete(doc.ref));
+        batch.delete(workspaceDocRef);
 
-    await batch.commit();
-    
-    if (id === activeWorkspaceId) {
-       const remainingWorkspaces = workspaces?.filter(ws => ws.id !== id) || [];
-       if (remainingWorkspaces.length > 0) {
-            switchWorkspace(remainingWorkspaces[0].id);
-       } else {
-            setActiveWorkspaceId(null);
-       }
+        await batch.commit();
+        
+        if (id === activeWorkspaceId) {
+           const remainingWorkspaces = workspaces?.filter(ws => ws.id !== id) || [];
+           if (remainingWorkspaces.length > 0) {
+                switchWorkspace(remainingWorkspaces[0].id);
+           } else {
+                setActiveWorkspaceId(null);
+           }
+        }
+        
+        toast({
+          title: "Listspace Deleted",
+          description: "The Listspace and all its items have been removed.",
+        });
+    } catch(e) {
+        const permissionError = new FirestorePermissionError({
+            path: workspaceDocRef.path,
+            operation: 'delete',
+        });
+        errorEmitter.emit('permission-error', permissionError);
     }
-    
-    toast({
-      title: "Listspace Deleted",
-      description: "The Listspace and all its items have been removed.",
-    });
   }, [firestore, workspaces, activeWorkspaceId, switchWorkspace, toast, workspacesRef]);
 
   const editWorkspace = useCallback((id: string, newName: string) => {
     if (newName.trim() === "" || !workspacesRef) return;
     const workspaceDocRef = doc(workspacesRef, id);
-    setDoc(workspaceDocRef, { name: newName.trim() }, { merge: true });
+    const updatedData = { name: newName.trim() };
+    setDoc(workspaceDocRef, updatedData, { merge: true })
+    .catch(async (serverError) => {
+        const permissionError = new FirestorePermissionError({
+            path: workspaceDocRef.path,
+            operation: 'update',
+            requestResourceData: updatedData,
+        });
+        errorEmitter.emit('permission-error', permissionError);
+    });
   }, [workspacesRef]);
 
   const completedTasks = useMemo(() => {
@@ -288,3 +425,5 @@ export function useTasks() {
     switchWorkspace,
   };
 }
+
+    
