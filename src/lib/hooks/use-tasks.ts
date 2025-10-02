@@ -7,10 +7,9 @@ import { useToast } from "@/hooks/use-toast";
 import { useUser, useAuth } from "@/firebase";
 import { useFirestore } from "@/firebase";
 import { collection, addDoc, doc, setDoc, deleteDoc, writeBatch, serverTimestamp, query, where, getDocs, onSnapshot, getDoc } from "firebase/firestore";
-import { updateProfile } from "firebase/auth";
+import { updateProfile, onAuthStateChanged } from "firebase/auth";
 import { useCollection, useDoc } from "@/firebase";
 import { useSidebar } from "@/components/ui/sidebar";
-import { onAuthStateChanged } from "firebase/auth";
 import { errorEmitter } from "@/firebase/error-emitter";
 import { FirestorePermissionError } from "@/firebase/errors";
 
@@ -26,13 +25,26 @@ export function useTasks() {
   const [activeWorkspaceId, setActiveWorkspaceId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [isFirstTime, setIsFirstTime] = useState(false);
-  const { setOpen: setSidebarOpen } = useSidebar();
+  
+  const sidebarContext = useSidebar();
+  const setSidebarOpen = sidebarContext ? sidebarContext.setOpen : () => {};
   
   // Firestore references
-  const workspacesRef = user ? collection(firestore, 'users', user.uid, 'workspaces') : null;
-  const activeWorkspaceRef = activeWorkspaceId && workspacesRef ? doc(workspacesRef, activeWorkspaceId) : null;
-  const tasksRef = activeWorkspaceRef ? collection(activeWorkspaceRef, 'tasks') : null;
-  const notesRef = activeWorkspaceRef ? collection(activeWorkspaceRef, 'notes') : null;
+  const workspacesRef = useMemo(() => 
+    user ? collection(firestore, 'users', user.uid, 'workspaces') : null
+  , [firestore, user]);
+
+  const activeWorkspaceRef = useMemo(() => 
+    activeWorkspaceId && workspacesRef ? doc(workspacesRef, activeWorkspaceId) : null
+  , [activeWorkspaceId, workspacesRef]);
+  
+  const tasksRef = useMemo(() => 
+    activeWorkspaceRef ? collection(activeWorkspaceRef, 'tasks') : null
+  , [activeWorkspaceRef]);
+
+  const notesRef = useMemo(() => 
+    activeWorkspaceRef ? collection(activeWorkspaceRef, 'notes') : null
+  , [activeWorkspaceRef]);
   
   // Firestore data hooks
   const { data: workspaces, loading: workspacesLoading } = useCollection<Workspace>(workspacesRef);
@@ -42,6 +54,7 @@ export function useTasks() {
 
   // Handle user profile creation for new sign-ups
   useEffect(() => {
+    if (!auth || !firestore) return;
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         const userDocRef = doc(firestore, 'users', user.uid);
@@ -55,8 +68,7 @@ export function useTasks() {
             photoURL: user.photoURL,
           };
           
-          await setDoc(userDocRef, profileData)
-            .catch(async (serverError) => {
+          setDoc(userDocRef, profileData).catch(async (serverError) => {
                 const permissionError = new FirestorePermissionError({
                     path: userDocRef.path,
                     operation: 'create',
@@ -122,7 +134,9 @@ export function useTasks() {
     if (user) {
         setActiveWorkspaceId(id);
         localStorage.setItem(`${ACTIVE_WORKSPACE_KEY}-${user.uid}`, id);
-        setSidebarOpen(false);
+        if (setSidebarOpen) {
+          setSidebarOpen(false);
+        }
     }
   }, [user, setSidebarOpen]);
 
@@ -149,9 +163,9 @@ export function useTasks() {
   }, [tasksRef]);
 
   const toggleTask = useCallback((id: string) => {
-    if (!tasksRef) return;
+    if (!tasksRef || !tasks) return;
     const taskDocRef = doc(tasksRef, id);
-    const task = tasks?.find(t => t.id === id);
+    const task = tasks.find(t => t.id === id);
     if (task) {
         const updatedData = { completed: !task.completed };
         setDoc(taskDocRef, updatedData, { merge: true })
@@ -333,8 +347,8 @@ export function useTasks() {
   }, [workspacesRef, user, switchWorkspace]);
 
   const deleteWorkspace = useCallback(async (id: string) => {
-     if (!workspacesRef) return;
-     if (workspaces && workspaces.length <= 1) {
+     if (!workspacesRef || !workspaces) return;
+     if (workspaces.length <= 1) {
       toast({
         variant: "destructive",
         title: "Cannot Delete",
@@ -352,13 +366,13 @@ export function useTasks() {
 
         const batch = writeBatch(firestore);
         tasksSnapshot.forEach(doc => batch.delete(doc.ref));
-        notesSnapshot.forEach(doc => batch.delete(doc.ref));
+        notesSnapshot.forEach(doc => batch.delete(noteDoc.ref));
         batch.delete(workspaceDocRef);
 
         await batch.commit();
         
         if (id === activeWorkspaceId) {
-           const remainingWorkspaces = workspaces?.filter(ws => ws.id !== id) || [];
+           const remainingWorkspaces = workspaces.filter(ws => ws.id !== id) || [];
            if (remainingWorkspaces.length > 0) {
                 switchWorkspace(remainingWorkspaces[0].id);
            } else {
@@ -424,7 +438,5 @@ export function useTasks() {
     switchWorkspace,
   };
 }
-
-    
 
     
