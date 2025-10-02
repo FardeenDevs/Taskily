@@ -450,13 +450,15 @@ export function useTasks() {
   }, [user, firestore]);
 
   const deleteAccount = useCallback(async () => {
-    if (!user || !firestore) {
+    if (!user || !auth || !auth.currentUser) {
         toast({ variant: "destructive", title: "Not signed in", description: "You must be signed in to delete an account." });
         return;
     }
+    
+    const currentUser = auth.currentUser;
 
     // 1. Delete all user's sub-collection data
-    const userWorkspacesQuery = query(collection(firestore, 'users', user.uid, 'workspaces'), where('ownerId', '==', user.uid));
+    const userWorkspacesQuery = query(collection(firestore, 'users', currentUser.uid, 'workspaces'), where('ownerId', '==', currentUser.uid));
     
     getDocs(userWorkspacesQuery)
     .then(async (querySnapshot) => {
@@ -482,12 +484,12 @@ export function useTasks() {
         
         await batch.commit().catch(e => {
             // This is a generic path, but it's the best we can do for a batch write error
-            errorEmitter.emit('permission-error', new FirestorePermissionError({ path: `/users/${user.uid}/workspaces`, operation: 'write' }));
+            errorEmitter.emit('permission-error', new FirestorePermissionError({ path: `/users/${currentUser.uid}/workspaces`, operation: 'write' }));
             throw e; // re-throw to stop execution
         });
 
         // 2. Delete the user from Authentication - this only runs if the batch commit succeeds
-        await deleteUser(user).catch(error => {
+        await deleteUser(currentUser).catch(error => {
              console.error("Error deleting account: ", error);
             if (error.code === 'auth/requires-recent-login') {
                 toast({
@@ -516,7 +518,7 @@ export function useTasks() {
         }
         console.error("Failed to delete user data:", error)
     });
-  }, [user, firestore, toast]);
+  }, [user, firestore, auth, toast]);
 
   const completedTasks = useMemo(() => {
     return (tasks || []).filter(task => task.completed).length;
