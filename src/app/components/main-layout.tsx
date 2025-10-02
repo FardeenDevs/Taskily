@@ -6,19 +6,21 @@ import { FirestoreWorkspaceSidebar } from "./firestore-workspace-sidebar";
 import { Button } from "@/components/ui/button";
 import { LayoutGrid } from "lucide-react";
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { cn } from "@/lib/utils";
 import { UserNav } from "./user-nav";
 import { type useTasks } from "@/lib/hooks/use-tasks";
+import { MouseEvent } from "react";
 
 type MainLayoutProps = {
     children: React.ReactNode;
     tasksHook: ReturnType<typeof useTasks>;
     setIsSettingsOpen: (isOpen: boolean) => void;
     setIsNavigating: (isNavigating: boolean) => void;
+    handleNotesNavigation: (e: MouseEvent<HTMLAnchorElement>) => void;
 }
 
-function Layout({ children, tasksHook, setIsSettingsOpen, setIsNavigating }: MainLayoutProps) {
+function Layout({ children, tasksHook, setIsSettingsOpen, setIsNavigating, handleNotesNavigation }: MainLayoutProps) {
     const { toggleSidebar } = useSidebar();
     const pathname = usePathname();
 
@@ -45,14 +47,16 @@ function Layout({ children, tasksHook, setIsSettingsOpen, setIsNavigating }: Mai
                                         Progress
                                     </span>
                                 </Link>
-                                <Link href="/notes" passHref onClick={() => setIsNavigating(true)}>
-                                    <span className={cn(
+                                <a
+                                    href="/notes"
+                                    onClick={handleNotesNavigation}
+                                    className={cn(
                                         "cursor-pointer rounded-full px-4 py-1 text-sm font-medium transition-colors",
                                         pathname === '/notes' ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:bg-background/50"
-                                    )}>
-                                        Notes
-                                    </span>
-                                </Link>
+                                    )}
+                                >
+                                    Notes
+                                </a>
                             </nav>
                         </div>
 
@@ -70,10 +74,11 @@ function Layout({ children, tasksHook, setIsSettingsOpen, setIsNavigating }: Mai
 }
 
 
-export function MainLayout({ children, tasksHook, setIsSettingsOpen, setIsNavigating }: MainLayoutProps) {
+export function MainLayout({ children, tasksHook, setIsSettingsOpen, setIsNavigating, handleNotesNavigation }: MainLayoutProps) {
     return (
-        <Layout tasksHook={tasksHook} setIsSettingsOpen={setIsSettingsOpen} setIsNavigating={setIsNavigating}>
+        <Layout tasksHook={tasksHook} setIsSettingsOpen={setIsSettingsOpen} setIsNavigating={setIsNavigating} handleNotesNavigation={handleNotesNavigation}>
             {children}
         </Layout>
     )
 }
+

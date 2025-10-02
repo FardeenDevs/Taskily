@@ -3,7 +3,7 @@
 
 import { useTasks } from "@/lib/hooks/use-tasks";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Lock, Unlock, Eye, EyeOff } from "lucide-react";
+import { Plus, Lock, Unlock, ShieldAlert } from "lucide-react";
 import { useState, memo, useMemo, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { NotesSection } from "@/app/components/notes-section";
@@ -11,13 +11,11 @@ import { Note } from "@/lib/types";
 import { PageTransition } from '../components/page-transition';
 import { MainLayout } from "../components/main-layout";
 import { useUser } from "@/firebase";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import dynamic from "next/dynamic";
+import { MouseEvent } from "react";
 
 const WelcomeDialog = dynamic(() => import('@/app/components/welcome-dialog').then(mod => mod.WelcomeDialog));
 const SettingsDialog = dynamic(() => import('@/app/components/settings-dialog').then(mod => mod.SettingsDialog));
@@ -29,18 +27,11 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
   const tasksHook = useTasks();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
-  const { toast } = useToast();
   const router = useRouter();
 
   const [isNoteDialogOpen, setIsNoteDialogOpen] = useState(false);
   const [editingNote, setEditingNote] = useState<Note | null>(null);
   
-  const [isUnlockDialogOpen, setIsUnlockDialogOpen] = useState(false);
-  const [isBackupCodeDialogOpen, setIsBackupCodeDialogOpen] = useState(false);
-  const [passwordInput, setPasswordInput] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [failedPasswordAttempts, setFailedPasswordAttempts] = useState(0);
-
   const {
     notes,
     loading,
@@ -53,8 +44,6 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
     resetApp,
     deleteAccount,
     unlockedWorkspaces,
-    unlockWithPassword,
-    unlockWithBackupCode,
     lockWorkspace,
     workspaces,
     appSettings, 
@@ -68,15 +57,14 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
     return !!activeWorkspace.password && !unlockedWorkspaces.has(activeWorkspace.id);
   }, [activeWorkspace, unlockedWorkspaces]);
 
-  useEffect(() => {
-    if (loading) return; // Wait until loading is finished
 
-    if (activeWorkspace?.password && !unlockedWorkspaces.has(activeWorkspace.id)) {
-      setIsUnlockDialogOpen(true);
-    } else {
-      setIsUnlockDialogOpen(false);
+  useEffect(() => {
+    // If the user lands here and the workspace is locked, redirect them to the home page
+    // where the unlock flow is now handled.
+    if (!loading && activeWorkspaceId && isLocked) {
+      router.push('/');
     }
-  }, [activeWorkspace, unlockedWorkspaces, loading]);
+  }, [loading, activeWorkspaceId, isLocked, router]);
 
   const handleOpenEditDialog = useCallback((note: Note) => {
     setEditingNote(note);
@@ -93,9 +81,8 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
   }, [activeWorkspace, isLocked, addNote]);
   
  const handleSaveNote = useCallback((id: string, newTitle: string, newContent: string, isNew?: boolean) => {
-    // If the note is new and has no title/content, delete it locally.
     if (isNew && !newTitle.trim() && (!newContent.trim() || newContent === '<p></p>')) {
-        deleteNote(id, true); // true for local-only deletion
+        deleteNote(id, true);
         return;
     }
     editNote(id, newTitle, newContent, isNew);
@@ -108,8 +95,6 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
 
  const handleCloseNoteDialog = useCallback((open: boolean) => {
     if (!open && editingNote) {
-      // The `handleSaveNote` is now also called from inside the dialog on close
-      // To ensure we capture the latest editor state.
     }
     setIsNoteDialogOpen(open);
     if (!open) {
@@ -127,80 +112,17 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
     });
   }, [notes]);
   
-  const handlePasswordUnlock = async () => {
-    if (!activeWorkspace) return;
-    const success = await unlockWithPassword(activeWorkspace.id, passwordInput);
-    if (success) {
-        setIsUnlockDialogOpen(false);
-        setPasswordInput("");
-        setShowPassword(false);
-        setFailedPasswordAttempts(0);
-        toast({ 
-            title: "Listspace Unlocked",
-            description: "If you have been redirected to Listily Progress or opening a note has locked you out, please try entering the password again."
-        });
-    } else {
-        toast({ variant: "destructive", title: "Incorrect Password" });
-        setPasswordInput("");
-        setFailedPasswordAttempts(prev => prev + 1);
-    }
-  };
-
-  const handleBackupCodeUnlock = async () => {
-    if (!activeWorkspace) return;
-     if (await unlockWithBackupCode(activeWorkspace.id, passwordInput)) {
-        setIsBackupCodeDialogOpen(false);
-        setPasswordInput("");
-        toast({ title: "Listspace Unlocked" });
-    } else {
-        toast({ variant: "destructive", title: "Incorrect or Used Backup Code" });
-        setPasswordInput("");
-    }
-  }
-
   const handleLock = () => {
     if (!activeWorkspace) return;
     lockWorkspace(activeWorkspace.id);
-    toast({ title: "Listspace Locked" });
   }
 
-  const handleBackFromLocked = () => {
-    router.push('/');
-    setIsUnlockDialogOpen(false);
-    setIsBackupCodeDialogOpen(false);
-  }
+  const handleNotesNavigation = (e: MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+    // Already on the notes page, do nothing.
+  };
 
-  const onUnlockDialogClose = (open: boolean) => {
-    if (!open) {
-      // Check if it's *still* locked after the user interaction has had a chance to process
-      setTimeout(() => {
-        const isStillLocked = activeWorkspace?.password && !unlockedWorkspaces.has(activeWorkspace.id);
-        if (isStillLocked) {
-           handleBackFromLocked();
-        } else {
-           setIsUnlockDialogOpen(false);
-        }
-      }, 50); // A small delay to allow state to propagate
-    } else {
-      setIsUnlockDialogOpen(true);
-    }
-  }
-
-  const openBackupDialog = () => {
-    setIsUnlockDialogOpen(false);
-    setPasswordInput("");
-    setShowPassword(false);
-    setFailedPasswordAttempts(0);
-    setIsBackupCodeDialogOpen(true);
-  }
-
-  const backToPasswordDialog = () => {
-    setIsBackupCodeDialogOpen(false);
-    setPasswordInput("");
-    setIsUnlockDialogOpen(true);
-  }
-
-  if (loading || isNavigating) {
+  if (loading || isNavigating || (!loading && isLocked)) {
     return (
       <AnimatePresence>
           <motion.div
@@ -219,7 +141,7 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
 
   return (
     <>
-      <MainLayout tasksHook={tasksHook} setIsSettingsOpen={setIsSettingsOpen} setIsNavigating={setIsNavigating}>
+      <MainLayout tasksHook={tasksHook} setIsSettingsOpen={setIsSettingsOpen} setIsNavigating={setIsNavigating} handleNotesNavigation={handleNotesNavigation}>
         <div className="p-4 sm:p-6 md:p-8 h-full">
             <PageTransition>
                 <Card className="border-2 border-border/50 shadow-2xl shadow-primary/5 overflow-hidden h-full flex flex-col">
@@ -230,7 +152,7 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
                         </CardTitle>
                         {activeWorkspace?.password && (
                             isLocked 
-                                ? <Button variant="ghost" size="icon" onClick={() => setIsUnlockDialogOpen(true)}><Lock className="h-5 w-5"/></Button>
+                                ? <Lock className="h-5 w-5"/>
                                 : <Button variant="ghost" size="icon" onClick={handleLock}><Unlock className="h-5 w-5"/></Button>
                         )}
                     </div>
@@ -240,12 +162,20 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
                     </Button>
                     </CardHeader>
                     <CardContent className="flex-grow overflow-y-auto p-6 pt-0">
-                    <NotesSection
-                        notes={sortedNotes}
-                        onDeleteNote={handleDeleteNote}
-                        onEditNote={handleOpenEditDialog}
-                        isLocked={isLocked}
-                    />
+                      {isLocked ? (
+                          <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/30 bg-muted/50 p-12 text-center h-64">
+                              <ShieldAlert className="h-12 w-12 text-muted-foreground/50 mb-4" />
+                              <h3 className="text-lg font-semibold text-muted-foreground">Listspace Locked</h3>
+                              <p className="text-sm text-muted-foreground">Go to the Progress page to unlock.</p>
+                          </div>
+                      ) : (
+                          <NotesSection
+                              notes={sortedNotes}
+                              onDeleteNote={handleDeleteNote}
+                              onEditNote={handleOpenEditDialog}
+                              isLocked={isLocked}
+                          />
+                      )}
                     </CardContent>
                 </Card>
             </PageTransition>
@@ -268,68 +198,6 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
         note={editingNote}
         onSave={handleSaveNote}
       />}
-       <AlertDialog open={isUnlockDialogOpen} onOpenChange={onUnlockDialogClose}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>This Listspace is Locked</AlertDialogTitle>
-            <AlertDialogDescription>
-              Please enter the password to view your notes.
-              {activeWorkspace?.passwordHint && failedPasswordAttempts >= 3 && (
-                <div className="text-xs text-muted-foreground mt-2">Hint: {activeWorkspace.passwordHint}</div>
-              )}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <div className="py-2 space-y-3">
-            <Label htmlFor="password-unlock" className="sr-only">Password</Label>
-            <div className="relative">
-                <Input 
-                    id="password-unlock" 
-                    type={showPassword ? "text" : "password"}
-                    value={passwordInput} 
-                    onChange={(e) => setPasswordInput(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handlePasswordUnlock()}
-                    placeholder="Enter password..." 
-                />
-                 <Button variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 text-muted-foreground" onClick={() => setShowPassword(prev => !prev)}>
-                    {showPassword ? <EyeOff /> : <Eye />}
-                </Button>
-            </div>
-            <Button variant="link" size="sm" className="p-0 h-auto text-xs" onClick={openBackupDialog}>
-                Forgot Password?
-            </Button>
-          </div>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Back</AlertDialogCancel>
-            <AlertDialogAction onClick={handlePasswordUnlock}>Unlock</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      <AlertDialog open={isBackupCodeDialogOpen} onOpenChange={setIsBackupCodeDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Enter Backup Code</AlertDialogTitle>
-            <AlertDialogDescription>
-              Enter one of your 6-character backup codes to regain access.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <div className="py-2">
-            <Label htmlFor="backup-code-unlock" className="sr-only">Backup Code</Label>
-            <Input 
-                id="backup-code-unlock" 
-                type="text" 
-                value={passwordInput} 
-                onChange={(e) => setPasswordInput(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleBackupCodeUnlock()}
-                placeholder="Enter backup code..." 
-            />
-          </div>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={backToPasswordDialog}>Back to Password</AlertDialogCancel>
-            <AlertDialogAction onClick={handleBackupCodeUnlock}>Unlock</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </>
   );
 });
