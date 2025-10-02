@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster"
 import { ThemeProvider } from '@/app/components/theme-provider';
 import { ClientProviders } from '@/app/components/client-providers';
 import { SidebarProvider } from '@/components/ui/sidebar';
+import { AppLayout } from './main-layout';
 
 export const metadata: Metadata = {
   title: 'Listily',
@@ -28,7 +29,9 @@ export default function RootLayout({
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <SidebarProvider>
             <ClientProviders>
-              {children}
+              <AppLayout>
+                {children}
+              </AppLayout>
             </ClientProviders>
           </SidebarProvider>
           <Toaster />
@@ -37,3 +40,4 @@ export default function RootLayout({
     </html>
   );
 }
+

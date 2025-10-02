@@ -5,22 +5,21 @@ import { SidebarInset, useSidebar } from "@/components/ui/sidebar";
 import { FirestoreWorkspaceSidebar } from "./firestore-workspace-sidebar";
 import { Button } from "@/components/ui/button";
 import { LayoutGrid } from "lucide-react";
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 import { cn } from "@/lib/utils";
 import { UserNav } from "./user-nav";
 import { type useTasks } from "@/lib/hooks/use-tasks";
-import { MouseEvent } from "react";
+
+type View = 'progress' | 'notes';
 
 type MainLayoutProps = {
     children: React.ReactNode;
     tasksHook: ReturnType<typeof useTasks>;
     setIsSettingsOpen: (isOpen: boolean) => void;
-    setIsNavigating: (isNavigating: boolean) => void;
-    handleNotesNavigation: (e: MouseEvent<HTMLAnchorElement>) => void;
+    currentView: View;
+    setCurrentView: (view: View) => void;
 }
 
-function Layout({ children, tasksHook, setIsSettingsOpen, setIsNavigating, handleNotesNavigation }: MainLayoutProps) {
+function Layout({ children, tasksHook, setIsSettingsOpen, currentView, setCurrentView }: MainLayoutProps) {
     const { toggleSidebar } = useSidebar();
     const pathname = usePathname();
 
@@ -38,25 +37,26 @@ function Layout({ children, tasksHook, setIsSettingsOpen, setIsNavigating, handl
 
                         <div className="flex items-center gap-4">
                             <h1 className="text-2xl font-bold text-center text-foreground hidden sm:block">Listily</h1>
-                            <nav className="flex items-center gap-2 rounded-full bg-secondary p-1">
-                                <Link href="/" passHref onClick={() => setIsNavigating(true)}>
-                                    <span className={cn(
-                                        "cursor-pointer rounded-full px-4 py-1 text-sm font-medium transition-colors",
-                                        pathname === '/' ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:bg-background/50"
-                                    )}>
-                                        Progress
-                                    </span>
-                                </Link>
-                                <a
-                                    href="/notes"
-                                    onClick={handleNotesNavigation}
+                            <nav className={cn(
+                                "flex items-center gap-2 rounded-full bg-secondary p-1",
+                                pathname === '/profile' && 'invisible' // Hide on profile page
+                            )}>
+                                <span 
+                                    onClick={() => setCurrentView('progress')}
                                     className={cn(
                                         "cursor-pointer rounded-full px-4 py-1 text-sm font-medium transition-colors",
-                                        pathname === '/notes' ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:bg-background/50"
-                                    )}
-                                >
+                                        currentView === 'progress' ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:bg-background/50"
+                                    )}>
+                                    Progress
+                                </span>
+                                <span 
+                                    onClick={() => setCurrentView('notes')}
+                                    className={cn(
+                                        "cursor-pointer rounded-full px-4 py-1 text-sm font-medium transition-colors",
+                                        currentView === 'notes' ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:bg-background/50"
+                                    )}>
                                     Notes
-                                </a>
+                                </span>
                             </nav>
                         </div>
 
@@ -74,10 +74,11 @@ function Layout({ children, tasksHook, setIsSettingsOpen, setIsNavigating, handl
 }
 
 
-export function MainLayout({ children, tasksHook, setIsSettingsOpen, setIsNavigating, handleNotesNavigation }: MainLayoutProps) {
+export function MainLayout({ children, tasksHook, setIsSettingsOpen, currentView, setCurrentView }: MainLayoutProps) {
     return (
-        <Layout tasksHook={tasksHook} setIsSettingsOpen={setIsSettingsOpen} setIsNavigating={setIsNavigating} handleNotesNavigation={handleNotesNavigation}>
+        <Layout tasksHook={tasksHook} setIsSettingsOpen={setIsSettingsOpen} currentView={currentView} setCurrentView={setCurrentView}>
             {children}
         </Layout>
     )
 }
+
