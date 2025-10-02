@@ -1,6 +1,7 @@
 
 "use client";
 
+import { memo } from 'react';
 import { type Note } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Trash2 } from 'lucide-react';
@@ -14,7 +15,7 @@ interface NoteItemProps {
   onDelete: () => void;
 }
 
-export function NoteItem({ note, onEdit, onDelete }: NoteItemProps) {
+export const NoteItem = memo(function NoteItem({ note, onEdit, onDelete }: NoteItemProps) {
   const getDisplayDate = (createdAt: string | Timestamp) => {
     if (!createdAt) return 'No date';
     // Firestore Timestamps have a toDate() method
@@ -62,4 +63,4 @@ export function NoteItem({ note, onEdit, onDelete }: NoteItemProps) {
       </CardFooter>
     </Card>
   );
-}
+});

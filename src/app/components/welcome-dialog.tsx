@@ -3,7 +3,7 @@
 
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Check, Edit, Plus, Trash2, Sparkles, Notebook, Rows3, Route } from 'lucide-react';
+import { Check, Plus, Sparkles, Route, Rows3 } from 'lucide-react';
 
 interface WelcomeDialogProps {
   open: boolean;

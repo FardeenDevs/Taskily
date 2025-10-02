@@ -2,18 +2,14 @@
 "use client";
 
 import { useTasks } from "@/lib/hooks/use-tasks";
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { WelcomeDialog } from "@/app/components/welcome-dialog";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, Lock, Unlock } from "lucide-react";
-import { useState, memo, useMemo, useEffect, useCallback } from "react";
-import { SettingsDialog } from "@/app/components/settings-dialog";
+import { useState, memo, useMemo, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { NotesSection } from "@/app/components/notes-section";
 import { Note } from "@/lib/types";
-import { NoteDialog } from "../components/note-dialog";
 import { PageTransition } from '../components/page-transition';
 import { MainLayout } from "../components/main-layout";
-import { SidebarProvider } from "@/components/ui/sidebar";
 import { useUser } from "@/firebase";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,6 +17,12 @@ import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, A
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
+import dynamic from "next/dynamic";
+
+const WelcomeDialog = dynamic(() => import('@/app/components/welcome-dialog').then(mod => mod.WelcomeDialog));
+const SettingsDialog = dynamic(() => import('@/app/components/settings-dialog').then(mod => mod.SettingsDialog));
+const NoteDialog = dynamic(() => import('../components/note-dialog').then(mod => mod.NoteDialog));
+
 
 const NotesPageContent = memo(function NotesPageContentInternal() {
   const { user } = useUser();
@@ -76,19 +78,19 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
   }, [activeWorkspace?.id])
 
 
-  const handleOpenEditDialog = (note: Note) => {
+  const handleOpenEditDialog = useCallback((note: Note) => {
     setEditingNote(note);
     setIsNoteDialogOpen(true);
-  };
+  }, []);
   
-  const handleOpenNewNoteDialog = () => {
+  const handleOpenNewNoteDialog = useCallback(() => {
     if (!activeWorkspace || isLocked) return;
     const newNote = addNote();
     if (newNote) {
         setEditingNote(newNote);
         setIsNoteDialogOpen(true);
     }
-  };
+  }, [activeWorkspace, isLocked, addNote]);
   
  const handleSaveNote = useCallback((id: string, newTitle: string, newContent: string, isNew?: boolean) => {
     // If the note is new and has no title/content, delete it locally.
@@ -98,6 +100,10 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
     }
     editNote(id, newTitle, newContent, isNew);
   }, [editNote, deleteNote]);
+
+  const handleDeleteNote = useCallback((id: string) => {
+      deleteNote(id);
+  }, [deleteNote]);
 
 
  const handleCloseNoteDialog = useCallback((open: boolean) => {
@@ -222,7 +228,7 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
                     <CardContent className="flex-grow overflow-y-auto p-6 pt-0">
                     <NotesSection
                         notes={sortedNotes}
-                        onDeleteNote={(id) => deleteNote(id)}
+                        onDeleteNote={handleDeleteNote}
                         onEditNote={handleOpenEditDialog}
                         isLocked={isLocked}
                     />
@@ -231,20 +237,20 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
             </PageTransition>
         </div>
       </MainLayout>
-      <WelcomeDialog open={isFirstTime} onOpenChange={setIsFirstTime} />
-      <SettingsDialog 
+      {isFirstTime && <WelcomeDialog open={isFirstTime} onOpenChange={setIsFirstTime} />}
+      {isSettingsOpen && <SettingsDialog 
         open={isSettingsOpen} 
         onOpenChange={setIsSettingsOpen} 
         onResetApp={resetApp} 
         onDeleteAccount={deleteAccount} 
         userEmail={user?.email}
-      />
-       <NoteDialog
+      />}
+       {isNoteDialogOpen && <NoteDialog
         open={isNoteDialogOpen}
         onOpenChange={handleCloseNoteDialog}
         note={editingNote}
         onSave={handleSaveNote}
-      />
+      />}
        <AlertDialog open={isUnlockDialogOpen} onOpenChange={onUnlockDialogClose}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -308,14 +314,6 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
 
 export default function NotesPage() {
     return (
-        <SidebarProvider>
-            <NotesPageContent />
-        </SidebarProvider>
+        <NotesPageContent />
     );
 }
-
-    
-
-    
-
-    

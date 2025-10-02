@@ -1,7 +1,7 @@
 
 "use client";
 
-import { SidebarProvider, SidebarInset, useSidebar } from "@/components/ui/sidebar";
+import { SidebarInset, useSidebar } from "@/components/ui/sidebar";
 import { FirestoreWorkspaceSidebar } from "./firestore-workspace-sidebar";
 import { Button } from "@/components/ui/button";
 import { LayoutGrid } from "lucide-react";

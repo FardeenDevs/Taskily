@@ -7,17 +7,19 @@ import { TaskProgress } from "@/app/components/task-progress";
 import { TaskInput } from "@/app/components/task-input";
 import { TaskList } from "@/app/components/task-list";
 import { TaskSuggestions } from "@/app/components/task-suggestions";
-import { WelcomeDialog } from "@/app/components/welcome-dialog";
 import { Trash2 } from "lucide-react";
-import { useState, memo } from "react";
-import { SettingsDialog } from "@/app/components/settings-dialog";
+import { useState, memo, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { PageTransition } from "./components/page-transition";
 import { MainLayout } from "./components/main-layout";
-import { SidebarProvider } from "@/components/ui/sidebar";
 import { useUser } from "@/firebase";
 import { motion, AnimatePresence } from "framer-motion";
+import dynamic from "next/dynamic";
+import { Priority, Effort } from "@/lib/types";
+
+const WelcomeDialog = dynamic(() => import('@/app/components/welcome-dialog').then(mod => mod.WelcomeDialog));
+const SettingsDialog = dynamic(() => import('@/app/components/settings-dialog').then(mod => mod.SettingsDialog));
 
 const AppContent = memo(function AppContentInternal() {
   const { user } = useUser();
@@ -43,11 +45,16 @@ const AppContent = memo(function AppContentInternal() {
     clearTasks,
   } = tasksHook;
 
-  const handleClearTasks = () => {
+  const handleClearTasks = useCallback(() => {
     if (activeWorkspaceId) {
       clearTasks(activeWorkspaceId);
     }
-  };
+  }, [activeWorkspaceId, clearTasks]);
+
+  const handleAddTask = useCallback((text: string, priority: Priority | null, effort: Effort | null) => {
+    addTask(text, priority, effort);
+  }, [addTask]);
+
 
   if (loading || isNavigating) {
     return (
@@ -82,7 +89,7 @@ const AppContent = memo(function AppContentInternal() {
                 <CardContent className="space-y-8 flex-grow overflow-y-auto p-6 pt-0">
                   <div className="space-y-6">
                     <TaskProgress completed={completedTasks} total={totalTasks} />
-                    <TaskInput onAddTask={addTask} />
+                    <TaskInput onAddTask={handleAddTask} />
                     <TaskList
                       tasks={tasks}
                       onToggleTask={toggleTask}
@@ -124,22 +131,20 @@ const AppContent = memo(function AppContentInternal() {
             </PageTransition>
           </div>
       </MainLayout>
-      <WelcomeDialog open={isFirstTime} onOpenChange={setIsFirstTime} />
-      <SettingsDialog 
+      {isFirstTime && <WelcomeDialog open={isFirstTime} onOpenChange={setIsFirstTime} />}
+      {isSettingsOpen && <SettingsDialog 
         open={isSettingsOpen} 
         onOpenChange={setIsSettingsOpen} 
         onResetApp={resetApp} 
         onDeleteAccount={deleteAccount} 
         userEmail={user?.email}
-      />
+      />}
     </>
   );
 });
 
 export default function Home() {
   return (
-      <SidebarProvider>
-        <AppContent />
-      </SidebarProvider>
+      <AppContent />
   );
 }

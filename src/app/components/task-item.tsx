@@ -1,6 +1,7 @@
+
 "use client";
 
-import { useState } from "react";
+import { useState, memo } from "react";
 import { type Task, type Priority, type Effort } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -21,7 +22,7 @@ interface TaskItemProps {
   onEditTask: (id: string, newText: string, newPriority: Priority | null, newEffort: Effort | null) => void;
 }
 
-export function TaskItem({ task, onToggleTask, onDeleteTask, onEditTask }: TaskItemProps) {
+export const TaskItem = memo(function TaskItem({ task, onToggleTask, onDeleteTask, onEditTask }: TaskItemProps) {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editText, setEditText] = useState(task.text);
   const [editPriority, setEditPriority] = useState<Priority | null>(task.priority ?? null);
@@ -146,4 +147,4 @@ export function TaskItem({ task, onToggleTask, onDeleteTask, onEditTask }: TaskI
       </div>
     </div>
   );
-}
+});

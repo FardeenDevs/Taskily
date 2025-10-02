@@ -41,5 +41,3 @@ export {
     AlertTriangle,
     Copy,
 } from 'lucide-react';
-
-    
