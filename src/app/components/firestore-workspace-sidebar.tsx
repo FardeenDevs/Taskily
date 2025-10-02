@@ -169,8 +169,8 @@ export function FirestoreWorkspaceSidebar({ tasksHook }: WorkspaceSidebarProps) 
               >
                 <span className="truncate flex-1">{workspace.name}</span>
                  {workspace.notesPassword && (
-                    <div className="h-3 w-3 text-muted-foreground ml-2">
-                        {workspace.id === activeWorkspaceId && !isNotesLocked ? <Unlock /> : <Lock />}
+                    <div className="ml-2">
+                        {workspace.id === activeWorkspaceId && !isNotesLocked ? <Unlock className="h-3 w-3 text-muted-foreground" /> : <Lock className="h-3 w-3 text-muted-foreground" />}
                     </div>
                 )}
               </SidebarMenuButton>
