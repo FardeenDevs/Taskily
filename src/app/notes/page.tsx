@@ -286,7 +286,7 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
             </Button>
           </div>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={handleBackFromLocked}>Back</AlertDialogCancel>
+            <AlertDialogCancel>Back</AlertDialogCancel>
             <AlertDialogAction onClick={handlePasswordUnlock}>Unlock</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

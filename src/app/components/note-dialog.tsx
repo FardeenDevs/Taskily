@@ -32,9 +32,10 @@ export function NoteDialog({ open, onOpenChange, note, onSave }: NoteDialogProps
           },
         },
         orderedList: {
-          HTMLAttributes: {
-            class: 'list-decimal pl-6',
-          },
+            // Styling is now handled in globals.css to override prose styles
+            HTMLAttributes: {
+                class: 'list-decimal',
+            },
         },
       }),
       Underline,

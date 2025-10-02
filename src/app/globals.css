@@ -99,11 +99,12 @@
     max-width: none;
   }
 
+  .prose ol {
+    padding-left: 1.75rem; /* Fix for numbered lists in editor */
+  }
+
   .prose ul {
     @apply list-disc pl-4;
-  }
-  .prose ol {
-    @apply list-decimal pl-4;
   }
 }
 
