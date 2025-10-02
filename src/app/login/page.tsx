@@ -150,30 +150,11 @@ export default function LoginPage() {
     }
   }
 
-
-  if (loading || user) {
-    return (
-      <AnimatePresence>
-          <motion.div
-              key="loader"
-              initial={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.5 }}
-              className="fixed inset-0 z-50 flex items-center justify-center bg-background"
-          >
-              <div className="h-16 w-16 animate-spin rounded-full border-4 border-solid border-primary border-t-transparent"></div>
-          </motion.div>
-      </AnimatePresence>
-    );
-  }
-  
-  if (!auth) {
-    // Firebase might still be initializing
-    return (
-        <div className="flex h-screen w-screen items-center justify-center">
-            <div className="h-16 w-16 animate-spin rounded-full border-4 border-solid border-primary border-t-transparent"></div>
-        </div>
-    );
+  // If the user is authenticated, we'll wait for the redirect in useEffect.
+  // We can return null or a minimal loader, but showing the UI is fine too
+  // as it will be quickly replaced by the redirect.
+  if (user) {
+    return null;
   }
 
   return (
@@ -339,3 +320,5 @@ export default function LoginPage() {
     </div>
   );
 }
+
+    
