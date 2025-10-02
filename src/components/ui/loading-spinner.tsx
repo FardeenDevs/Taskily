@@ -16,7 +16,7 @@ export function LoadingSpinner() {
     >
       <div className="flex flex-col items-center gap-2">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <p className="text-sm text-muted-foreground">Loading Editor...</p>
+        <p className="text-sm text-muted-foreground">Loading...</p>
       </div>
     </motion.div>
   );

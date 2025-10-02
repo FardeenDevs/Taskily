@@ -47,16 +47,23 @@ export const SettingsDialog = memo(function SettingsDialog({
   const { theme, setTheme } = useTheme()
   const [isDark, setIsDark] = useState(theme === 'dark');
 
+  const [isFirstResetAlertOpen, setIsFirstResetAlertOpen] = useState(false);
+  const [isSecondResetDialogOpen, setIsSecondResetDialogOpen] = useState(false);
+  const [resetConfirmationEmail, setResetConfirmationEmail] = useState("");
+
   const [isFirstDeleteAlertOpen, setIsFirstDeleteAlertOpen] = useState(false)
   const [isSecondDeleteDialogOpen, setIsSecondDeleteDialogOpen] = useState(false)
   const [deleteConfirmationEmail, setDeleteConfirmationEmail] = useState("")
 
   useEffect(() => {
-    // Reset confirmation when the main dialog is closed
+    // Reset confirmations when the main dialog is closed
     if (!open) {
       setIsFirstDeleteAlertOpen(false);
       setIsSecondDeleteDialogOpen(false);
       setDeleteConfirmationEmail("");
+      setIsFirstResetAlertOpen(false);
+      setIsSecondResetDialogOpen(false);
+      setResetConfirmationEmail("");
     }
   }, [open]);
 
@@ -66,8 +73,14 @@ export const SettingsDialog = memo(function SettingsDialog({
     setTheme(newTheme);
   }
 
-  const handleReset = () => {
+  const openSecondResetDialog = () => {
+    setIsFirstResetAlertOpen(false);
+    setIsSecondResetDialogOpen(true);
+  }
+
+  const handleConfirmReset = () => {
     onResetApp();
+    setIsSecondResetDialogOpen(false);
     onOpenChange(false);
   }
 
@@ -172,7 +185,7 @@ export const SettingsDialog = memo(function SettingsDialog({
                 </div>
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
                     <p className="text-sm text-muted-foreground flex-1 text-center sm:text-left">Reset all lists, tasks, and notes.</p>
-                    <AlertDialog>
+                    <AlertDialog open={isFirstResetAlertOpen} onOpenChange={setIsFirstResetAlertOpen}>
                         <AlertDialogTrigger asChild>
                             <Button variant="destructive" size="sm" className="w-full sm:w-auto">
                                 <Trash2 className="mr-2 h-4 w-4"/>
@@ -181,15 +194,15 @@ export const SettingsDialog = memo(function SettingsDialog({
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                             <AlertDialogHeader>
-                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                <AlertDialogTitle>Reset application?</AlertDialogTitle>
                                 <AlertDialogDescription>
                                     This will permanently delete all tasks, notes, and listspaces. This action cannot be undone.
                                 </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
                                 <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction onClick={handleReset} variant="destructive">
-                                    Yes, reset everything
+                                <AlertDialogAction onClick={openSecondResetDialog} variant="destructive">
+                                    Continue
                                 </AlertDialogAction>
                             </AlertDialogFooter>
                         </AlertDialogContent>
@@ -229,7 +242,37 @@ export const SettingsDialog = memo(function SettingsDialog({
       </DialogContent>
     </Dialog>
     
-    {/* Second, more serious, delete confirmation */}
+    <Dialog open={isSecondResetDialogOpen} onOpenChange={setIsSecondResetDialogOpen}>
+        <DialogContent>
+             <DialogHeader>
+                <DialogTitle>Are you absolutely sure?</DialogTitle>
+                <DialogDescription>
+                    This action cannot be undone. This will permanently delete all your application data, including every listspace and all their tasks and notes.
+                </DialogDescription>
+            </DialogHeader>
+            <div className="py-4 space-y-2">
+                <Label htmlFor="reset-confirm-email">Please type <span className="font-bold text-foreground">{userEmail}</span> to confirm.</Label>
+                <Input 
+                    id="reset-confirm-email" 
+                    type="email" 
+                    value={resetConfirmationEmail}
+                    onChange={(e) => setResetConfirmationEmail(e.target.value)}
+                    placeholder="Enter your email"
+                />
+            </div>
+            <DialogFooter>
+                <Button variant="secondary" onClick={() => setIsSecondResetDialogOpen(false)}>Cancel</Button>
+                <Button 
+                    variant="destructive"
+                    onClick={handleConfirmReset}
+                    disabled={resetConfirmationEmail !== userEmail}
+                >
+                    I understand the consequences, reset my application
+                </Button>
+            </DialogFooter>
+        </DialogContent>
+    </Dialog>
+    
     <Dialog open={isSecondDeleteDialogOpen} onOpenChange={setIsSecondDeleteDialogOpen}>
         <DialogContent>
              <DialogHeader>
@@ -239,9 +282,9 @@ export const SettingsDialog = memo(function SettingsDialog({
                 </DialogDescription>
             </DialogHeader>
             <div className="py-4 space-y-2">
-                <Label htmlFor="email-confirm">Please type <span className="font-bold text-foreground">{userEmail}</span> to confirm.</Label>
+                <Label htmlFor="delete-confirm-email">Please type <span className="font-bold text-foreground">{userEmail}</span> to confirm.</Label>
                 <Input 
-                    id="email-confirm" 
+                    id="delete-confirm-email" 
                     type="email" 
                     value={deleteConfirmationEmail}
                     onChange={(e) => setDeleteConfirmationEmail(e.target.value)}
@@ -263,5 +306,3 @@ export const SettingsDialog = memo(function SettingsDialog({
     </>
   )
 });
-
-    
