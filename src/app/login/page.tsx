@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Chrome } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -40,7 +40,6 @@ export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false);
 
   const signInForm = useForm<z.infer<typeof signInSchema>>({
     resolver: zodResolver(signInSchema),
@@ -136,7 +135,6 @@ export default function LoginPage() {
             title: "Password Reset Email Sent",
             description: `If an account exists for ${values.email}, a password reset link has been sent.`,
         });
-        setIsForgotPasswordOpen(false);
         forgotPasswordForm.reset();
     } catch (error) {
         console.error("Error sending password reset email", error);
@@ -150,10 +148,6 @@ export default function LoginPage() {
     }
   }
 
-  if (loading && !user) {
-    return null;
-  }
-
   // If the user is authenticated, we'll wait for the redirect in useEffect.
   // We can return null or a minimal loader, but showing the UI is fine too
   // as it will be quickly replaced by the redirect.
@@ -162,7 +156,7 @@ export default function LoginPage() {
   }
 
   return (
-    <Dialog open={isForgotPasswordOpen} onOpenChange={setIsForgotPasswordOpen}>
+    <Dialog>
       <div className="flex min-h-screen items-center justify-center bg-app-gradient p-4">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -206,7 +200,7 @@ export default function LoginPage() {
                               <div className="flex justify-between items-center">
                                   <FormLabel>Password</FormLabel>
                                   <DialogTrigger asChild>
-                                      <Button type="button" variant="link" className="h-auto p-0 text-xs" onClick={() => setIsForgotPasswordOpen(true)}>Forgot Password?</Button>
+                                      <Button type="button" variant="link" className="h-auto p-0 text-xs">Forgot Password?</Button>
                                   </DialogTrigger>
                               </div>
                               <FormControl>
@@ -312,7 +306,7 @@ export default function LoginPage() {
                           )}
                       />
                       <DialogFooter>
-                          <Button type="button" variant="secondary" onClick={() => setIsForgotPasswordOpen(false)}>Cancel</Button>
+                          <Button type="button" variant="secondary" onClick={() => (forgotPasswordForm.reset(), (document.querySelector('[data-radix-collection-item] as HTMLElement')?.click()))}>Cancel</Button>
                           <Button type="submit" disabled={isSubmitting}>
                               {isSubmitting ? 'Sending...' : 'Send Reset Link'}
                           </Button>
