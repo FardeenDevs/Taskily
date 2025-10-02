@@ -5,7 +5,7 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { type Task, type Workspace, type Priority, type Effort, type Note } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { useUser, useAuth, useFirestore, useCollection, useDoc } from "@/firebase";
-import { collection, addDoc, doc, setDoc, deleteDoc, writeBatch, serverTimestamp, getDocs, getDoc } from "firebase/firestore";
+import { collection, addDoc, doc, setDoc, deleteDoc, writeBatch, serverTimestamp, getDocs, getDoc, query, where } from "firebase/firestore";
 import { onAuthStateChanged, updateProfile } from "firebase/auth";
 import { useSidebar } from "@/components/ui/sidebar";
 import { errorEmitter } from "@/firebase/error-emitter";
@@ -28,8 +28,8 @@ export function useTasks() {
   const { setOpen: setSidebarOpen } = useSidebar();
   
   // Firestore references
-  const workspacesRef = useMemo(() => 
-    user ? collection(firestore, 'users', user.uid, 'workspaces') : null
+  const workspacesQuery = useMemo(() => 
+    user ? query(collection(firestore, 'users', user.uid, 'workspaces'), where('ownerId', '==', user.uid)) : null
   , [firestore, user]);
 
   const activeWorkspaceRef = useMemo(() => 
@@ -45,7 +45,7 @@ export function useTasks() {
   , [activeWorkspaceId, user, firestore]);
   
   // Firestore data hooks
-  const { data: workspaces, loading: workspacesLoading } = useCollection<Workspace>(workspacesRef);
+  const { data: workspaces, loading: workspacesLoading } = useCollection<Workspace>(workspacesQuery);
   const { data: activeWorkspace, loading: activeWorkspaceLoading } = useDoc<Workspace>(activeWorkspaceRef);
   const { data: tasks, loading: tasksLoading } = useCollection<Task>(tasksRef);
   const { data: notes, loading: notesLoading } = useCollection<Note>(notesRef);
@@ -85,26 +85,25 @@ export function useTasks() {
 
   // Determine initial active workspace
   useEffect(() => {
-    if (userLoading) return;
+    if (userLoading || workspacesLoading) return;
 
-    if (user && !workspacesLoading) {
-      if (!initialCheckDone) {
+    if (user && !initialCheckDone) {
+      if (workspaces) {
+        const storedWorkspaceId = localStorage.getItem(`${ACTIVE_WORKSPACE_KEY}-${user.uid}`);
+        if (storedWorkspaceId && workspaces.some(ws => ws.id === storedWorkspaceId)) {
+          setActiveWorkspaceId(storedWorkspaceId);
+        } else if (workspaces.length > 0) {
+          const sortedWorkspaces = [...workspaces].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+          setActiveWorkspaceId(sortedWorkspaces[0].id);
+        }
         setInitialCheckDone(true);
-      }
-
-      const storedWorkspaceId = localStorage.getItem(`${ACTIVE_WORKSPACE_KEY}-${user.uid}`);
-      if (storedWorkspaceId && workspaces?.some(ws => ws.id === storedWorkspaceId)) {
-        setActiveWorkspaceId(storedWorkspaceId);
-      } else if (workspaces && workspaces.length > 0) {
-        const sortedWorkspaces = [...workspaces].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
-        setActiveWorkspaceId(sortedWorkspaces[0].id);
       }
     }
   }, [user, userLoading, workspaces, workspacesLoading, initialCheckDone]);
 
   // Create default workspace if none exist after initial check
   useEffect(() => {
-    if (initialCheckDone && workspaces?.length === 0 && workspacesRef && user) {
+    if (initialCheckDone && user && workspaces?.length === 0 && workspacesQuery) {
         setLoading(true);
         const defaultWorkspaceName = "My List";
         const workspaceData = {
@@ -112,14 +111,17 @@ export function useTasks() {
             createdAt: serverTimestamp(),
             ownerId: user.uid
         };
-        addDoc(workspacesRef, workspaceData)
+
+        const workspacesCollectionRef = collection(firestore, 'users', user.uid, 'workspaces');
+
+        addDoc(workspacesCollectionRef, workspaceData)
         .then(docRef => {
             setActiveWorkspaceId(docRef.id);
             setIsFirstTime(true);
         })
         .catch(async (serverError) => {
             const permissionError = new FirestorePermissionError({
-                path: workspacesRef.path,
+                path: workspacesCollectionRef.path,
                 operation: 'create',
                 requestResourceData: workspaceData,
             });
@@ -129,7 +131,7 @@ export function useTasks() {
             setLoading(false);
         });
     }
-  }, [initialCheckDone, workspaces, workspacesRef, user]);
+  }, [initialCheckDone, workspaces, workspacesQuery, user, firestore]);
 
 
   // Update loading state
@@ -217,9 +219,9 @@ export function useTasks() {
   }, [tasksRef]);
 
   const clearTasks = useCallback(async (workspaceId: string) => {
-    if (!workspacesRef) return;
+    if (!user) return;
     const batch = writeBatch(firestore);
-    const tasksCollectionRef = collection(workspacesRef, workspaceId, 'tasks');
+    const tasksCollectionRef = collection(firestore, 'users', user.uid, 'workspaces', workspaceId, 'tasks');
     try {
         const querySnapshot = await getDocs(tasksCollectionRef);
         querySnapshot.forEach((doc) => {
@@ -237,7 +239,7 @@ export function useTasks() {
         });
         errorEmitter.emit('permission-error', permissionError);
     }
-  }, [firestore, workspacesRef, toast]);
+  }, [firestore, user, toast]);
 
   const addNote = useCallback((title: string, content: string) : string | undefined => {
     if (!notesRef) return;
@@ -288,11 +290,11 @@ export function useTasks() {
   }, [notesRef]);
 
   const resetApp = useCallback(async () => {
-    if (!workspacesRef || !user) return;
+    if (!workspacesQuery || !user) return;
     
     try {
         const batch = writeBatch(firestore);
-        const querySnapshot = await getDocs(workspacesRef);
+        const querySnapshot = await getDocs(workspacesQuery);
         
         for (const workspaceDoc of querySnapshot.docs) {
             const tasksCollectionRef = collection(workspaceDoc.ref, 'tasks');
@@ -307,6 +309,8 @@ export function useTasks() {
         }
         
         await batch.commit();
+
+        const workspacesCollectionRef = collection(firestore, 'users', user.uid, 'workspaces');
         
         // Create a new default workspace after clearing everything
          const defaultWorkspaceName = "My List";
@@ -315,7 +319,7 @@ export function useTasks() {
              createdAt: serverTimestamp(),
              ownerId: user.uid
          };
-         const newWorkspaceRef = await addDoc(workspacesRef, workspaceData);
+         const newWorkspaceRef = await addDoc(workspacesCollectionRef, workspaceData);
 
         setActiveWorkspaceId(newWorkspaceRef.id);
         toast({
@@ -324,38 +328,40 @@ export function useTasks() {
         });
     } catch (e) {
          const permissionError = new FirestorePermissionError({
-            path: workspacesRef.path,
+            path: workspacesQuery.path,
             operation: 'list',
         });
         errorEmitter.emit('permission-error', permissionError);
     }
-  }, [workspacesRef, user, toast, firestore]);
+  }, [workspacesQuery, user, toast, firestore]);
 
   const addWorkspace = useCallback((name: string) => {
-    if (name.trim() === "" || !workspacesRef || !user) return;
+    if (name.trim() === "" || !user) return;
     
+    const workspacesCollectionRef = collection(firestore, 'users', user.uid, 'workspaces');
+
     const workspaceData = {
         name: name.trim(),
         createdAt: serverTimestamp(),
         ownerId: user.uid
     };
 
-    addDoc(workspacesRef, workspaceData)
+    addDoc(workspacesCollectionRef, workspaceData)
     .then(docRef => {
         switchWorkspace(docRef.id);
     })
     .catch(async (serverError) => {
         const permissionError = new FirestorePermissionError({
-            path: workspacesRef.path,
+            path: workspacesCollectionRef.path,
             operation: 'create',
             requestResourceData: workspaceData,
         });
         errorEmitter.emit('permission-error', permissionError);
     });
-  }, [workspacesRef, user, switchWorkspace]);
+  }, [user, firestore, switchWorkspace]);
 
   const deleteWorkspace = useCallback(async (id: string) => {
-     if (!workspacesRef || !workspaces) return;
+     if (!user || !workspaces) return;
      if (workspaces.length <= 1) {
       toast({
         variant: "destructive",
@@ -365,7 +371,7 @@ export function useTasks() {
       return;
     }
 
-    const workspaceDocRef = doc(workspacesRef, id);
+    const workspaceDocRef = doc(firestore, 'users', user.uid, 'workspaces', id);
     try {
         const tasksCollectionRef = collection(workspaceDocRef, 'tasks');
         const tasksSnapshot = await getDocs(tasksCollectionRef);
@@ -399,11 +405,11 @@ export function useTasks() {
         });
         errorEmitter.emit('permission-error', permissionError);
     }
-  }, [firestore, workspaces, activeWorkspaceId, switchWorkspace, toast, workspacesRef]);
+  }, [firestore, user, workspaces, activeWorkspaceId, switchWorkspace, toast]);
 
   const editWorkspace = useCallback((id: string, newName: string) => {
-    if (newName.trim() === "" || !workspacesRef) return;
-    const workspaceDocRef = doc(workspacesRef, id);
+    if (newName.trim() === "" || !user) return;
+    const workspaceDocRef = doc(firestore, 'users', user.uid, 'workspaces', id);
     const updatedData = { name: newName.trim() };
     setDoc(workspaceDocRef, updatedData, { merge: true })
     .catch(async (serverError) => {
@@ -414,7 +420,7 @@ export function useTasks() {
         });
         errorEmitter.emit('permission-error', permissionError);
     });
-  }, [workspacesRef]);
+  }, [user, firestore]);
 
   const completedTasks = useMemo(() => {
     return (tasks || []).filter(task => task.completed).length;
