@@ -10,8 +10,11 @@ import { NotesSection } from "@/app/components/notes-section";
 import { Note } from "@/lib/types";
 import { PasswordPromptDialog } from "@/app/components/password-prompt-dialog";
 import dynamic from "next/dynamic";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
-const NoteDialog = dynamic(() => import('@/app/components/note-dialog').then(mod => mod.NoteDialog));
+const NoteDialog = dynamic(() => import('@/app/components/note-dialog').then(mod => mod.NoteDialog), {
+  loading: () => <LoadingSpinner />,
+});
 
 export default function NotesPage() {
   const {
