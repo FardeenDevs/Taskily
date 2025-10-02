@@ -4,7 +4,7 @@
 import { useTasks } from "@/lib/hooks/use-tasks";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, Lock, Unlock, Eye, EyeOff } from "lucide-react";
-import { useState, memo, useMemo, useCallback, useEffect } from "react";
+import { useState, memo, useMemo, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { NotesSection } from "@/app/components/notes-section";
 import { Note } from "@/lib/types";
@@ -66,16 +66,6 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
     if (!activeWorkspace) return false;
     return !!activeWorkspace.password && !unlockedWorkspaces.has(activeWorkspace.id);
   }, [activeWorkspace, unlockedWorkspaces]);
-
-  useEffect(() => {
-    if (isLocked) {
-      setIsUnlockDialogOpen(true);
-    } else {
-      setIsUnlockDialogOpen(false);
-      setFailedPasswordAttempts(0); // Reset attempts when unlocked
-    }
-  }, [isLocked, activeWorkspace?.id]);
-
 
   const handleOpenEditDialog = useCallback((note: Note) => {
     setEditingNote(note);
@@ -167,7 +157,12 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
 
   const onUnlockDialogClose = (open: boolean) => {
       if (!open && isLocked) {
-        handleBackFromLocked();
+        // This check prevents closing the dialog and redirecting if the unlock process is still finishing
+        // and the isLocked state hasn't updated yet.
+        const isStillLocked = !!activeWorkspace?.password && !unlockedWorkspaces.has(activeWorkspace.id);
+        if (isStillLocked) {
+           handleBackFromLocked();
+        }
       } else {
         setIsUnlockDialogOpen(open);
       }

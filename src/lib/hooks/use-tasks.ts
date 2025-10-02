@@ -200,14 +200,14 @@ export function useTasks() {
 
   // Update loading state
   useEffect(() => {
-    const isStillLoading = userLoading || workspacesLoading || (!!activeWorkspaceId && (activeWorkspaceLoading || tasksLoading || notesLoading === undefined)) || !initialCheckDone;
-    // Don't set loading to true if we just unlocked a workspace
-    if (!isStillLoading && loading && notesLoading === undefined && unlockedWorkspaces.has(activeWorkspaceId || '')) {
-      // Stay on loading=false
-    } else {
-       setLoading(isStillLoading);
-    }
-  }, [userLoading, workspacesLoading, activeWorkspaceId, activeWorkspaceLoading, tasksLoading, notesLoading, initialCheckDone, unlockedWorkspaces, loading]);
+    // Key change: notesLoading can be `true` (if locked) or `undefined` (if just unlocked, before listener attaches).
+    // The `notesRef` being null means it is locked, so we should consider notes "loaded" in that state.
+    const isNotesRefLocked = notesRef === null;
+    const notesDataLoading = isNotesRefLocked ? false : notesLoading;
+
+    const isStillLoading = userLoading || workspacesLoading || (!!activeWorkspaceId && (activeWorkspaceLoading || tasksLoading || notesDataLoading)) || !initialCheckDone;
+    setLoading(isStillLoading);
+  }, [userLoading, workspacesLoading, activeWorkspaceId, activeWorkspaceLoading, tasksLoading, notesLoading, initialCheckDone, notesRef]);
 
 
   const switchWorkspace = useCallback((id: string | null) => {
@@ -601,7 +601,7 @@ export function useTasks() {
     } catch (error) {
         console.error("Failed to complete account deletion process:", error);
     }
-  }, [user, firestore, auth, toast]);
+  }, [user, auth, firestore, toast]);
 
   const updateUserProfile = useCallback(async (newDisplayName: string) => {
     if (!user || !auth.currentUser || !firestore) {
