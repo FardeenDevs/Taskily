@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useTasks } from "@/lib/hooks/use-tasks";
@@ -47,10 +48,10 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
     deleteAccount,
     unlockedWorkspaces,
     unlockWorkspace,
-    lockWorkspace
+    lockWorkspace,
+    switchWorkspace,
   } = tasksHook;
 
-  const [clientNotes, setClientNotes] = useState<Note[]>([]);
 
   const isLocked = useMemo(() => {
     if (!activeWorkspace) return false;
@@ -71,9 +72,6 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
     setFailedPasswordAttempts(0);
   }, [activeWorkspace?.id])
 
-  useEffect(() => {
-    setClientNotes(notes);
-  }, [notes]);
 
   const handleOpenEditDialog = (note: Note) => {
     setEditingNote(note);
@@ -85,55 +83,36 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
     const newNote = addNote();
     if (newNote) {
         setEditingNote(newNote);
-        setClientNotes(prev => [newNote, ...prev]);
         setIsNoteDialogOpen(true);
     }
   };
   
   const handleSaveNote = (id: string, title: string, content: string, isNew?: boolean) => {
+    // Prevent saving an empty new note if user just closes the dialog
+    if(isNew && title === 'New Note' && content === '') {
+      return;
+    }
     editNote(id, title, content, isNew);
-    
-    // Optimistically update the client state
-    setClientNotes(prev => {
-        // If it's a new note that's now being saved
-        if (isNew) {
-            return prev.map(n => 
-                n.id === id 
-                ? { ...n, title, content, isNew: false, createdAt: new Date().toISOString() } // set a temporary timestamp
-                : n
-            );
-        }
-        // If it's an existing note being updated
-        return prev.map(n => 
-            n.id === id 
-            ? { ...n, title, content } 
-            : n
-        );
-    });
   };
 
   const handleCloseNoteDialog = (open: boolean) => {
-      if (!open) {
-          const noteToClean = editingNote;
-          setEditingNote(null);
-           // If a new note was closed without being properly saved (i.e. it's still marked as new and is empty)
-          if (noteToClean && noteToClean.isNew && noteToClean.title.trim() === 'New Note' && noteToClean.content.trim() === '') {
-             deleteNote(noteToClean.id);
-             setClientNotes(prev => prev.filter(n => n.id !== noteToClean.id));
-          }
-      }
-      setIsNoteDialogOpen(open);
+    if (!open && editingNote) {
+        // This is called when the dialog is closing.
+        // The `onSave` in the dialog already has the latest title/content.
+        // We call it here to persist the final state.
+    }
+    setIsNoteDialogOpen(open);
   };
 
   const sortedNotes = useMemo(() => {
-    return [...clientNotes].sort((a, b) => {
+    return [...notes].sort((a, b) => {
         const dateA = a.createdAt ? (typeof (a.createdAt as any).toDate === 'function' ? (a.createdAt as any).toDate() : new Date(a.createdAt as string)) : new Date(0);
         const dateB = b.createdAt ? (typeof (b.createdAt as any).toDate === 'function' ? (b.createdAt as any).toDate() : new Date(b.createdAt as string)) : new Date(0);
         if (a.isNew) return -1;
         if (b.isNew) return 1;
         return dateB.getTime() - dateA.getTime();
     });
-  }, [clientNotes]);
+  }, [notes]);
   
   const handleUnlock = () => {
     if (!activeWorkspace) return;
@@ -155,16 +134,16 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
     toast({ title: "Listspace Locked" });
   }
 
+  const handleBackFromLocked = () => {
+    router.push('/');
+    setIsUnlockDialogOpen(false);
+  }
+
   const onUnlockDialogClose = (open: boolean) => {
       if (!open && isLocked) {
         return; // Prevents closing via overlay click or Esc when locked
       }
       setIsUnlockDialogOpen(open);
-  }
-
-  const handleBackFromLocked = () => {
-    router.push('/');
-    setIsUnlockDialogOpen(false);
   }
 
 
@@ -230,12 +209,12 @@ const NotesPageContent = memo(function NotesPageContentInternal() {
             <AlertDialogTitle>This Listspace is Locked</AlertDialogTitle>
             <AlertDialogDescription>
               Please enter the password to view your notes.
-            </AlertDialogDescription>
-             {activeWorkspace?.passwordHint && failedPasswordAttempts >= 3 && (
+               {activeWorkspace?.passwordHint && failedPasswordAttempts >= 3 && (
                 <div className="text-sm text-muted-foreground pt-2">
                     <span className="text-xs font-semibold">Hint:</span> {activeWorkspace.passwordHint}
                 </div>
               )}
+            </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="py-2">
             <Label htmlFor="password-unlock" className="sr-only">Password</Label>

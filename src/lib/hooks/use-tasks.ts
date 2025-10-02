@@ -47,15 +47,14 @@ export function useTasks() {
   
   const { data: tasks, loading: tasksLoading } = useCollection<Task>(tasksRef);
 
-  const notesRef = useMemo(() => {
+   const notesRef = useMemo(() => {
     if (!activeWorkspaceId || !user || !firestore) return null;
 
-    const currentWorkspace = workspaces?.find(ws => ws.id === activeWorkspaceId);
-    if (currentWorkspace?.password && !unlockedWorkspaces.has(activeWorkspaceId)) {
+    if (activeWorkspace?.password && !unlockedWorkspaces.has(activeWorkspaceId)) {
       return null;
     }
     return collection(firestore, 'users', user.uid, 'workspaces', activeWorkspaceId, 'notes');
-  }, [activeWorkspaceId, user, firestore, unlockedWorkspaces, workspaces]);
+  }, [activeWorkspaceId, user, firestore, activeWorkspace, unlockedWorkspaces]);
   
   const { data: notes, loading: notesLoading } = useCollection<Note>(notesRef);
 
@@ -280,30 +279,34 @@ export function useTasks() {
     if (!notesRef) return;
     const noteDocRef = doc(notesRef, id);
     
-    let data;
     if (isNew) {
-      data = { 
+      const dataToSave = { 
         title: newTitle.trim() || 'Untitled Note', 
         content: newContent,
         createdAt: serverTimestamp(),
       };
+      setDoc(noteDocRef, dataToSave).catch(async (serverError) => {
+        const permissionError = new FirestorePermissionError({
+            path: noteDocRef.path,
+            operation: 'create',
+            requestResourceData: dataToSave,
+        });
+        errorEmitter.emit('permission-error', permissionError);
+      });
     } else {
-      data = { 
+      const dataToUpdate = { 
         title: newTitle.trim() || 'Untitled Note', 
         content: newContent,
       };
-    }
-    
-    const operation = isNew ? setDoc(noteDocRef, data) : setDoc(noteDocRef, data, { merge: true });
-
-    operation.catch(async (serverError) => {
+      setDoc(noteDocRef, dataToUpdate, { merge: true }).catch(async (serverError) => {
         const permissionError = new FirestorePermissionError({
             path: noteDocRef.path,
-            operation: isNew ? 'create' : 'update',
-            requestResourceData: data,
+            operation: 'update',
+            requestResourceData: dataToUpdate,
         });
         errorEmitter.emit('permission-error', permissionError);
-    });
+      });
+    }
   }, [notesRef]);
 
   const deleteNote = useCallback((id: string) => {
