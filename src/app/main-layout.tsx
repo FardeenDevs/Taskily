@@ -70,6 +70,10 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     }
   }
 
+  // Do not show the main app loader on the login page
+  if (pathname === '/login') {
+    return <TasksContext.Provider value={tasksHook}>{children}</TasksContext.Provider>;
+  }
 
   if (loading && !tasksHook.activeWorkspaceId) {
     return (
@@ -117,3 +121,5 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     </TasksContext.Provider>
   );
 }
+
+    

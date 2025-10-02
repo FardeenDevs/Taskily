@@ -137,10 +137,7 @@ export default function LoginPage() {
         });
         forgotPasswordForm.reset();
         // Close the dialog by finding its trigger and clicking it
-        const trigger = document.querySelector('[data-radix-collection-item]');
-        if (trigger instanceof HTMLElement) {
-          trigger.click();
-        }
+        document.getElementById('forgot-password-trigger')?.click();
     } catch (error) {
         console.error("Error sending password reset email", error);
         toast({
@@ -151,13 +148,6 @@ export default function LoginPage() {
     } finally {
         setIsSubmitting(false);
     }
-  }
-
-  // If the user is authenticated, we'll wait for the redirect in useEffect.
-  // We can return null or a minimal loader, but showing the UI is fine too
-  // as it will be quickly replaced by the redirect.
-  if (user) {
-    return null;
   }
 
   return (
@@ -205,7 +195,7 @@ export default function LoginPage() {
                               <div className="flex justify-between items-center">
                                   <FormLabel>Password</FormLabel>
                                   <DialogTrigger asChild>
-                                      <Button type="button" variant="link" className="h-auto p-0 text-xs">Forgot Password?</Button>
+                                      <Button id="forgot-password-trigger" type="button" variant="link" className="h-auto p-0 text-xs">Forgot Password?</Button>
                                   </DialogTrigger>
                               </div>
                               <FormControl>
@@ -311,13 +301,9 @@ export default function LoginPage() {
                           )}
                       />
                       <DialogFooter>
-                          <Button type="button" variant="secondary" onClick={() => {
-                              forgotPasswordForm.reset();
-                              const trigger = document.querySelector('[data-radix-collection-item]');
-                              if (trigger instanceof HTMLElement) {
-                                trigger.click();
-                              }
-                            }}>Cancel</Button>
+                         <DialogTrigger asChild>
+                            <Button type="button" variant="secondary">Cancel</Button>
+                         </DialogTrigger>
                           <Button type="submit" disabled={isSubmitting}>
                               {isSubmitting ? 'Sending...' : 'Send Reset Link'}
                           </Button>
@@ -329,3 +315,5 @@ export default function LoginPage() {
     </Dialog>
   );
 }
+
+    
