@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 import { UserNav } from "./user-nav";
 import { type useTasks } from "@/lib/hooks/use-tasks";
 import { usePathname } from "next/navigation";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
 type View = 'progress' | 'notes';
 
