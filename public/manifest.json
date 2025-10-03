@@ -1,10 +1,6 @@
 {
   "name": "Listily",
   "short_name": "Listily",
-  "start_url": "/",
-  "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#4CAF50",
   "description": "Get things done, one task at a time.",
   "icons": [
     {
@@ -17,5 +13,9 @@
       "sizes": "512x512",
       "type": "image/png"
     }
-  ]
+  ],
+  "theme_color": "#10B981",
+  "background_color": "#ffffff",
+  "display": "standalone",
+  "start_url": "/app"
 }

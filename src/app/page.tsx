@@ -40,6 +40,10 @@ export default function LandingPage() {
     },
   ];
 
+  const scrollToFeatures = () => {
+    document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' });
+  };
+
   return (
     <div className="flex min-h-screen w-full flex-col bg-app-gradient">
       <header className="fixed top-0 left-0 right-0 z-50 flex h-20 items-center justify-between bg-background/50 px-4 backdrop-blur-sm md:px-6">
@@ -90,16 +94,14 @@ export default function LandingPage() {
                   Open App <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
               </Button>
-              <Button size="lg" variant="outline" asChild>
-                <Link href="https://github.com/FirebaseExtended/codelab-studiovs-nextjs-listily" target="_blank">
-                  Learn More
-                </Link>
+              <Button size="lg" variant="outline" onClick={scrollToFeatures}>
+                Learn More
               </Button>
             </div>
           </motion.div>
         </section>
 
-        <section className="py-16 md:py-24">
+        <section id="features" className="py-16 md:py-24">
           <div className="container mx-auto px-4">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
