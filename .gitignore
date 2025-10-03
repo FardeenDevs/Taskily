@@ -27,10 +27,7 @@ yarn-error.log*
 .pnpm-debug.log*
 
 # local env files
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+.env*.local
 
 # vercel
 .vercel
@@ -39,6 +36,9 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# studio
-.studio
-public/
+# pwa
+/public/sw.js
+/public/sw.js.map
+/public/workbox-*.js
+/public/workbox-*.js.map
+/public/fallback-*.js
