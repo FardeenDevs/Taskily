@@ -23,7 +23,7 @@ export {
     Rows3,
     Route,
     LogOut,
-    User as UserIcon,
+    User,
     Chrome,
     Settings,
     X,
@@ -42,4 +42,5 @@ export {
     Copy,
     Eye,
     EyeOff,
+    ShieldCheck
 } from 'lucide-react';
