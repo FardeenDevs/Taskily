@@ -36,7 +36,7 @@ const forgotPasswordSchema = z.object({
 
 export default function LoginPage() {
   const auth = useAuth();
-  const { user } = useUser();
+  const { user, loading } = useUser();
   const router = useRouter();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
