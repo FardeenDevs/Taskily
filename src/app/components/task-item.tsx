@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, memo } from "react";
+import { useState, memo, useCallback } from "react";
 import { type Task, type Priority, type Effort } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -28,17 +28,26 @@ export const TaskItem = memo(function TaskItem({ task, onToggleTask, onDeleteTas
   const [editPriority, setEditPriority] = useState<Priority | null>(task.priority ?? null);
   const [editEffort, setEditEffort] = useState<Effort | null>(task.effort ?? null);
 
-  const handleSave = () => {
+  const handleSave = useCallback(() => {
     onEditTask(task.id, editText, editPriority, editEffort);
     setIsEditDialogOpen(false);
-  };
+  }, [task.id, editText, editPriority, editEffort, onEditTask]);
   
-  const openEditDialog = () => {
+  const openEditDialog = useCallback(() => {
     setEditText(task.text);
     setEditPriority(task.priority ?? null);
     setEditEffort(task.effort ?? null);
     setIsEditDialogOpen(true);
-  }
+  }, [task.text, task.priority, task.effort]);
+
+  const handleDelete = useCallback(() => {
+    onDeleteTask(task.id);
+  }, [task.id, onDeleteTask]);
+
+  const handleToggle = useCallback(() => {
+    onToggleTask(task.id);
+  }, [task.id, onToggleTask]);
+
 
   return (
     <div className="group relative flex items-center gap-3 rounded-lg bg-secondary/50 p-3 transition-colors hover:bg-secondary overflow-hidden">
@@ -56,7 +65,7 @@ export const TaskItem = memo(function TaskItem({ task, onToggleTask, onDeleteTas
       <Checkbox
         id={`task-${task.id}`}
         checked={task.completed}
-        onCheckedChange={() => onToggleTask(task.id)}
+        onCheckedChange={handleToggle}
         aria-label={`Mark task "${task.text}" as ${task.completed ? 'incomplete' : 'complete'}`}
         className="data-[state=checked]:bg-primary data-[state=checked]:border-primary relative z-10"
       />
@@ -139,7 +148,7 @@ export const TaskItem = memo(function TaskItem({ task, onToggleTask, onDeleteTas
           variant="destructiveIcon"
           size="icon"
           className="h-8 w-8"
-          onClick={() => onDeleteTask(task.id)}
+          onClick={handleDelete}
           aria-label={`Delete task "${task.text}"`}
         >
           <Trash2 />

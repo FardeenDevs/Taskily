@@ -5,7 +5,7 @@ import { memo } from 'react';
 import { type Note } from '@/lib/types';
 import { NoteItem } from './note-item';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ShieldAlert, Lock } from 'lucide-react';
+import { Lock } from 'lucide-react';
 
 interface NotesSectionProps {
   notes: Note[];
@@ -48,8 +48,8 @@ export const NotesSection = memo(function NotesSection({ notes, onEditNote, onDe
                 >
                     <NoteItem
                       note={note}
-                      onEdit={() => onEditNote(note)}
-                      onDelete={() => onDeleteNote(note.id)}
+                      onEdit={onEditNote}
+                      onDelete={onDeleteNote}
                     />
                 </motion.div>
                 ))}

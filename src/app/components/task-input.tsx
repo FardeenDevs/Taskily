@@ -145,5 +145,3 @@ export const TaskInput = memo(function TaskInput({ onAddTask, defaultPriority, d
     </Form>
   );
 });
-
-    

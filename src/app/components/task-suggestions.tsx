@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, memo } from "react";
+import { useState, memo, useCallback } from "react";
 import { type Task } from "@/lib/types";
 import { getTaskSuggestions } from "@/app/actions";
 import { Button } from "@/components/ui/button";
@@ -20,7 +20,7 @@ export const TaskSuggestions = memo(function TaskSuggestions({ currentTasks, onA
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const { toast } = useToast();
 
-  const handleFetchSuggestions = async () => {
+  const handleFetchSuggestions = useCallback(async () => {
     setIsLoading(true);
     setSuggestions([]);
     try {
@@ -50,19 +50,24 @@ export const TaskSuggestions = memo(function TaskSuggestions({ currentTasks, onA
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [currentTasks, toast]);
 
-  const handleAddSuggestion = (suggestion: string) => {
+  const handleAddSuggestion = useCallback((suggestion: string) => {
     onAddTask(suggestion);
     setSuggestions(prev => prev.filter(s => s !== suggestion));
-  }
+  }, [onAddTask]);
+
+  const handleOpenDialog = useCallback(() => {
+    setIsOpen(true);
+    handleFetchSuggestions();
+  }, [handleFetchSuggestions]);
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <Button 
           variant="outline" 
-          onClick={handleFetchSuggestions}
+          onClick={handleOpenDialog}
           disabled={currentTasks.filter(t => !t.completed).length === 0}
           className="disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
         >

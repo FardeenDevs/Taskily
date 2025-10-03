@@ -1,7 +1,7 @@
 
 "use client";
 
-import { memo } from 'react';
+import { memo, useCallback } from 'react';
 import { type Note } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Trash2 } from 'lucide-react';
@@ -11,8 +11,8 @@ import { type Timestamp } from 'firebase/firestore';
 
 interface NoteItemProps {
   note: Note;
-  onEdit: () => void;
-  onDelete: () => void;
+  onEdit: (note: Note) => void;
+  onDelete: (id: string) => void;
 }
 
 export const NoteItem = memo(function NoteItem({ note, onEdit, onDelete }: NoteItemProps) {
@@ -26,10 +26,18 @@ export const NoteItem = memo(function NoteItem({ note, onEdit, onDelete }: NoteI
     return new Date(createdAt as string).toLocaleDateString();
   };
 
+  const handleEdit = useCallback(() => {
+    onEdit(note);
+  }, [note, onEdit]);
+
+  const handleDelete = useCallback(() => {
+    onDelete(note.id);
+  }, [note.id, onDelete]);
+
   return (
-    <Card className="relative flex flex-col h-full group bg-secondary/30 hover:bg-secondary/60 transition-colors duration-200" onClick={onEdit}>
+    <Card className="relative flex flex-col h-full group bg-secondary/30 hover:bg-secondary/60 transition-colors duration-200" onClick={handleEdit}>
       <CardHeader className="flex-row items-start justify-between pb-2">
-        <CardTitle className="text-base font-bold leading-tight line-clamp-2 pr-8">{note.title}</CardTitle>
+        <CardTitle className="text-base font-bold leading-tight line-clamp-2 pr-8">{note.title || 'Untitled Note'}</CardTitle>
          <AlertDialog>
             <AlertDialogTrigger asChild>
                 <Button variant="destructiveIcon" size="icon" className="absolute top-2 right-2 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => { e.stopPropagation(); }} aria-label={`Delete note "${note.title}"`}>
@@ -45,7 +53,7 @@ export const NoteItem = memo(function NoteItem({ note, onEdit, onDelete }: NoteI
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={(e) => { e.stopPropagation(); onDelete(); }} className="bg-red-600 hover:bg-red-700 text-white">
+                    <AlertDialogAction onClick={(e) => { e.stopPropagation(); handleDelete(); }} className="bg-red-600 hover:bg-red-700 text-white">
                         Yes, delete it
                     </AlertDialogAction>
                 </AlertDialogFooter>
