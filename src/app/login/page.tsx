@@ -151,7 +151,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen w-full items-center justify-center bg-app-gradient p-4 md:justify-end md:p-8">
+    <div className="flex min-h-screen w-full items-center justify-center bg-app-gradient p-4 md:p-8">
       <Dialog>
         <motion.div
             initial={{ opacity: 0, y: 20 }}
