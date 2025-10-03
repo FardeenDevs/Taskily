@@ -1,39 +1,40 @@
 
 import { initializeApp, getApps, getApp, type FirebaseApp } from "firebase/app";
 import { getAuth, type Auth } from "firebase/auth";
-import { getFirestore, type Firestore, enableIndexedDbPersistence, CACHE_SIZE_UNLIMITED } from "firebase/firestore";
+import { 
+  getFirestore, 
+  type Firestore, 
+  initializeFirestore,
+  persistentLocalCache,
+  CACHE_SIZE_UNLIMITED 
+} from "firebase/firestore";
 import { firebaseConfig } from "./config";
 
 // Provides a singleton pattern for Firebase instances.
 let firebaseApp: FirebaseApp;
 let auth: Auth;
 let firestore: Firestore;
-let persistenceEnabled = false;
 
 function initializeFirebase() {
   if (typeof window !== "undefined") {
     if (!getApps().length) {
       firebaseApp = initializeApp(firebaseConfig);
       auth = getAuth(firebaseApp);
-      firestore = getFirestore(firebaseApp);
-
-      if (!persistenceEnabled) {
-        enableIndexedDbPersistence(firestore, { cacheSizeBytes: CACHE_SIZE_UNLIMITED })
-          .then(() => {
-            persistenceEnabled = true;
-          })
-          .catch((err) => {
-            if (err.code == 'failed-precondition') {
-              console.warn('Firestore persistence failed: multiple tabs open.');
-            } else if (err.code == 'unimplemented') {
-              console.warn('Firestore persistence not supported in this browser.');
-            }
-          });
-      }
+      // Use initializeFirestore for modern persistence setup
+      firestore = initializeFirestore(firebaseApp, {
+        localCache: persistentLocalCache({ cacheSizeBytes: CACHE_SIZE_UNLIMITED }),
+      });
     } else {
       firebaseApp = getApp();
       auth = getAuth(firebaseApp);
-      firestore = getFirestore(firebaseApp);
+      // Ensure firestore is initialized if it hasn't been already
+      try {
+        firestore = getFirestore(firebaseApp);
+      } catch (e) {
+         firestore = initializeFirestore(firebaseApp, {
+          localCache: persistentLocalCache({ cacheSizeBytes: CACHE_SIZE_UNLIMITED }),
+        });
+      }
     }
   }
 

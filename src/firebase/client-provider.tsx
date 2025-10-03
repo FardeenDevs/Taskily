@@ -11,12 +11,14 @@ interface FirebaseClientProviderProps {
 export function FirebaseClientProvider({
   children,
 }: FirebaseClientProviderProps) {
-  // By calling initializeFirebase() here at the top level of the component,
-  // we ensure that it runs before any child components can render and try to access Firebase.
-  // The useMemo hook ensures this initialization logic is executed only once per component lifecycle.
   const firebaseInstances = useMemo(() => initializeFirebase(), []);
 
-  // Now, we can safely pass the initialized instances to the provider.
+  // firebaseInstances might be undefined on the first server render, 
+  // so we should only render the provider when they are available on the client.
+  if (!firebaseInstances?.app) {
+    return <>{children}</>;
+  }
+
   return (
     <FirebaseProvider
       app={firebaseInstances.app}
