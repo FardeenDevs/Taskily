@@ -4,6 +4,7 @@
 import { useUser } from "@/firebase";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect } from "react";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 export function AuthGate({ children }: { children: React.ReactNode }) {
   const { user, loading } = useUser();
@@ -23,18 +24,21 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
     }
   }, [user, loading, router, isLoginPage, pathname]);
 
-  // If we are loading and on a protected page, render nothing to prevent flash of content
-  if (loading && !isLoginPage) {
-      return null;
+  // While checking auth status, show a spinner to prevent any content flash
+  if (loading) {
+      return <LoadingSpinner />;
   }
 
   // If there's no user and we are on a protected page, we render null and wait for redirect
   if (!user && !isLoginPage) {
       return null;
   }
+  
+  // If there is a user and we are on the login page, render null and wait for redirect
+  if (user && isLoginPage) {
+      return null;
+  }
 
-  // Otherwise, render the children
+  // Otherwise, render the children (either the protected page content or the login form)
   return <>{children}</>;
 }
-
-    
