@@ -11,6 +11,8 @@ import { useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { X } from 'lucide-react';
 
 interface NoteDialogProps {
   open: boolean;
@@ -32,7 +34,6 @@ export function NoteDialog({ open, onOpenChange, note, onSave }: NoteDialogProps
           },
         },
         orderedList: {
-            // Styling is now handled in globals.css to override prose styles
             HTMLAttributes: {
                 class: 'list-decimal',
             },
@@ -57,7 +58,6 @@ export function NoteDialog({ open, onOpenChange, note, onSave }: NoteDialogProps
       contentRef.current = content;
       setTitle(note.title);
       editor.commands.setContent(content);
-      // We don't focus the editor here to allow title editing first
     }
   }, [note, open, editor]);
   
@@ -76,25 +76,37 @@ export function NoteDialog({ open, onOpenChange, note, onSave }: NoteDialogProps
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className={cn("w-screen h-screen max-w-none rounded-none flex flex-col p-8 sm:p-12")}>
-        <DialogTitle className="sr-only">{title}</DialogTitle>
-        <Input
-          id="note-title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="Note Title"
-          className="text-4xl font-extrabold border-0 shadow-none focus-visible:ring-0 text-center h-auto py-2 mb-4"
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              e.preventDefault();
-              editor?.commands.focus();
-            }
-          }}
-        />
+      <DialogContent 
+        className={cn(
+          "flex h-full w-full max-w-full flex-col gap-0 p-0 sm:h-[90vh] sm:max-w-2xl sm:rounded-lg"
+        )}
+        showCloseButton={false}
+      >
+        <div className="flex items-center justify-between border-b p-4">
+            <DialogTitle className="sr-only">{title || 'Edit Note'}</DialogTitle>
+             <Input
+              id="note-title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Note Title"
+              className="border-0 text-lg font-semibold shadow-none focus-visible:ring-0 h-auto"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  editor?.commands.focus();
+                }
+              }}
+            />
+            <Button variant="ghost" size="icon" onClick={() => handleOpenChange(false)} className="h-9 w-9">
+              <X />
+              <span className="sr-only">Close</span>
+            </Button>
+        </div>
         
-        <div className="flex-grow pt-4 overflow-y-auto">
+        <div className="flex-grow overflow-y-auto p-6 pb-24">
            <RichTextEditor editor={editor} />
         </div>
+
         <RichTextToolbar editor={editor} />
       </DialogContent>
     </Dialog>
