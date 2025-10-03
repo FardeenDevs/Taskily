@@ -72,7 +72,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     }
   }
 
-  const showLoadingSpinner = loading || isResetting || isDeleting;
+  const showLoadingSpinner = (loading || isResetting || isDeleting) && pathname !== '/login';
 
   return (
     <TasksContext.Provider value={tasksHook}>
