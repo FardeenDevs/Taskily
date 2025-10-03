@@ -28,7 +28,8 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
 
 
   if (loading) {
-      return <LoadingSpinner />;
+      // If we are loading, don't show anything to prevent flashes
+      return null;
   }
 
   // If we are waiting for a redirect, render nothing to avoid flashes
