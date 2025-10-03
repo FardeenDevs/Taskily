@@ -199,37 +199,35 @@ export function useTasks() {
     }
   }, [user, userLoading, workspaces, workspacesLoading, initialCheckDone, appSettings.defaultWorkspaceId]);
 
-  // Create default workspace if none exist after initial check
+  // Create default workspace if none exist after initial check and data has loaded.
   useEffect(() => {
-    if (initialCheckDone && user && firestore && !workspacesLoading && workspaces?.length === 0) {
-        setLoading(true);
-        const defaultWorkspaceName = "My List";
-        const workspaceData = {
-            name: defaultWorkspaceName,
-            createdAt: serverTimestamp(),
-            ownerId: user.uid
-        };
-
-        const workspacesCollectionRef = collection(firestore, 'users', user.uid, 'workspaces');
-
-        addDoc(workspacesCollectionRef, workspaceData)
-        .then(docRef => {
-            setActiveWorkspaceId(docRef.id);
-            setIsFirstTime(true);
-        })
-        .catch(async (serverError) => {
-            const permissionError = new FirestorePermissionError({
-                path: workspacesCollectionRef.path,
-                operation: 'create',
-                requestResourceData: workspaceData,
-            });
-            errorEmitter.emit('permission-error', permissionError);
-        })
-        .finally(() => {
-            setLoading(false);
-        });
-    }
-  }, [initialCheckDone, workspaces, workspacesLoading, user, firestore]);
+      // This should ONLY run when the initial loading is complete and we confirm there are no workspaces.
+      if (!workspacesLoading && initialCheckDone && user && firestore && workspaces && workspaces.length === 0) {
+          const defaultWorkspaceName = "My List";
+          const workspaceData = {
+              name: defaultWorkspaceName,
+              createdAt: serverTimestamp(),
+              ownerId: user.uid
+          };
+  
+          const workspacesCollectionRef = collection(firestore, 'users', user.uid, 'workspaces');
+  
+          addDoc(workspacesCollectionRef, workspaceData)
+          .then(docRef => {
+              // This is the user's very first session.
+              setActiveWorkspaceId(docRef.id);
+              setIsFirstTime(true);
+          })
+          .catch(async (serverError) => {
+              const permissionError = new FirestorePermissionError({
+                  path: workspacesCollectionRef.path,
+                  operation: 'create',
+                  requestResourceData: workspaceData,
+              });
+              errorEmitter.emit('permission-error', permissionError);
+          });
+      }
+  }, [workspacesLoading, initialCheckDone, user, firestore, workspaces]);
 
 
   // Update loading state
@@ -783,7 +781,7 @@ export function useTasks() {
     setAppSettings,
     backupCodes,
     clearBackupCodes,
-    notesBackupCodes,
+notesBackupCodes,
     clearNotesBackupCodes,
     isNotesLocked,
     isUnlocking,
@@ -794,3 +792,5 @@ export function useTasks() {
     removeNotesPassword,
   };
 }
+
+    
