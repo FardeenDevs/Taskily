@@ -151,15 +151,14 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-end bg-app-gradient">
+    <div className="flex min-h-screen items-center justify-center bg-app-gradient p-4">
       <Dialog>
-        <div className="w-full max-w-sm p-4">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.5 }}
-            className="w-full"
+            className="w-full max-w-sm"
           >
             <Card className="shadow-2xl shadow-primary/10 border-border/20">
               <CardHeader className="text-center">
@@ -278,7 +277,6 @@ export default function LoginPage() {
               </CardContent>
             </Card>
           </motion.div>
-        </div>
           
           <DialogContent>
               <DialogHeader>
@@ -317,3 +315,5 @@ export default function LoginPage() {
     </div>
   );
 }
+
+    
