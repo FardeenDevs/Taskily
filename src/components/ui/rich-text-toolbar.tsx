@@ -4,7 +4,6 @@
 import { type Editor } from '@tiptap/react';
 import { Bold, Italic, Underline, List, Strikethrough, ListOrdered } from 'lucide-react';
 import { Toggle } from '@/components/ui/toggle';
-import { cn } from '@/lib/utils';
 
 interface RichTextToolbarProps {
   editor: Editor | null;
@@ -16,11 +15,7 @@ export function RichTextToolbar({ editor }: RichTextToolbarProps) {
   }
 
   return (
-    <div className={cn(
-      "flex items-center gap-1",
-      "absolute bottom-0 left-0 right-0 z-10", 
-      "border-t bg-background p-2 sm:relative sm:border-t-0 sm:bg-transparent sm:p-0"
-    )}>
+    <div className="fixed bottom-4 left-1/2 -translate-x-1/2 bg-card border rounded-lg shadow-lg p-2 flex items-center gap-1 z-[60]">
       <Toggle
         size="sm"
         pressed={editor.isActive('bold')}

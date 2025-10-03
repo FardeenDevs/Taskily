@@ -78,7 +78,7 @@ export function NoteDialog({ open, onOpenChange, note, onSave }: NoteDialogProps
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent 
         className={cn(
-          "flex h-full w-full max-w-full flex-col gap-0 p-0 sm:h-[90vh] sm:max-w-2xl sm:rounded-lg"
+          "flex h-full w-full max-w-full flex-col gap-0 p-0 rounded-none border-none"
         )}
         showCloseButton={false}
       >
