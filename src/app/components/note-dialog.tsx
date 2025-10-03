@@ -43,7 +43,7 @@ export function NoteDialog({ open, onOpenChange, note, onSave }: NoteDialogProps
     content: '',
     editorProps: {
       attributes: {
-        class: 'prose dark:prose-invert prose-sm sm:prose-base lg:prose-lg xl:prose-2xl focus:outline-none w-full h-full text-lg placeholder:text-muted-foreground/40',
+        class: 'prose dark:prose-invert focus:outline-none w-full h-full text-base placeholder:text-muted-foreground/40',
       },
     },
     onUpdate: ({ editor }) => {
