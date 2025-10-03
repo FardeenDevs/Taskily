@@ -34,6 +34,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   const tasksHook = useTasksClient();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const router = useRouter();
+  const pathname = usePathname();
   
   const { 
       loading, 
@@ -51,8 +52,6 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     } = tasksHook;
 
   const [currentView, setCurrentView] = useState<'progress' | 'notes'>('progress');
-  
-  const pathname = usePathname();
 
   useEffect(() => {
     // When the route changes, update the view state
@@ -70,7 +69,8 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     }
   }
 
-  // Do not show the main app layout or loader on the login page
+  // If we are on the login page, just render the children (the login page itself)
+  // without the main app layout.
   if (pathname === '/login') {
     return (
       <TasksContext.Provider value={tasksHook}>
@@ -125,6 +125,3 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     </TasksContext.Provider>
   );
 }
-
-    
-    
