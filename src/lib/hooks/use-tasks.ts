@@ -47,6 +47,8 @@ export function useTasks() {
   const [notesBackupCodes, setNotesBackupCodes] = useState<string[] | null>(null);
   const [unlockedWorkspaces, setUnlockedWorkspaces] = useState<string[]>([]);
   const [isUnlocking, setIsUnlocking] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   
   const { setOpen: setSidebarOpen } = useSidebar();
   
@@ -199,7 +201,7 @@ export function useTasks() {
 
   // Create default workspace if none exist after initial check
   useEffect(() => {
-    if (initialCheckDone && user && firestore && workspaces?.length === 0) {
+    if (initialCheckDone && user && firestore && !workspacesLoading && workspaces?.length === 0) {
         setLoading(true);
         const defaultWorkspaceName = "My List";
         const workspaceData = {
@@ -227,7 +229,7 @@ export function useTasks() {
             setLoading(false);
         });
     }
-  }, [initialCheckDone, workspaces, user, firestore]);
+  }, [initialCheckDone, workspaces, workspacesLoading, user, firestore]);
 
 
   // Update loading state
@@ -420,9 +422,11 @@ export function useTasks() {
   const resetApp = useCallback(async () => {
     if (!user || !firestore) return;
     
+    setIsResetting(true);
     const userWorkspacesQuery = query(collection(firestore, 'users', user.uid, 'workspaces'));
     
-    getDocs(userWorkspacesQuery).then(async (querySnapshot) => {
+    try {
+        const querySnapshot = await getDocs(userWorkspacesQuery);
         const batch = writeBatch(firestore);
 
         for (const workspaceDoc of querySnapshot.docs) {
@@ -443,33 +447,28 @@ export function useTasks() {
             batch.delete(workspaceDoc.ref);
         }
         
-        await batch.commit().catch(e => {
-            errorEmitter.emit('permission-error', new FirestorePermissionError({ path: `/users/${user.uid}/workspaces`, operation: 'write' }));
-            throw e;
-        });
+        await batch.commit();
 
         const workspacesCollectionRef = collection(firestore, 'users', user.uid, 'workspaces');
         
-        // Create a new default workspace after clearing everything
-         const defaultWorkspaceName = "My List";
-         const workspaceData = {
+        const defaultWorkspaceName = "My List";
+        const workspaceData = {
              name: defaultWorkspaceName,
              createdAt: serverTimestamp(),
              ownerId: user.uid
-         };
-         const newWorkspaceRef = await addDoc(workspacesCollectionRef, workspaceData).catch(e => {
-            errorEmitter.emit('permission-error', new FirestorePermissionError({ path: workspacesCollectionRef.path, operation: 'create', requestResourceData: workspaceData }));
-            throw e;
-         });
+        };
+        const newWorkspaceRef = await addDoc(workspacesCollectionRef, workspaceData);
 
         setActiveWorkspaceId(newWorkspaceRef.id);
         toast({
           title: "App Reset",
           description: "Everything has been reset to default.",
         });
-    }).catch(e => {
-         errorEmitter.emit('permission-error', new FirestorePermissionError({ path: userWorkspacesQuery.path, operation: 'list' }));
-    });
+    } catch(e) {
+        errorEmitter.emit('permission-error', new FirestorePermissionError({ path: userWorkspacesQuery.path, operation: 'list' }));
+    } finally {
+        setIsResetting(false);
+    }
   }, [user, toast, firestore]);
 
   const addWorkspace = useCallback((name: string) => {
@@ -672,6 +671,7 @@ export function useTasks() {
         return;
     }
     
+    setIsDeleting(true);
     const currentUser = auth.currentUser;
     const userDocRef = doc(firestore, 'users', currentUser.uid);
 
@@ -708,6 +708,8 @@ export function useTasks() {
 
     } catch (error) {
         console.error("Failed to complete account deletion process:", error);
+    } finally {
+        setIsDeleting(false);
     }
   }, [user, auth, firestore, toast]);
 
@@ -785,6 +787,8 @@ export function useTasks() {
     clearNotesBackupCodes,
     isNotesLocked,
     isUnlocking,
+    isResetting,
+    isDeleting,
     unlockNotes,
     setNotesPassword,
     removeNotesPassword,

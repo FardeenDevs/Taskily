@@ -48,7 +48,10 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
       backupCodes,
       clearBackupCodes,
       notesBackupCodes,
-      clearNotesBackupCodes
+      clearNotesBackupCodes,
+      loading,
+      isResetting,
+      isDeleting,
     } = tasksHook;
 
   const [currentView, setCurrentView] = useState<'progress' | 'notes'>('progress');
@@ -69,29 +72,25 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     }
   }
 
-  // If we are on the login page, just render the children (the login page itself)
-  // without the main app layout.
-  if (pathname === '/login') {
-    return (
-      <TasksContext.Provider value={tasksHook}>
-        <AuthGate>
-          {children}
-        </AuthGate>
-      </TasksContext.Provider>
-    );
-  }
+  const showLoadingSpinner = loading || isResetting || isDeleting;
 
   return (
     <TasksContext.Provider value={tasksHook}>
       <AuthGate>
-        <MainLayoutComponent 
-            tasksHook={tasksHook} 
-            setIsSettingsOpen={setIsSettingsOpen} 
-            currentView={currentView}
-            setCurrentView={handleSetCurrentView}
-        >
-          {children}
-        </MainLayoutComponent>
+        {showLoadingSpinner && <LoadingSpinner />}
+        
+        {pathname === '/login' ? (
+          children
+        ) : (
+          <MainLayoutComponent 
+              tasksHook={tasksHook} 
+              setIsSettingsOpen={setIsSettingsOpen} 
+              currentView={currentView}
+              setCurrentView={handleSetCurrentView}
+          >
+            {children}
+          </MainLayoutComponent>
+        )}
 
         {isFirstTime && <WelcomeDialog open={isFirstTime} onOpenChange={setIsFirstTime} />}
         
