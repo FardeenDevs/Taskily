@@ -13,32 +13,32 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
   const isLoginPage = pathname === '/login';
 
   useEffect(() => {
-    // If auth is not loading and there's no user, redirect to login from a protected page
-    if (!loading && !user && !isLoginPage) {
+    if (loading) return; // Wait until loading is complete before doing anything
+
+    // If there's no user, redirect to login from any protected page
+    if (!user && !isLoginPage) {
       router.push('/login');
     }
     
     // If the user is logged in, redirect them away from the login page
-    if (!loading && user && isLoginPage) {
+    if (user && isLoginPage) {
       router.push('/');
     }
   }, [user, loading, router, isLoginPage, pathname]);
 
-  // While checking auth status, show a spinner to prevent any content flash
+
   if (loading) {
       return <LoadingSpinner />;
   }
 
-  // If there's no user and we are on a protected page, we render null and wait for redirect
+  // If we are waiting for a redirect, render nothing to avoid flashes
   if (!user && !isLoginPage) {
       return null;
   }
-  
-  // If there is a user and we are on the login page, render null and wait for redirect
   if (user && isLoginPage) {
       return null;
   }
 
-  // Otherwise, render the children (either the protected page content or the login form)
+  // Otherwise, render the children
   return <>{children}</>;
 }

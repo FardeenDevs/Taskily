@@ -3,7 +3,6 @@
 
 import dynamic from 'next/dynamic';
 import { ReactNode } from 'react';
-import { AuthGate } from './auth-gate';
 import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
 
 // Dynamically import FirebaseClientProvider to ensure it only runs on the client
@@ -15,9 +14,7 @@ const FirebaseClientProvider = dynamic(
 export function ClientProviders({ children }: { children: ReactNode }) {
   return (
     <FirebaseClientProvider>
-        <AuthGate>
-            {children}
-        </AuthGate>
+        {children}
         <FirebaseErrorListener />
     </FirebaseClientProvider>
   );

@@ -11,6 +11,7 @@ import dynamic from "next/dynamic";
 import { BackupCodesDialog } from "@/components/ui/backup-codes-dialog";
 import { NotesBackupCodesDialog } from "@/components/ui/notes-backup-codes-dialog";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { AuthGate } from "./components/auth-gate";
 
 type useTasksType = ReturnType<typeof useTasksClient>;
 const TasksContext = React.createContext<useTasksType | null>(null);
@@ -30,14 +31,13 @@ const SettingsDialog = dynamic(() => import('@/app/components/settings-dialog').
 
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
-  const { user } = useUser();
   const tasksHook = useTasksClient();
+  const { user } = useUser();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
   
   const { 
-      loading, 
       isFirstTime, 
       setIsFirstTime, 
       resetApp, 
@@ -74,29 +74,16 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   if (pathname === '/login') {
     return (
       <TasksContext.Provider value={tasksHook}>
-        {children}
+        <AuthGate>
+          {children}
+        </AuthGate>
       </TasksContext.Provider>
-    );
-  }
-
-  if (loading && !tasksHook.activeWorkspaceId) {
-    return (
-      <AnimatePresence>
-          <motion.div
-              key="loader"
-              initial={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.5 }}
-              className="fixed inset-0 z-50 flex items-center justify-center bg-background"
-          >
-              <div className="h-16 w-16 animate-spin rounded-full border-4 border-solid border-primary border-t-transparent"></div>
-          </motion.div>
-      </AnimatePresence>
     );
   }
 
   return (
     <TasksContext.Provider value={tasksHook}>
+      <AuthGate>
         <MainLayoutComponent 
             tasksHook={tasksHook} 
             setIsSettingsOpen={setIsSettingsOpen} 
@@ -122,6 +109,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             appSettings={appSettings}
             onSettingsChange={setAppSettings}
         />}
+       </AuthGate>
     </TasksContext.Provider>
   );
 }
