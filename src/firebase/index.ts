@@ -1,3 +1,4 @@
+
 import { initializeApp, getApps, getApp, type FirebaseApp } from "firebase/app";
 import { getAuth, type Auth } from "firebase/auth";
 import { getFirestore, type Firestore, enableIndexedDbPersistence, CACHE_SIZE_UNLIMITED } from "firebase/firestore";
@@ -10,39 +11,35 @@ let firestore: Firestore;
 let persistenceEnabled = false;
 
 function initializeFirebase() {
-  if (getApps().length === 0) {
-    firebaseApp = initializeApp(firebaseConfig);
-    auth = getAuth(firebaseApp);
-    firestore = getFirestore(firebaseApp);
-    
-    // Enable offline persistence only once
-    if (!persistenceEnabled) {
-        try {
-            enableIndexedDbPersistence(firestore, { cacheSizeBytes: CACHE_SIZE_UNLIMITED })
-            .then(() => {
-                persistenceEnabled = true;
-            })
-            .catch((err) => {
-                if (err.code == 'failed-precondition') {
-                // Multiple tabs open, persistence can only be enabled in one tab at a time.
-                console.warn('Firestore persistence failed: multiple tabs open.');
-                } else if (err.code == 'unimplemented') {
-                // The current browser does not support all of the features required to enable persistence.
-                console.warn('Firestore persistence not supported in this browser.');
-                }
-            });
-        } catch (error) {
-            console.error("Firebase persistence error:", error);
-        }
+  if (typeof window !== "undefined") {
+    if (!getApps().length) {
+      firebaseApp = initializeApp(firebaseConfig);
+      auth = getAuth(firebaseApp);
+      firestore = getFirestore(firebaseApp);
+
+      if (!persistenceEnabled) {
+        enableIndexedDbPersistence(firestore, { cacheSizeBytes: CACHE_SIZE_UNLIMITED })
+          .then(() => {
+            persistenceEnabled = true;
+          })
+          .catch((err) => {
+            if (err.code == 'failed-precondition') {
+              console.warn('Firestore persistence failed: multiple tabs open.');
+            } else if (err.code == 'unimplemented') {
+              console.warn('Firestore persistence not supported in this browser.');
+            }
+          });
+      }
+    } else {
+      firebaseApp = getApp();
+      auth = getAuth(firebaseApp);
+      firestore = getFirestore(firebaseApp);
     }
-  } else {
-    firebaseApp = getApp();
-    auth = getAuth(firebaseApp);
-    firestore = getFirestore(firebaseApp);
   }
 
   return { app: firebaseApp, auth, firestore };
 }
+
 
 // Public API
 export { initializeFirebase };
