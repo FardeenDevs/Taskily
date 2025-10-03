@@ -10,6 +10,7 @@ import { UserNav } from "./user-nav";
 import { type useTasks } from "@/lib/hooks/use-tasks";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
+import Link from 'next/link';
 
 type View = 'progress' | 'notes';
 
@@ -38,7 +39,14 @@ function Layout({ children, tasksHook, setIsSettingsOpen, currentView, setCurren
                         </div>
 
                         <div className="flex items-center gap-4">
-                            <h1 className="text-2xl font-bold text-center text-foreground hidden sm:block">Listily</h1>
+                             <Link href="/" className="flex items-center gap-2 sm:hidden">
+                                <svg role="img" viewBox="0 0 24 24" className="h-7 w-7 text-primary">
+                                    <title>Listily</title>
+                                    <path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm0 18c-4.411 0-8-3.589-8-8s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8z" fill="currentColor"></path>
+                                    <path d="m16.299 7.295-5.294 5.294-2.293-2.293-1.414 1.414 3.707 3.707 6.707-6.707z" fill="currentColor"></path>
+                                </svg>
+                                <span className="sr-only">Listily</span>
+                            </Link>
                             <nav className={cn("relative flex items-center gap-2 rounded-full bg-secondary p-1")}>
                                 <span 
                                     onClick={() => setCurrentView('progress')}

@@ -58,15 +58,15 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     // When the route changes, update the view state
-    if (pathname === '/notes') {
+    if (pathname === '/app/notes') {
       setCurrentView('notes');
-    } else { // This will cover '/' and '/profile'
+    } else { // This will cover '/app' and '/app/profile'
       setCurrentView('progress');
     }
   }, [pathname]);
 
   const handleSetCurrentView = (view: 'progress' | 'notes') => {
-    const newPath = view === 'notes' ? '/notes' : '/';
+    const newPath = view === 'notes' ? '/app/notes' : '/app';
     if (pathname !== newPath) {
         router.push(newPath);
     }

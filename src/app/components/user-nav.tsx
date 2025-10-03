@@ -66,7 +66,7 @@ export function UserNav({ setIsSettingsOpen }: UserNavProps) {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          <Link href="/profile" passHref>
+          <Link href="/app/profile" passHref>
             <DropdownMenuItem>
               <UserIcon className="mr-2 h-4 w-4" />
               <span>Profile</span>

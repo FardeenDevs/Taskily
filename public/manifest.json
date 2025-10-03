@@ -1,11 +1,11 @@
 {
   "name": "Listily",
   "short_name": "Listily",
-  "description": "Get things done, one task at a time.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#F2F5F9",
+  "background_color": "#ffffff",
   "theme_color": "#4CAF50",
+  "description": "Get things done, one task at a time.",
   "icons": [
     {
       "src": "/icons/icon-192x192.png",
