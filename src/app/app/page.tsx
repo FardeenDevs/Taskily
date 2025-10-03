@@ -38,6 +38,8 @@ export default function AppPage() {
     addTask(text, priority, effort);
   }, [addTask]);
 
+  const showPlaceholder = !activeWorkspaceId || !activeWorkspace;
+
   return (
       <div className="mx-auto max-w-5xl w-full h-full p-4 sm:p-8">
         <Card className="border-2 border-border/50 shadow-2xl shadow-primary/5 overflow-hidden h-full flex flex-col">
@@ -49,7 +51,7 @@ export default function AppPage() {
             </div>
           </CardHeader>
           <CardContent className="space-y-8 flex-grow overflow-y-auto p-6 pt-0">
-            {!activeWorkspace ? (
+            {showPlaceholder ? (
                 <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/30 bg-muted/50 p-12 text-center h-64">
                   <h3 className="text-lg font-semibold text-muted-foreground">Select a Listspace</h3>
                   <p className="text-sm text-muted-foreground">Choose a listspace from the sidebar to get started.</p>
