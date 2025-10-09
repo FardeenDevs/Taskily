@@ -37,3 +37,19 @@ export interface AppSettings {
   defaultEffort: Effort;
   defaultWorkspaceId: string | null;
 }
+
+export const priorityMap: Record<Priority, { value: number }> = {
+    "P1": { value: 1 },
+    "P2": { value: 2 },
+    "P3": { value: 3 },
+    "P4": { value: 4 },
+    "P5": { value: 5 },
+};
+
+export const effortMap: Record<Effort, { value: number }> = {
+    "E1": { value: 1 },
+    "E2": { value: 2 },
+    "E3": { value: 3 },
+    "E4": { value: 4 },
+    "E5": { value: 5 },
+};

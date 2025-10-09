@@ -8,10 +8,14 @@ import { TaskInput } from "@/app/components/task-input";
 import { TaskList } from "@/app/components/task-list";
 import { TaskSuggestions } from "@/app/components/task-suggestions";
 import { Trash2 } from "lucide-react";
-import { useCallback } from "react";
+import { useCallback, useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Priority, Effort } from "@/lib/types";
+import { Priority, Effort, effortMap, priorityMap } from "@/lib/types";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { ListFilter } from "lucide-react";
+
+type SortOption = 'default' | 'priority' | 'effort';
 
 export default function AppPage() {
   const {
@@ -28,6 +32,8 @@ export default function AppPage() {
     appSettings,
   } = useTasks();
 
+  const [sortOrder, setSortOrder] = useState<SortOption>('default');
+
   const handleClearWorkspace = useCallback(() => {
     if (activeWorkspaceId) {
       clearWorkspace(activeWorkspaceId);
@@ -40,15 +46,67 @@ export default function AppPage() {
 
   const showPlaceholder = !activeWorkspaceId || !activeWorkspace;
 
+  const sortedTasks = useMemo(() => {
+    if (!tasks) return [];
+    
+    const sorted = [...tasks].sort((a, b) => {
+        // Completed tasks always go to the bottom
+        if (a.completed && !b.completed) return 1;
+        if (!a.completed && b.completed) return -1;
+
+        switch (sortOrder) {
+            case 'priority':
+                const priorityA = a.priority ? priorityMap[a.priority].value : 0;
+                const priorityB = b.priority ? priorityMap[b.priority].value : 0;
+                return priorityB - priorityA; // Higher value (P5) comes first
+            case 'effort':
+                const effortA = a.effort ? effortMap[a.effort].value : 0;
+                const effortB = b.effort ? effortMap[b.effort].value : 0;
+                return effortB - effortA; // Higher value (E5) comes first
+            default:
+                 const dateA = a.createdAt ? (typeof (a.createdAt as any).toDate === 'function' ? (a.createdAt as any).toDate() : new Date(a.createdAt as string)) : new Date(0);
+                 const dateB = b.createdAt ? (typeof (b.createdAt as any).toDate === 'function' ? (b.createdAt as any).toDate() : new Date(b.createdAt as string)) : new Date(0);
+                 return dateA.getTime() - dateB.getTime();
+        }
+    });
+
+    return sorted;
+
+  }, [tasks, sortOrder]);
+
   return (
       <div className="mx-auto max-w-5xl w-full h-full p-4 sm:p-8">
         <Card className="border-2 border-border/50 shadow-2xl shadow-primary/5 overflow-hidden h-full flex flex-col">
-          <CardHeader>
+          <CardHeader className="space-y-4">
             <div className="flex items-center justify-center gap-2">
               <CardTitle className="font-headline text-2xl font-bold tracking-tight text-foreground text-center">
                 {activeWorkspace?.name || "Listily Utilities"}
               </CardTitle>
             </div>
+             {!showPlaceholder && (
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
+                  <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                    <ListFilter className="h-4 w-4" />
+                    <span>Sort by</span>
+                  </div>
+                  <ToggleGroup
+                    type="single"
+                    value={sortOrder}
+                    onValueChange={(value: SortOption) => value && setSortOrder(value)}
+                    className="justify-center"
+                  >
+                    <ToggleGroupItem value="default" aria-label="Sort by date">
+                      Default
+                    </ToggleGroupItem>
+                    <ToggleGroupItem value="priority" aria-label="Sort by priority">
+                      Priority
+                    </ToggleGroupItem>
+                    <ToggleGroupItem value="effort" aria-label="Sort by effort">
+                      Effort
+                    </ToggleGroupItem>
+                  </ToggleGroup>
+              </div>
+            )}
           </CardHeader>
           <CardContent className="space-y-8 flex-grow overflow-y-auto p-6 pt-0">
             {showPlaceholder ? (
@@ -65,7 +123,7 @@ export default function AppPage() {
                   defaultEffort={appSettings.defaultEffort}
                 />
                 <TaskList
-                  tasks={tasks}
+                  tasks={sortedTasks}
                   onToggleTask={toggleTask}
                   onDeleteTask={deleteTask}
                   onEditTask={editTask}

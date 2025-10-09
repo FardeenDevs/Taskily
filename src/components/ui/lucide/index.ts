@@ -42,5 +42,6 @@ export {
     Copy,
     Eye,
     EyeOff,
-    ShieldCheck
+    ShieldCheck,
+    ListFilter
 } from 'lucide-react';
