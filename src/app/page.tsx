@@ -86,7 +86,7 @@ export default function LandingPage() {
               </span>
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground md:text-xl">
-              Welcome to <span className="font-bold text-foreground">Listily Utilities</span> — a powerful suite of tools designed to bring your tasks and notes together in one focused, intelligent workspace.
+              Welcome to <span className="font-bold text-foreground">Listily</span> — a powerful suite of tools designed to bring your tasks and notes together in one focused, intelligent workspace.
             </p>
             <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
               <Button size="lg" asChild className="shadow-xl">
