@@ -40,6 +40,8 @@ export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false);
+
 
   const signInForm = useForm<z.infer<typeof signInSchema>>({
     resolver: zodResolver(signInSchema),
@@ -136,8 +138,7 @@ export default function LoginPage() {
             description: `If an account exists for ${values.email}, a password reset link has been sent.`,
         });
         forgotPasswordForm.reset();
-        // Close the dialog by finding its trigger and clicking it
-        document.getElementById('forgot-password-trigger')?.click();
+        setIsForgotPasswordOpen(false);
     } catch (error) {
         console.error("Error sending password reset email", error);
         toast({
@@ -152,7 +153,7 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-screen w-full items-center justify-center bg-app-gradient p-4 md:p-8">
-      <Dialog>
+      <Dialog open={isForgotPasswordOpen} onOpenChange={setIsForgotPasswordOpen}>
         <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -301,9 +302,7 @@ export default function LoginPage() {
                         )}
                     />
                     <DialogFooter>
-                    <DialogTrigger asChild>
-                        <Button type="button" variant="secondary">Cancel</Button>
-                    </DialogTrigger>
+                        <Button type="button" variant="secondary" onClick={() => setIsForgotPasswordOpen(false)}>Cancel</Button>
                         <Button type="submit" disabled={isSubmitting}>
                             {isSubmitting ? 'Sending...' : 'Send Reset Link'}
                         </Button>
