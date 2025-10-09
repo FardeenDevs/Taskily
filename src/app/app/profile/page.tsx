@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useUser } from "@/firebase";
+import { useAuth, useUser } from "@/firebase";
 import { useTasks } from "@/app/main-layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -12,6 +12,9 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { sendPasswordResetEmail } from "firebase/auth";
+import { useToast } from "@/hooks/use-toast";
+import { Separator } from "@/components/ui/separator";
 
 const profileFormSchema = z.object({
   displayName: z.string().min(2, { message: "Name must be at least 2 characters." }).max(50, { message: "Name is too long." }),
@@ -19,7 +22,10 @@ const profileFormSchema = z.object({
 
 export default function ProfilePage() {
   const { user } = useUser();
+  const auth = useAuth();
   const { updateUserProfile } = useTasks();
+  const { toast } = useToast();
+  const [isPasswordResetting, setIsPasswordResetting] = useState(false);
 
   const form = useForm<z.infer<typeof profileFormSchema>>({
     resolver: zodResolver(profileFormSchema),
@@ -38,6 +44,27 @@ export default function ProfilePage() {
     updateUserProfile(values.displayName);
   };
   
+  const handlePasswordReset = async () => {
+    if (!user?.email || !auth) return;
+    setIsPasswordResetting(true);
+    try {
+        await sendPasswordResetEmail(auth, user.email);
+        toast({
+            title: "Password Reset Email Sent",
+            description: `A password reset link has been sent to ${user.email}.`,
+        });
+    } catch (error) {
+        console.error("Error sending password reset email", error);
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Could not send password reset email. Please try again.",
+        });
+    } finally {
+        setIsPasswordResetting(false);
+    }
+  };
+
   const getInitials = (name: string | null | undefined) => {
     if (!name) return "?";
     const names = name.split(' ');
@@ -54,6 +81,8 @@ export default function ProfilePage() {
       </div>
     );
   }
+
+  const isPasswordUser = user.providerData.some(p => p.providerId === 'password');
 
   return (
     <div className="mx-auto max-w-2xl w-full h-full p-4 sm:p-8">
@@ -94,6 +123,27 @@ export default function ProfilePage() {
               </Button>
             </form>
           </Form>
+
+          {isPasswordUser && (
+            <>
+              <Separator />
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-lg font-medium">Password</h3>
+                  <p className="text-sm text-muted-foreground">
+                    To change your password, send a reset link to your email.
+                  </p>
+                </div>
+                <Button 
+                  variant="outline" 
+                  onClick={handlePasswordReset}
+                  disabled={isPasswordResetting}
+                >
+                  {isPasswordResetting ? 'Sending...' : 'Send Password Reset Email'}
+                </Button>
+              </div>
+            </>
+          )}
 
         </CardContent>
       </Card>
