@@ -20,6 +20,8 @@ const DEFAULT_SETTINGS: AppSettings = {
   defaultPriority: "P3",
   defaultEffort: "E3",
   defaultWorkspaceId: null,
+  showPriority: true,
+  showEffort: true,
 };
 
 // Helper function to generate backup codes
@@ -57,7 +59,8 @@ export function useTasks() {
     if (user) {
       const storedSettings = localStorage.getItem(`${APP_SETTINGS_KEY}-${user.uid}`);
       if (storedSettings) {
-        setAppSettingsState(JSON.parse(storedSettings));
+        // Merge stored settings with defaults to ensure new settings are included
+        setAppSettingsState(prev => ({ ...prev, ...JSON.parse(storedSettings) }));
       }
     }
   }, [user]);
@@ -774,7 +777,7 @@ export function useTasks() {
     setAppSettings,
     backupCodes,
     clearBackupCodes,
-notesBackupCodes,
+    notesBackupCodes,
     clearNotesBackupCodes,
     isNotesLocked,
     isUnlocking,

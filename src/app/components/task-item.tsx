@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, memo, useCallback } from "react";
-import { type Task, type Priority, type Effort } from "@/lib/types";
+import { type Task, type Priority, type Effort, AppSettings } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -20,18 +20,24 @@ interface TaskItemProps {
   onToggleTask: (id: string) => void;
   onDeleteTask: (id: string) => void;
   onEditTask: (id: string, newText: string, newPriority: Priority | null, newEffort: Effort | null) => void;
+  appSettings: AppSettings;
 }
 
-export const TaskItem = memo(function TaskItem({ task, onToggleTask, onDeleteTask, onEditTask }: TaskItemProps) {
+export const TaskItem = memo(function TaskItem({ task, onToggleTask, onDeleteTask, onEditTask, appSettings }: TaskItemProps) {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editText, setEditText] = useState(task.text);
   const [editPriority, setEditPriority] = useState<Priority | null>(task.priority ?? null);
   const [editEffort, setEditEffort] = useState<Effort | null>(task.effort ?? null);
 
   const handleSave = useCallback(() => {
-    onEditTask(task.id, editText, editPriority, editEffort);
+    onEditTask(
+        task.id, 
+        editText,
+        appSettings.showPriority ? editPriority : null,
+        appSettings.showEffort ? editEffort : null
+    );
     setIsEditDialogOpen(false);
-  }, [task.id, editText, editPriority, editEffort, onEditTask]);
+  }, [task.id, editText, editPriority, editEffort, onEditTask, appSettings]);
   
   const openEditDialog = useCallback(() => {
     setEditText(task.text);
@@ -80,8 +86,8 @@ export const TaskItem = memo(function TaskItem({ task, onToggleTask, onDeleteTas
           {task.text}
         </label>
         <div className="flex items-center gap-1">
-            {task.priority && <PriorityBadge priority={task.priority} />}
-            {task.effort && <EffortBadge effort={task.effort} />}
+            {appSettings.showPriority && task.priority && <PriorityBadge priority={task.priority} />}
+            {appSettings.showEffort && task.effort && <EffortBadge effort={task.effort} />}
         </div>
       </div>
       <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100 relative z-10">
@@ -108,36 +114,40 @@ export const TaskItem = memo(function TaskItem({ task, onToggleTask, onDeleteTas
                   onKeyDown={(e) => e.key === 'Enter' && handleSave()}
                 />
               </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                  <Label className="text-right">Priority</Label>
-                   <Select onValueChange={(value) => setEditPriority(value as Priority)} value={editPriority ?? undefined}>
-                      <SelectTrigger className="col-span-3">
+              {appSettings.showPriority && (
+                <div className="grid grid-cols-4 items-center gap-4">
+                    <Label className="text-right">Priority</Label>
+                    <Select onValueChange={(value) => setEditPriority(value as Priority)} value={editPriority ?? undefined}>
+                        <SelectTrigger className="col-span-3">
                         <SelectValue placeholder="Set priority" />
-                      </SelectTrigger>
-                      <SelectContent>
+                        </SelectTrigger>
+                        <SelectContent>
                         <SelectItem value="P1">Priority 1 (Low)</SelectItem>
                         <SelectItem value="P2">Priority 2</SelectItem>
                         <SelectItem value="P3">Priority 3 (Medium)</SelectItem>
                         <SelectItem value="P4">Priority 4</SelectItem>
                         <SelectItem value="P5">Priority 5 (High)</SelectItem>
-                      </SelectContent>
+                        </SelectContent>
                     </Select>
-              </div>
-               <div className="grid grid-cols-4 items-center gap-4">
-                  <Label className="text-right">Effort</Label>
-                   <Select onValueChange={(value) => setEditEffort(value as Effort)} value={editEffort ?? undefined}>
-                      <SelectTrigger className="col-span-3">
+                </div>
+              )}
+               {appSettings.showEffort && (
+                <div className="grid grid-cols-4 items-center gap-4">
+                    <Label className="text-right">Effort</Label>
+                    <Select onValueChange={(value) => setEditEffort(value as Effort)} value={editEffort ?? undefined}>
+                        <SelectTrigger className="col-span-3">
                         <SelectValue placeholder="Set effort" />
-                      </SelectTrigger>
-                      <SelectContent>
+                        </SelectTrigger>
+                        <SelectContent>
                         <SelectItem value="E1">Effort 1 (Very Easy)</SelectItem>
                         <SelectItem value="E2">Effort 2 (Easy)</SelectItem>
                         <SelectItem value="E3">Effort 3 (Medium)</SelectItem>
                         <SelectItem value="E4">Effort 4 (Hard)</SelectItem>
                         <SelectItem value="E5">Effort 5 (Very Hard)</SelectItem>
-                      </SelectContent>
+                        </SelectContent>
                     </Select>
-              </div>
+                </div>
+               )}
             </div>
             <DialogFooter>
               <Button type="submit" onClick={handleSave} variant="edit">Save changes</Button>

@@ -56,13 +56,19 @@ export default function AppPage() {
 
         switch (sortOrder) {
             case 'priority':
-                const priorityA = a.priority ? priorityMap[a.priority].value : 0;
-                const priorityB = b.priority ? priorityMap[b.priority].value : 0;
-                return priorityB - priorityA; // Higher value (P5) comes first
+                if (appSettings.showPriority) {
+                    const priorityA = a.priority ? priorityMap[a.priority].value : 0;
+                    const priorityB = b.priority ? priorityMap[b.priority].value : 0;
+                    return priorityB - priorityA; // Higher value (P5) comes first
+                }
+                // Fallthrough to default if priority is hidden
             case 'effort':
-                const effortA = a.effort ? effortMap[a.effort].value : 0;
-                const effortB = b.effort ? effortMap[b.effort].value : 0;
-                return effortB - effortA; // Higher value (E5) comes first
+                if (appSettings.showEffort) {
+                    const effortA = a.effort ? effortMap[a.effort].value : 0;
+                    const effortB = b.effort ? effortMap[b.effort].value : 0;
+                    return effortB - effortA; // Higher value (E5) comes first
+                }
+                // Fallthrough to default if effort is hidden
             default:
                  const dateA = a.createdAt ? (typeof (a.createdAt as any).toDate === 'function' ? (a.createdAt as any).toDate() : new Date(a.createdAt as string)) : new Date(0);
                  const dateB = b.createdAt ? (typeof (b.createdAt as any).toDate === 'function' ? (b.createdAt as any).toDate() : new Date(b.createdAt as string)) : new Date(0);
@@ -72,7 +78,7 @@ export default function AppPage() {
 
     return sorted;
 
-  }, [tasks, sortOrder]);
+  }, [tasks, sortOrder, appSettings.showPriority, appSettings.showEffort]);
 
   return (
       <div className="mx-auto max-w-5xl w-full h-full p-4 sm:p-8">
@@ -98,12 +104,16 @@ export default function AppPage() {
                     <ToggleGroupItem value="default" aria-label="Sort by date">
                       Default
                     </ToggleGroupItem>
-                    <ToggleGroupItem value="priority" aria-label="Sort by priority">
-                      Priority
-                    </ToggleGroupItem>
-                    <ToggleGroupItem value="effort" aria-label="Sort by effort">
-                      Effort
-                    </ToggleGroupItem>
+                    {appSettings.showPriority && (
+                        <ToggleGroupItem value="priority" aria-label="Sort by priority">
+                        Priority
+                        </ToggleGroupItem>
+                    )}
+                    {appSettings.showEffort && (
+                        <ToggleGroupItem value="effort" aria-label="Sort by effort">
+                        Effort
+                        </ToggleGroupItem>
+                    )}
                   </ToggleGroup>
               </div>
             )}
@@ -119,14 +129,14 @@ export default function AppPage() {
                 <TaskProgress completed={completedTasks} total={totalTasks} />
                 <TaskInput 
                   onAddTask={handleAddTask} 
-                  defaultPriority={appSettings.defaultPriority}
-                  defaultEffort={appSettings.defaultEffort}
+                  appSettings={appSettings}
                 />
                 <TaskList
                   tasks={sortedTasks}
                   onToggleTask={toggleTask}
                   onDeleteTask={deleteTask}
                   onEditTask={editTask}
+                  appSettings={appSettings}
                 />
               </div>
             )}

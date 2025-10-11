@@ -36,6 +36,8 @@ export interface AppSettings {
   defaultPriority: Priority;
   defaultEffort: Effort;
   defaultWorkspaceId: string | null;
+  showPriority: boolean;
+  showEffort: boolean;
 }
 
 export const priorityMap: Record<Priority, { value: number }> = {

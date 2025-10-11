@@ -10,7 +10,7 @@ import { Form, FormControl, FormField, FormItem, FormMessage } from "@/component
 import { Plus } from "lucide-react";
 import { useState, useEffect, memo } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import type { Priority, Effort } from "@/lib/types";
+import type { Priority, Effort, AppSettings } from "@/lib/types";
 
 const formSchema = z.object({
   task: z.string().min(1, {
@@ -24,17 +24,16 @@ const formSchema = z.object({
 
 interface TaskInputProps {
   onAddTask: (text: string, priority: Priority | null, effort: Effort | null) => void;
-  defaultPriority: Priority;
-  defaultEffort: Effort;
+  appSettings: AppSettings;
 }
 
-export const TaskInput = memo(function TaskInput({ onAddTask, defaultPriority, defaultEffort }: TaskInputProps) {
+export const TaskInput = memo(function TaskInput({ onAddTask, appSettings }: TaskInputProps) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       task: "",
-      priority: defaultPriority,
-      effort: defaultEffort,
+      priority: appSettings.defaultPriority,
+      effort: appSettings.defaultEffort,
     },
   });
 
@@ -43,10 +42,10 @@ export const TaskInput = memo(function TaskInput({ onAddTask, defaultPriority, d
   useEffect(() => {
     form.reset({
       task: form.getValues('task'),
-      priority: defaultPriority,
-      effort: defaultEffort
+      priority: appSettings.defaultPriority,
+      effort: appSettings.defaultEffort
     });
-  }, [defaultPriority, defaultEffort, form]);
+  }, [appSettings.defaultPriority, appSettings.defaultEffort, form]);
 
   useEffect(() => {
     const subscription = form.watch((value) => {
@@ -58,10 +57,10 @@ export const TaskInput = memo(function TaskInput({ onAddTask, defaultPriority, d
   function onSubmit(values: z.infer<typeof formSchema>) {
     onAddTask(
       values.task,
-      values.priority as Priority || null,
-      values.effort as Effort || null
+      appSettings.showPriority ? (values.priority as Priority || null) : null,
+      appSettings.showEffort ? (values.effort as Effort || null) : null
     );
-    form.reset({ task: "", priority: defaultPriority, effort: defaultEffort });
+    form.reset({ task: "", priority: appSettings.defaultPriority, effort: appSettings.defaultEffort });
   }
 
   return (
@@ -95,52 +94,58 @@ export const TaskInput = memo(function TaskInput({ onAddTask, defaultPriority, d
             <Plus />
           </Button>
         </div>
-        <div className="grid grid-cols-2 gap-2 w-full">
-          <FormField
-            control={form.control}
-            name="priority"
-            render={({ field }) => (
-              <FormItem>
-                <Select onValueChange={field.onChange} value={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Priority" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="P1">Priority 1 (Low)</SelectItem>
-                    <SelectItem value="P2">Priority 2</SelectItem>
-                    <SelectItem value="P3">Priority 3 (Medium)</SelectItem>
-                    <SelectItem value="P4">Priority 4</SelectItem>
-                    <SelectItem value="P5">Priority 5 (High)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </FormItem>
+        {(appSettings.showPriority || appSettings.showEffort) && (
+            <div className="grid grid-cols-2 gap-2 w-full">
+            {appSettings.showPriority && (
+                <FormField
+                control={form.control}
+                name="priority"
+                render={({ field }) => (
+                    <FormItem>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Priority" />
+                        </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                        <SelectItem value="P1">Priority 1 (Low)</SelectItem>
+                        <SelectItem value="P2">Priority 2</SelectItem>
+                        <SelectItem value="P3">Priority 3 (Medium)</SelectItem>
+                        <SelectItem value="P4">Priority 4</SelectItem>
+                        <SelectItem value="P5">Priority 5 (High)</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    </FormItem>
+                )}
+                />
             )}
-          />
-          <FormField
-            control={form.control}
-            name="effort"
-            render={({ field }) => (
-              <FormItem>
-                <Select onValueChange={field.onChange} value={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Effort" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="E1">Effort 1 (Very Easy)</SelectItem>
-                    <SelectItem value="E2">Effort 2 (Easy)</SelectItem>
-                    <SelectItem value="E3">Effort 3 (Medium)</SelectItem>
-                    <SelectItem value="E4">Effort 4 (Hard)</SelectItem>
-                    <SelectItem value="E5">Effort 5 (Very Hard)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </FormItem>
+            {appSettings.showEffort && (
+                <FormField
+                control={form.control}
+                name="effort"
+                render={({ field }) => (
+                    <FormItem>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Effort" />
+                        </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                        <SelectItem value="E1">Effort 1 (Very Easy)</SelectItem>
+                        <SelectItem value="E2">Effort 2 (Easy)</SelectItem>
+                        <SelectItem value="E3">Effort 3 (Medium)</SelectItem>
+                        <SelectItem value="E4">Effort 4 (Hard)</SelectItem>
+                        <SelectItem value="E5">Effort 5 (Very Hard)</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    </FormItem>
+                )}
+                />
             )}
-          />
-        </div>
+            </div>
+        )}
       </form>
     </Form>
   );
