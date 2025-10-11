@@ -92,7 +92,7 @@ export function MainLayout({ children, tasksHook, setIsSettingsOpen }: MainLayou
                         
 
                         <div className="flex items-center gap-2">
-                             <Link href="/" className="flex items-center gap-2 sm:hidden">
+                             <Link href="/app" className="flex items-center gap-2">
                                 <svg role="img" viewBox="0 0 24 24" className="h-7 w-7 text-primary">
                                     <title>Listily</title>
                                     <path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm0 18c-4.411 0-8-3.589-8-8s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8z" fill="currentColor"></path>
