@@ -14,7 +14,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PriorityBadge } from "./priority-badge";
 import { EffortBadge } from "./effort-badge";
-import { Separator } from "@/components/ui/separator";
 
 interface TaskItemProps {
   task: Task;
@@ -89,8 +88,8 @@ export const TaskItem = memo(function TaskItem({ task, onToggleTask, onDeleteTas
                 {task.text}
                 </label>
             </div>
-            <div className="flex items-center gap-2 relative z-10">
-                 <div className="flex items-center gap-1">
+            <div className="flex items-center gap-3 relative z-10">
+                 <div className="flex items-center gap-2">
                     {showPriority && task.priority && <PriorityBadge priority={task.priority} />}
                     {showEffort && task.effort && <EffortBadge effort={task.effort} />}
                 </div>

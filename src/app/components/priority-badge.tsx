@@ -1,21 +1,25 @@
 "use client";
 
 import { type Priority } from "@/lib/types";
-import { Badge, type BadgeProps } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 interface PriorityBadgeProps {
     priority: Priority;
+    className?: string;
 }
 
-const priorityMap: Record<Priority, { variant: BadgeProps['variant'], label: string }> = {
-    "P1": { variant: "p1", label: "P1" },
-    "P2": { variant: "p2", label: "P2" },
-    "P3": { variant: "p3", label: "P3" },
-    "P4": { variant: "p4", label: "P4" },
-    "P5": { variant: "p5", label: "P5" },
+const priorityColorMap: Record<Priority, string> = {
+    "P1": "text-green-500",
+    "P2": "text-green-600 dark:text-green-500",
+    "P3": "text-yellow-600 dark:text-yellow-500",
+    "P4": "text-orange-600 dark:text-orange-500",
+    "P5": "text-red-600 dark:text-red-500",
 }
 
-export function PriorityBadge({ priority }: PriorityBadgeProps) {
-    const { variant, label } = priorityMap[priority];
-    return <Badge variant={variant}>{label}</Badge>
+export function PriorityBadge({ priority, className }: PriorityBadgeProps) {
+    return (
+        <span className={cn("text-xs font-bold", priorityColorMap[priority], className)}>
+            {priority}
+        </span>
+    )
 }
