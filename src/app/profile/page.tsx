@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useUser } from "@/firebase";
+import { useAuth, useUser } from "@/firebase";
 import { useTasks } from "@/app/main-layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -12,6 +12,11 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { sendPasswordResetEmail, updateProfile } from "firebase/auth";
+import { doc, updateDoc } from "firebase/firestore";
+import { useFirestore } from "@/firebase";
+import { useToast } from "@/hooks/use-toast";
+import { Separator } from "@/components/ui/separator";
 
 const profileFormSchema = z.object({
   displayName: z.string().min(2, { message: "Name must be at least 2 characters." }).max(50, { message: "Name is too long." }),
@@ -19,7 +24,10 @@ const profileFormSchema = z.object({
 
 export default function ProfilePage() {
   const { user } = useUser();
-  const { updateUserProfile } = useTasks();
+  const auth = useAuth();
+  const firestore = useFirestore();
+  const { toast } = useToast();
+  const [isPasswordResetting, setIsPasswordResetting] = useState(false);
 
   const form = useForm<z.infer<typeof profileFormSchema>>({
     resolver: zodResolver(profileFormSchema),
@@ -34,10 +42,52 @@ export default function ProfilePage() {
     }
   }, [user, form]);
 
-  const onSubmit = (values: z.infer<typeof profileFormSchema>) => {
-    updateUserProfile(values.displayName);
+  const onSubmit = async (values: z.infer<typeof profileFormSchema>) => {
+    if (!user || !auth?.currentUser || !firestore) {
+      toast({ variant: "destructive", title: "Not signed in" });
+      return;
+    }
+    
+    if (values.displayName.trim().length < 2) {
+      toast({ variant: "destructive", title: "Invalid Name", description: "Display name must be at least 2 characters." });
+      return;
+    }
+
+    const currentUser = auth.currentUser;
+    const userDocRef = doc(firestore, 'users', currentUser.uid);
+    const updateData = { displayName: values.displayName.trim() };
+
+    try {
+      await updateDoc(userDocRef, updateData);
+      await updateProfile(currentUser, { displayName: values.displayName.trim() });
+      toast({ title: "Profile Updated", description: "Your display name has been changed." });
+    } catch (error) {
+      console.error("Error updating profile: ", error);
+      toast({ variant: "destructive", title: "Update Failed", description: "Could not update your profile. Please try again." });
+    }
   };
   
+  const handlePasswordReset = async () => {
+    if (!user?.email || !auth) return;
+    setIsPasswordResetting(true);
+    try {
+        await sendPasswordResetEmail(auth, user.email);
+        toast({
+            title: "Password Reset Email Sent",
+            description: `A password reset link has been sent to ${user.email}.`,
+        });
+    } catch (error) {
+        console.error("Error sending password reset email", error);
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Could not send password reset email. Please try again.",
+        });
+    } finally {
+        setIsPasswordResetting(false);
+    }
+  };
+
   const getInitials = (name: string | null | undefined) => {
     if (!name) return "?";
     const names = name.split(' ');
@@ -54,6 +104,8 @@ export default function ProfilePage() {
       </div>
     );
   }
+
+  const isPasswordUser = user.providerData.some(p => p.providerId === 'password');
 
   return (
     <div className="mx-auto max-w-2xl w-full h-full p-4 sm:p-8">
@@ -94,6 +146,27 @@ export default function ProfilePage() {
               </Button>
             </form>
           </Form>
+
+          {isPasswordUser && (
+            <>
+              <Separator />
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-lg font-medium">Password</h3>
+                  <p className="text-sm text-muted-foreground">
+                    To change your password, send a reset link to your email.
+                  </p>
+                </div>
+                <Button 
+                  variant="outline" 
+                  onClick={handlePasswordReset}
+                  disabled={isPasswordResetting}
+                >
+                  {isPasswordResetting ? 'Sending...' : 'Send Password Reset Email'}
+                </Button>
+              </div>
+            </>
+          )}
 
         </CardContent>
       </Card>
