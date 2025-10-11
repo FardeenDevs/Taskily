@@ -11,20 +11,19 @@ import { type useTasks } from "@/lib/hooks/use-tasks";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from 'next/link';
-
-type View = 'progress' | 'notes';
+import { useView } from "@/app/main-layout";
 
 type MainLayoutProps = {
     children: React.ReactNode;
     tasksHook: ReturnType<typeof useTasks>;
     setIsSettingsOpen: (isOpen: boolean) => void;
-    currentView: View;
-    setCurrentView: (view: View) => void;
 }
 
-function Layout({ children, tasksHook, setIsSettingsOpen, currentView, setCurrentView }: MainLayoutProps) {
+export function MainLayout({ children, tasksHook, setIsSettingsOpen }: MainLayoutProps) {
     const { toggleSidebar } = useSidebar();
     const pathname = usePathname();
+    const { currentView, setCurrentView } = useView();
+    const isProfilePage = pathname === '/app/profile';
 
     return (
         <>
@@ -38,7 +37,61 @@ function Layout({ children, tasksHook, setIsSettingsOpen, currentView, setCurren
                             </Button>
                         </div>
 
-                        <div className="flex items-center gap-4">
+                        <AnimatePresence>
+                        {!isProfilePage && (
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.95 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.95 }}
+                                className="flex items-center gap-4"
+                            >
+                                <nav className={cn("relative flex items-center gap-2 rounded-full bg-secondary p-1")}>
+                                    <span 
+                                        onClick={() => setCurrentView('progress')}
+                                        className={cn(
+                                            "relative z-10 cursor-pointer rounded-full px-4 py-1 text-sm font-medium transition-colors",
+                                            currentView !== 'progress' && "text-muted-foreground hover:text-foreground"
+                                        )}>
+                                        Progress
+                                    </span>
+                                    <span 
+                                        onClick={() => setCurrentView('notes')}
+                                        className={cn(
+                                            "relative z-10 cursor-pointer rounded-full px-4 py-1 text-sm font-medium transition-colors",
+                                            currentView !== 'notes' && "text-muted-foreground hover:text-foreground"
+                                        )}>
+                                        Notes
+                                    </span>
+                                    <AnimatePresence>
+                                        {currentView === 'progress' ? (
+                                            <motion.div
+                                                key="progress-indicator"
+                                                layoutId="nav-indicator"
+                                                className="absolute left-1 h-[calc(100%-8px)] w-[90px] rounded-full bg-background shadow-sm"
+                                                initial={{ opacity: 0 }}
+                                                animate={{ opacity: 1, transition: { duration: 0.3 } }}
+                                                exit={{ opacity: 0, transition: { duration: 0.3 } }}
+                                                transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                                            />
+                                        ) : (
+                                            <motion.div
+                                                key="notes-indicator"
+                                                layoutId="nav-indicator"
+                                                className="absolute left-[98px] h-[calc(100%-8px)] w-[75px] rounded-full bg-background shadow-sm"
+                                                initial={{ opacity: 0 }}
+                                                animate={{ opacity: 1, transition: { duration: 0.3 } }}
+                                                exit={{ opacity: 0, transition: { duration: 0.3 } }}
+                                                transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                                            />
+                                        )}
+                                    </AnimatePresence>
+                                </nav>
+                            </motion.div>
+                        )}
+                        </AnimatePresence>
+                        
+
+                        <div className="flex items-center gap-2">
                              <Link href="/" className="flex items-center gap-2 sm:hidden">
                                 <svg role="img" viewBox="0 0 24 24" className="h-7 w-7 text-primary">
                                     <title>Listily</title>
@@ -47,50 +100,6 @@ function Layout({ children, tasksHook, setIsSettingsOpen, currentView, setCurren
                                 </svg>
                                 <span className="sr-only">Listily</span>
                             </Link>
-                            <nav className={cn("relative flex items-center gap-2 rounded-full bg-secondary p-1")}>
-                                <span 
-                                    onClick={() => setCurrentView('progress')}
-                                    className={cn(
-                                        "relative z-10 cursor-pointer rounded-full px-4 py-1 text-sm font-medium transition-colors",
-                                        currentView !== 'progress' && "text-muted-foreground hover:text-foreground"
-                                    )}>
-                                    Progress
-                                </span>
-                                <span 
-                                    onClick={() => setCurrentView('notes')}
-                                    className={cn(
-                                        "relative z-10 cursor-pointer rounded-full px-4 py-1 text-sm font-medium transition-colors",
-                                        currentView !== 'notes' && "text-muted-foreground hover:text-foreground"
-                                    )}>
-                                    Notes
-                                </span>
-                                <AnimatePresence>
-                                    {currentView === 'progress' ? (
-                                        <motion.div
-                                            key="progress-indicator"
-                                            layoutId="nav-indicator"
-                                            className="absolute left-1 h-[calc(100%-8px)] w-[90px] rounded-full bg-background shadow-sm"
-                                            initial={{ opacity: 0 }}
-                                            animate={{ opacity: 1, transition: { duration: 0.3 } }}
-                                            exit={{ opacity: 0, transition: { duration: 0.3 } }}
-                                            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                                        />
-                                    ) : (
-                                        <motion.div
-                                            key="notes-indicator"
-                                            layoutId="nav-indicator"
-                                            className="absolute left-[98px] h-[calc(100%-8px)] w-[75px] rounded-full bg-background shadow-sm"
-                                            initial={{ opacity: 0 }}
-                                            animate={{ opacity: 1, transition: { duration: 0.3 } }}
-                                            exit={{ opacity: 0, transition: { duration: 0.3 } }}
-                                            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                                        />
-                                    )}
-                                </AnimatePresence>
-                            </nav>
-                        </div>
-
-                        <div className="flex items-center gap-2">
                             <UserNav setIsSettingsOpen={setIsSettingsOpen} />
                         </div>
                     </header>
@@ -110,14 +119,5 @@ function Layout({ children, tasksHook, setIsSettingsOpen, currentView, setCurren
                 </div>
             </SidebarInset>
         </>
-    )
-}
-
-
-export function MainLayout({ children, tasksHook, setIsSettingsOpen, currentView, setCurrentView }: MainLayoutProps) {
-    return (
-        <Layout tasksHook={tasksHook} setIsSettingsOpen={setIsSettingsOpen} currentView={currentView} setCurrentView={setCurrentView}>
-            {children}
-        </Layout>
     )
 }

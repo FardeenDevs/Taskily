@@ -6,7 +6,6 @@ import { useTasks as useTasksClient } from "@/lib/hooks/use-tasks";
 import { useUser } from "@/firebase";
 import { MainLayout as MainLayoutComponent } from "./components/main-layout";
 import { useRouter, usePathname } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
 import dynamic from "next/dynamic";
 import { BackupCodesDialog } from "@/components/ui/backup-codes-dialog";
 import { NotesBackupCodesDialog } from "@/components/ui/notes-backup-codes-dialog";
@@ -16,10 +15,26 @@ import { AuthGate } from "./components/auth-gate";
 type useTasksType = ReturnType<typeof useTasksClient>;
 const TasksContext = React.createContext<useTasksType | null>(null);
 
+type View = 'progress' | 'notes';
+type ViewContextType = {
+  currentView: View;
+  setCurrentView: (view: View) => void;
+}
+const ViewContext = React.createContext<ViewContextType | null>(null);
+
+
 export const useTasks = () => {
     const context = use(TasksContext);
     if (!context) {
         throw new Error("useTasks must be used within a AppLayout");
+    }
+    return context;
+}
+
+export const useView = () => {
+    const context = use(ViewContext);
+    if (!context) {
+        throw new Error("useView must be used within a AppLayout");
     }
     return context;
 }
@@ -55,60 +70,44 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     } = tasksHook;
 
   const [currentView, setCurrentView] = useState<'progress' | 'notes'>('progress');
-
-  useEffect(() => {
-    // When the route changes, update the view state
-    if (pathname === '/app/notes') {
-      setCurrentView('notes');
-    } else { // This will cover '/app' and '/app/profile'
-      setCurrentView('progress');
-    }
-  }, [pathname]);
-
-  const handleSetCurrentView = (view: 'progress' | 'notes') => {
-    const newPath = view === 'notes' ? '/app/notes' : '/app';
-    if (pathname !== newPath) {
-        router.push(newPath);
-    }
-  }
-
+  
   const showLoadingSpinner = (loading || isResetting || isDeleting) && pathname !== '/login';
 
   return (
     <TasksContext.Provider value={tasksHook}>
-      <AuthGate>
-        {showLoadingSpinner && <LoadingSpinner />}
-        
-        {pathname === '/login' ? (
-          children
-        ) : (
-          <MainLayoutComponent 
-              tasksHook={tasksHook} 
-              setIsSettingsOpen={setIsSettingsOpen} 
-              currentView={currentView}
-              setCurrentView={handleSetCurrentView}
-          >
-            {children}
-          </MainLayoutComponent>
-        )}
+      <ViewContext.Provider value={{ currentView, setCurrentView }}>
+        <AuthGate>
+          {showLoadingSpinner && <LoadingSpinner />}
+          
+          {pathname.startsWith('/app') ? (
+            <MainLayoutComponent 
+                tasksHook={tasksHook} 
+                setIsSettingsOpen={setIsSettingsOpen}
+            >
+              {children}
+            </MainLayoutComponent>
+          ) : (
+            children
+          )}
 
-        {isFirstTime && <WelcomeDialog open={isFirstTime} onOpenChange={setIsFirstTime} />}
-        
-        {backupCodes && <BackupCodesDialog open={!!backupCodes} onOpenChange={clearBackupCodes} codes={backupCodes} />}
+          {isFirstTime && <WelcomeDialog open={isFirstTime} onOpenChange={setIsFirstTime} />}
+          
+          {backupCodes && <BackupCodesDialog open={!!backupCodes} onOpenChange={clearBackupCodes} codes={backupCodes} />}
 
-        {notesBackupCodes && <NotesBackupCodesDialog open={!!notesBackupCodes} onOpenChange={clearNotesBackupCodes} codes={notesBackupCodes} />}
-        
-        {isSettingsOpen && <SettingsDialog 
-            open={isSettingsOpen} 
-            onOpenChange={setIsSettingsOpen} 
-            onResetApp={resetApp} 
-            onDeleteAccount={deleteAccount} 
-            userEmail={user?.email}
-            workspaces={workspaces}
-            appSettings={appSettings}
-            onSettingsChange={setAppSettings}
-        />}
-       </AuthGate>
+          {notesBackupCodes && <NotesBackupCodesDialog open={!!notesBackupCodes} onOpenChange={clearNotesBackupCodes} codes={notesBackupCodes} />}
+          
+          {isSettingsOpen && <SettingsDialog 
+              open={isSettingsOpen} 
+              onOpenChange={setIsSettingsOpen} 
+              onResetApp={resetApp} 
+              onDeleteAccount={deleteAccount} 
+              userEmail={user?.email}
+              workspaces={workspaces}
+              appSettings={appSettings}
+              onSettingsChange={setAppSettings}
+          />}
+        </AuthGate>
+      </ViewContext.Provider>
     </TasksContext.Provider>
   );
 }
