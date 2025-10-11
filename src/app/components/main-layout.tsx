@@ -4,11 +4,11 @@
 import { SidebarInset, useSidebar } from "@/components/ui/sidebar";
 import { FirestoreWorkspaceSidebar } from "./firestore-workspace-sidebar";
 import { Button } from "@/components/ui/button";
-import { LayoutGrid } from "lucide-react";
+import { LayoutGrid, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { UserNav } from "./user-nav";
 import { type useTasks } from "@/lib/hooks/use-tasks";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from 'next/link';
 import { useView } from "@/app/main-layout";
@@ -22,6 +22,7 @@ type MainLayoutProps = {
 export function MainLayout({ children, tasksHook, setIsSettingsOpen }: MainLayoutProps) {
     const { toggleSidebar } = useSidebar();
     const pathname = usePathname();
+    const router = useRouter();
     const { currentView, setCurrentView } = useView();
     const isMainAppPage = pathname === '/app';
 
@@ -32,9 +33,15 @@ export function MainLayout({ children, tasksHook, setIsSettingsOpen }: MainLayou
                 <div className="flex flex-col h-screen">
                     <header className="flex h-16 items-center justify-between border-b px-4 md:px-6 flex-shrink-0">
                         <div className="flex items-center gap-2">
-                            <Button variant="ghost" size="icon" onClick={toggleSidebar}>
-                                <LayoutGrid className="h-5 w-5" />
-                            </Button>
+                            {isMainAppPage ? (
+                                <Button variant="ghost" size="icon" onClick={toggleSidebar}>
+                                    <LayoutGrid className="h-5 w-5" />
+                                </Button>
+                            ) : (
+                                <Button variant="ghost" size="icon" onClick={() => router.back()}>
+                                    <ArrowLeft className="h-5 w-5" />
+                                </Button>
+                            )}
                         </div>
 
                         <AnimatePresence>
