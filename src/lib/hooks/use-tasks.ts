@@ -372,34 +372,30 @@ export function useTasks() {
   const editNote = useCallback((id: string, newTitle: string, newContent: string, isNew?: boolean) => {
     if (!notesRef) return;
     const noteDocRef = doc(notesRef, id);
-    
+    const data = {
+        title: newTitle.trim() || 'Untitled Note',
+        content: newContent,
+    };
+
     if (isNew) {
-      const dataToSave = { 
-        title: newTitle.trim() || 'Untitled Note', 
-        content: newContent,
-        createdAt: serverTimestamp(),
-      };
-      setDoc(noteDocRef, dataToSave).catch(async (serverError) => {
-        const permissionError = new FirestorePermissionError({
-            path: noteDocRef.path,
-            operation: 'create',
-            requestResourceData: dataToSave,
+        const dataToCreate = { ...data, createdAt: serverTimestamp() };
+        setDoc(noteDocRef, dataToCreate).catch(async (serverError) => {
+            const permissionError = new FirestorePermissionError({
+                path: noteDocRef.path,
+                operation: 'create',
+                requestResourceData: dataToCreate,
+            });
+            errorEmitter.emit('permission-error', permissionError);
         });
-        errorEmitter.emit('permission-error', permissionError);
-      });
     } else {
-      const dataToUpdate = { 
-        title: newTitle.trim() || 'Untitled Note', 
-        content: newContent,
-      };
-      updateDoc(noteDocRef, dataToUpdate).catch(async (serverError) => {
-        const permissionError = new FirestorePermissionError({
-            path: noteDocRef.path,
-            operation: 'update',
-            requestResourceData: dataToUpdate,
+        updateDoc(noteDocRef, data).catch(async (serverError) => {
+            const permissionError = new FirestorePermissionError({
+                path: noteDocRef.path,
+                operation: 'update',
+                requestResourceData: data,
+            });
+            errorEmitter.emit('permission-error', permissionError);
         });
-        errorEmitter.emit('permission-error', permissionError);
-      });
     }
   }, [notesRef]);
 
@@ -792,5 +788,3 @@ notesBackupCodes,
     removeNotesPassword,
   };
 }
-
-    

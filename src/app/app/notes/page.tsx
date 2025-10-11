@@ -56,10 +56,12 @@ export default function NotesPage() {
   }, [activeWorkspace, addNote]);
   
  const handleSaveNote = useCallback((id: string, newTitle: string, newContent: string, isNew?: boolean) => {
+    // If it's a new note and it's completely empty, delete it locally.
     if (isNew && !newTitle.trim() && (!newContent.trim() || newContent === '<p></p>')) {
-        deleteNote(id, true);
+        deleteNote(id, true); // `true` indicates a local-only deletion
         return;
     }
+    // Otherwise, save to Firestore. `editNote` handles both create and update.
     editNote(id, newTitle, newContent, isNew);
   }, [editNote, deleteNote]);
 
@@ -70,9 +72,13 @@ export default function NotesPage() {
  const handleCloseNoteDialog = useCallback((open: boolean) => {
     setIsNoteDialogOpen(open);
     if (!open) {
+        // When dialog closes, check if the note being edited was a new, empty note.
+        if (editingNote?.isNew && !editingNote.title.trim() && (!editingNote.content.trim() || editingNote.content === '<p></p>')) {
+            deleteNote(editingNote.id, true);
+        }
         setEditingNote(null);
     }
-  }, []);
+  }, [editingNote, deleteNote]);
 
   const handleUnlock = async (password: string) => {
     if (activeWorkspace) {

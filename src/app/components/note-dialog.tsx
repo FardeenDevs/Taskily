@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { type Note } from '@/lib/types';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
@@ -24,6 +24,22 @@ interface NoteDialogProps {
 export function NoteDialog({ open, onOpenChange, note, onSave }: NoteDialogProps) {
   const [title, setTitle] = useState('');
   const contentRef = useRef<string>('');
+  const autosaveTimer = useRef<NodeJS.Timeout | null>(null);
+  const noteRef = useRef(note);
+
+  const handleAutoSave = useCallback(() => {
+    if (noteRef.current) {
+      // Don't autosave an empty new note
+      if (noteRef.current.isNew && !title.trim() && (!contentRef.current.trim() || contentRef.current === '<p></p>')) {
+        return;
+      }
+      onSave(noteRef.current.id, title, contentRef.current, noteRef.current.isNew);
+      // After the first autosave, it's no longer a "new" note in this session.
+      if (noteRef.current.isNew) {
+        noteRef.current = { ...noteRef.current, isNew: false };
+      }
+    }
+  }, [onSave, title]);
 
   const editor = useEditor({
     extensions: [
@@ -49,19 +65,46 @@ export function NoteDialog({ open, onOpenChange, note, onSave }: NoteDialogProps
     },
     onUpdate: ({ editor }) => {
       contentRef.current = editor.getHTML();
+      if (autosaveTimer.current) {
+        clearTimeout(autosaveTimer.current);
+      }
+      autosaveTimer.current = setTimeout(handleAutoSave, 2000);
     },
   });
 
   useEffect(() => {
+    noteRef.current = note;
     if (open && note && editor) {
       const content = note.content || '';
       contentRef.current = content;
       setTitle(note.title);
-      editor.commands.setContent(content);
+      editor.commands.setContent(content, false); // `false` prevents firing onUpdate
     }
+    // Clear any pending saves when the dialog is closed or the note changes
+    return () => {
+      if (autosaveTimer.current) {
+        clearTimeout(autosaveTimer.current);
+      }
+    };
   }, [note, open, editor]);
-  
-  const handleSave = () => {
+
+  useEffect(() => {
+    if (autosaveTimer.current) {
+      clearTimeout(autosaveTimer.current);
+    }
+    autosaveTimer.current = setTimeout(handleAutoSave, 2000);
+    
+    return () => {
+        if (autosaveTimer.current) {
+          clearTimeout(autosaveTimer.current);
+        }
+    }
+  }, [title, handleAutoSave]);
+
+  const handleManualSave = () => {
+    if (autosaveTimer.current) {
+      clearTimeout(autosaveTimer.current);
+    }
     if (note) {
       onSave(note.id, title, contentRef.current, note.isNew);
     }
@@ -69,7 +112,7 @@ export function NoteDialog({ open, onOpenChange, note, onSave }: NoteDialogProps
 
   const handleOpenChange = (isOpen: boolean) => {
     if (!isOpen) {
-      handleSave();
+      handleManualSave();
     }
     onOpenChange(isOpen);
   };
