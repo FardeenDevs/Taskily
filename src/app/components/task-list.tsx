@@ -26,9 +26,9 @@ export const TaskList = memo(function TaskList({ tasks, onToggleTask, onDeleteTa
   }
 
   return (
-    <div className="divide-y divide-border rounded-lg border">
+    <div className="rounded-lg border">
       <AnimatePresence>
-        {tasks.map((task) => (
+        {tasks.map((task, index) => (
           <motion.div
             key={task.id}
             layout
@@ -44,6 +44,7 @@ export const TaskList = memo(function TaskList({ tasks, onToggleTask, onDeleteTa
               onEditTask={onEditTask}
               showPriority={showPriority}
               showEffort={showEffort}
+              isLast={index === tasks.length - 1}
             />
           </motion.div>
         ))}
