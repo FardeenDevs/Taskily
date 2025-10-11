@@ -111,7 +111,8 @@ export default function LoginPage() {
     if (!auth) return;
     setIsSubmitting(true);
     try {
-        await createUserWithEmailAndPassword(auth, values.email, values.password);
+        const { user: newUser } = await createUserWithEmailAndPassword(auth, values.email, values.password);
+        await updateProfile(newUser, { displayName: values.displayName });
         // The user profile and backup code creation is handled by the useTasks hook via onAuthStateChanged
     } catch (error: any) {
         let description = "An unexpected error occurred.";

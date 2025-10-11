@@ -373,7 +373,7 @@ export function useTasks() {
   }, [notesRef, firestore, activeWorkspaceId]);
 
   const editNote = useCallback(async (id: string, newTitle: string, newContent: string, isNew?: boolean): Promise<void> => {
-    if (!notesRef) return;
+    if (!notesRef) return Promise.reject(new Error("Notes reference not available."));
     const noteDocRef = doc(notesRef, id);
     const data = {
         title: newTitle.trim() || 'Untitled Note',
@@ -401,8 +401,6 @@ export function useTasks() {
 
   const deleteNote = useCallback((id: string, isLocal?: boolean) => {
     if (isLocal) {
-        // Find the note in the local state and remove it if it's new and unsaved
-        // This part is handled by the component logic now.
         return;
     }
     if (!notesRef) return;
@@ -581,14 +579,14 @@ export function useTasks() {
     const workspace = workspaces?.find(ws => ws.id === workspaceId);
     if (!workspace) return false;
 
-    // If a password already exists, the old password must be correct
+    // In a real app, you would hash the password before storing it.
+    // Here, we check the unhashed password if it exists.
     if (workspace.notesPassword && workspace.notesPassword !== oldPassword) {
         return false;
     }
 
     const workspaceDocRef = doc(firestore, 'users', user.uid, 'workspaces', workspaceId);
     
-    // In a real app, you would hash the password before storing it.
     // For this prototype, we'll store it directly, but this is NOT secure.
     const newBackupCodes = generateBackupCodes();
     const dataToUpdate = {
@@ -621,7 +619,12 @@ export function useTasks() {
     };
 
     try {
-        await updateDoc(workspaceDocRef, dataToUpdate);
+        const newDoc = { ...workspace, notesPassword: null, notesBackupCodes: null };
+        delete newDoc.notesPassword;
+        delete newDoc.notesBackupCodes;
+
+        await setDoc(workspaceDocRef, newDoc);
+
         return true;
     } catch(e) {
         errorEmitter.emit('permission-error', new FirestorePermissionError({ path: workspaceDocRef.path, operation: 'update', requestResourceData: dataToUpdate }));
