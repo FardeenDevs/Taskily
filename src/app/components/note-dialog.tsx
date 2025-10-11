@@ -12,13 +12,14 @@ import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { X } from 'lucide-react';
+import { X, Loader2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface NoteDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   note: Note | null;
-  onSave: (id: string, newTitle: string, newContent: string, isNew?: boolean) => void;
+  onSave: (id: string, newTitle: string, newContent: string, isNew?: boolean) => Promise<void>;
 }
 
 export function NoteDialog({ open, onOpenChange, note, onSave }: NoteDialogProps) {
@@ -26,15 +27,17 @@ export function NoteDialog({ open, onOpenChange, note, onSave }: NoteDialogProps
   const contentRef = useRef<string>('');
   const autosaveTimer = useRef<NodeJS.Timeout | null>(null);
   const noteRef = useRef(note);
+  const [isSaving, setIsSaving] = useState(false);
 
-  const handleAutoSave = useCallback(() => {
+  const handleAutoSave = useCallback(async () => {
     if (noteRef.current) {
-      // Don't autosave an empty new note
       if (noteRef.current.isNew && !title.trim() && (!contentRef.current.trim() || contentRef.current === '<p></p>')) {
         return;
       }
-      onSave(noteRef.current.id, title, contentRef.current, noteRef.current.isNew);
-      // After the first autosave, it's no longer a "new" note in this session.
+      setIsSaving(true);
+      await onSave(noteRef.current.id, title, contentRef.current, noteRef.current.isNew);
+      setIsSaving(false);
+
       if (noteRef.current.isNew) {
         noteRef.current = { ...noteRef.current, isNew: false };
       }
@@ -68,7 +71,7 @@ export function NoteDialog({ open, onOpenChange, note, onSave }: NoteDialogProps
       if (autosaveTimer.current) {
         clearTimeout(autosaveTimer.current);
       }
-      autosaveTimer.current = setTimeout(handleAutoSave, 2000);
+      autosaveTimer.current = setTimeout(handleAutoSave, 1000);
     },
   });
 
@@ -78,9 +81,8 @@ export function NoteDialog({ open, onOpenChange, note, onSave }: NoteDialogProps
       const content = note.content || '';
       contentRef.current = content;
       setTitle(note.title);
-      editor.commands.setContent(content, false); // `false` prevents firing onUpdate
+      editor.commands.setContent(content, false);
     }
-    // Clear any pending saves when the dialog is closed or the note changes
     return () => {
       if (autosaveTimer.current) {
         clearTimeout(autosaveTimer.current);
@@ -89,24 +91,27 @@ export function NoteDialog({ open, onOpenChange, note, onSave }: NoteDialogProps
   }, [note, open, editor]);
 
   useEffect(() => {
+    if (!open) return; // Only trigger autosave when dialog is open
     if (autosaveTimer.current) {
       clearTimeout(autosaveTimer.current);
     }
-    autosaveTimer.current = setTimeout(handleAutoSave, 2000);
+    autosaveTimer.current = setTimeout(handleAutoSave, 1000);
     
     return () => {
         if (autosaveTimer.current) {
           clearTimeout(autosaveTimer.current);
         }
     }
-  }, [title, handleAutoSave]);
+  }, [title, handleAutoSave, open]);
 
-  const handleManualSave = () => {
+  const handleManualSave = async () => {
     if (autosaveTimer.current) {
       clearTimeout(autosaveTimer.current);
     }
     if (note) {
-      onSave(note.id, title, contentRef.current, note.isNew);
+        setIsSaving(true);
+        await onSave(note.id, title, contentRef.current, note.isNew);
+        setIsSaving(false);
     }
   };
 
@@ -140,10 +145,25 @@ export function NoteDialog({ open, onOpenChange, note, onSave }: NoteDialogProps
                 }
               }}
             />
-            <Button variant="ghost" size="icon" onClick={() => handleOpenChange(false)} className="h-9 w-9">
-              <X />
-              <span className="sr-only">Close</span>
-            </Button>
+            <div className="flex items-center gap-4">
+                 <AnimatePresence>
+                    {isSaving && (
+                        <motion.div
+                            initial={{ opacity: 0, y: -5 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -5 }}
+                            className="flex items-center gap-2 text-sm text-muted-foreground"
+                        >
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            <span>Saving...</span>
+                        </motion.div>
+                    )}
+                 </AnimatePresence>
+                <Button variant="ghost" size="icon" onClick={() => handleOpenChange(false)} className="h-9 w-9">
+                  <X />
+                  <span className="sr-only">Close</span>
+                </Button>
+            </div>
         </div>
         
         <div className="flex-grow overflow-y-auto p-6 pb-24">

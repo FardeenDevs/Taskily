@@ -369,7 +369,7 @@ export function useTasks() {
     return newNote;
   }, [notesRef, firestore, activeWorkspaceId]);
 
-  const editNote = useCallback((id: string, newTitle: string, newContent: string, isNew?: boolean) => {
+  const editNote = useCallback(async (id: string, newTitle: string, newContent: string, isNew?: boolean): Promise<void> => {
     if (!notesRef) return;
     const noteDocRef = doc(notesRef, id);
     const data = {
@@ -377,25 +377,22 @@ export function useTasks() {
         content: newContent,
     };
 
-    if (isNew) {
-        const dataToCreate = { ...data, createdAt: serverTimestamp() };
-        setDoc(noteDocRef, dataToCreate).catch(async (serverError) => {
-            const permissionError = new FirestorePermissionError({
-                path: noteDocRef.path,
-                operation: 'create',
-                requestResourceData: dataToCreate,
-            });
-            errorEmitter.emit('permission-error', permissionError);
+    try {
+        if (isNew) {
+            const dataToCreate = { ...data, createdAt: serverTimestamp() };
+            await setDoc(noteDocRef, dataToCreate);
+        } else {
+            await updateDoc(noteDocRef, data);
+        }
+    } catch (serverError) {
+        const permissionError = new FirestorePermissionError({
+            path: noteDocRef.path,
+            operation: isNew ? 'create' : 'update',
+            requestResourceData: data,
         });
-    } else {
-        updateDoc(noteDocRef, data).catch(async (serverError) => {
-            const permissionError = new FirestorePermissionError({
-                path: noteDocRef.path,
-                operation: 'update',
-                requestResourceData: data,
-            });
-            errorEmitter.emit('permission-error', permissionError);
-        });
+        errorEmitter.emit('permission-error', permissionError);
+        // Re-throw the error so the UI can handle it if needed
+        throw serverError;
     }
   }, [notesRef]);
 

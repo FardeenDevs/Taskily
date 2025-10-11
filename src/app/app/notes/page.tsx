@@ -55,14 +55,14 @@ export default function NotesPage() {
     }
   }, [activeWorkspace, addNote]);
   
- const handleSaveNote = useCallback((id: string, newTitle: string, newContent: string, isNew?: boolean) => {
+ const handleSaveNote = useCallback(async (id: string, newTitle: string, newContent: string, isNew?: boolean): Promise<void> => {
     // If it's a new note and it's completely empty, delete it locally.
     if (isNew && !newTitle.trim() && (!newContent.trim() || newContent === '<p></p>')) {
         deleteNote(id, true); // `true` indicates a local-only deletion
         return;
     }
     // Otherwise, save to Firestore. `editNote` handles both create and update.
-    editNote(id, newTitle, newContent, isNew);
+    await editNote(id, newTitle, newContent, isNew);
   }, [editNote, deleteNote]);
 
   const handleDeleteNote = useCallback((id: string) => {
