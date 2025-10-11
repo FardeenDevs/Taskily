@@ -5,6 +5,7 @@ import { type Task, type Priority, type Effort } from "@/lib/types";
 import { TaskItem } from "@/app/components/task-item";
 import { AnimatePresence, motion } from "framer-motion";
 import { memo } from "react";
+import type { ActiveTimer } from "@/lib/hooks/use-tasks";
 
 interface TaskListProps {
   tasks: Task[];
@@ -13,9 +14,26 @@ interface TaskListProps {
   onEditTask: (id: string, newText: string, newPriority: Priority | null, newEffort: Effort | null, newDuration: number | null) => void;
   showPriority: boolean;
   showEffort: boolean;
+  activeTimers: ActiveTimer[];
+  onTimerStart: (taskId: string, duration: number) => void;
+  onTimerPause: (taskId: string) => void;
+  onTimerStop: (taskId: string) => void;
+  onTimerTick: (taskId: string, remaining: number) => void;
 }
 
-export const TaskList = memo(function TaskList({ tasks, onToggleTask, onDeleteTask, onEditTask, showPriority, showEffort }: TaskListProps) {
+export const TaskList = memo(function TaskList({ 
+  tasks, 
+  onToggleTask, 
+  onDeleteTask, 
+  onEditTask, 
+  showPriority, 
+  showEffort,
+  activeTimers,
+  onTimerStart,
+  onTimerPause,
+  onTimerStop,
+  onTimerTick
+}: TaskListProps) {
   if (tasks.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/30 bg-muted/50 p-12 text-center">
@@ -45,6 +63,11 @@ export const TaskList = memo(function TaskList({ tasks, onToggleTask, onDeleteTa
               onEditTask={onEditTask}
               showPriority={showPriority}
               showEffort={showEffort}
+              activeTimer={activeTimers.find(t => t.taskId === task.id)}
+              onTimerStart={onTimerStart}
+              onTimerPause={onTimerPause}
+              onTimerStop={onTimerStop}
+              onTimerTick={onTimerTick}
             />
           </motion.div>
         ))}
@@ -52,3 +75,5 @@ export const TaskList = memo(function TaskList({ tasks, onToggleTask, onDeleteTa
     </div>
   );
 });
+
+    

@@ -31,6 +31,11 @@ const generateBackupCodes = () => {
     return codes;
 };
 
+export type ActiveTimer = {
+  taskId: string;
+  remaining: number;
+  isActive: boolean;
+};
 
 export function useTasks() {
   const auth = useAuth();
@@ -54,6 +59,9 @@ export function useTasks() {
   const [isNoteDialogOpen, setIsNoteDialogOpen] = useState(false);
   const [editingNote, setEditingNote] = useState<Note | null>(null);
   const [isPasswordPromptOpen, setIsPasswordPromptOpen] = useState(false);
+
+  // Timer State
+  const [activeTimers, setActiveTimers] = useState<ActiveTimer[]>([]);
 
   const { setOpen: setSidebarOpen } = useSidebar();
   
@@ -259,6 +267,7 @@ export function useTasks() {
     if (user) {
         setUnlockedWorkspaces([]); // Auto-lock notes on switch
         setActiveWorkspaceId(id);
+        setActiveTimers([]); // Clear timers when switching workspace
         if (id) {
           localStorage.setItem(`${ACTIVE_WORKSPACE_KEY}-${user.uid}`, id);
         } else {
@@ -788,6 +797,32 @@ export function useTasks() {
     return (tasks || []).filter(task => task.completed).length;
   }, [tasks]);
 
+  // Timer handlers
+  const handleTimerStart = useCallback((taskId: string, duration?: number) => {
+    setActiveTimers(prev => {
+      const existing = prev.find(t => t.taskId === taskId);
+      const task = tasks?.find(t => t.id === taskId);
+      const newDuration = duration ?? (task?.duration || 0) * 60;
+
+      if (existing) {
+        return prev.map(t => t.taskId === taskId ? { ...t, isActive: true, remaining: newDuration } : t);
+      }
+      return [...prev, { taskId, remaining: newDuration, isActive: true }];
+    });
+  }, [tasks]);
+
+  const handleTimerPause = useCallback((taskId: string) => {
+    setActiveTimers(prev => prev.map(t => t.taskId === taskId ? { ...t, isActive: false } : t));
+  }, []);
+
+  const handleTimerStop = useCallback((taskId: string) => {
+    setActiveTimers(prev => prev.filter(t => t.taskId !== taskId));
+  }, []);
+  
+  const handleTimerTick = useCallback((taskId: string, remaining: number) => {
+    setActiveTimers(prev => prev.map(t => t.taskId === taskId ? { ...t, remaining } : t));
+  }, []);
+
   return {
     tasks: tasks || [],
     notes: isNotesLocked ? [] : (notes || []),
@@ -840,5 +875,13 @@ export function useTasks() {
     handleSaveNote,
     handleCloseNoteDialog,
     handleUnlock,
+    // Timer state and handlers
+    activeTimers,
+    handleTimerStart,
+    handleTimerPause,
+    handleTimerStop,
+    handleTimerTick,
   };
 }
+
+    

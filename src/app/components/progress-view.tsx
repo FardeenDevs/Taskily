@@ -40,6 +40,11 @@ export function ProgressView(props: ProgressViewProps) {
         activeWorkspaceId,
         clearWorkspace,
         appSettings,
+        activeTimers,
+        handleTimerStart,
+        handleTimerPause,
+        handleTimerStop,
+        handleTimerTick,
     } = props;
 
     const [sortOrder, setSortOrder] = useState<SortOption>('createdAt_asc');
@@ -152,6 +157,11 @@ export function ProgressView(props: ProgressViewProps) {
                         onEditTask={editTask}
                         showPriority={showPriority}
                         showEffort={showEffort}
+                        activeTimers={activeTimers}
+                        onTimerStart={handleTimerStart}
+                        onTimerPause={handleTimerPause}
+                        onTimerStop={handleTimerStop}
+                        onTimerTick={handleTimerTick}
                     />
                 </div>
                 )}
@@ -188,3 +198,5 @@ export function ProgressView(props: ProgressViewProps) {
         </>
     );
 }
+
+    

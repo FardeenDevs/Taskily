@@ -67,11 +67,31 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
       loading,
       isResetting,
       isDeleting,
+      activeTimers,
+      handleTimerTick,
     } = tasksHook;
 
   const [currentView, setCurrentView] = useState<'progress' | 'notes'>('progress');
   
   const showLoadingSpinner = (loading || isResetting || isDeleting) && pathname !== '/login';
+
+  useEffect(() => {
+    const intervals = activeTimers.map(timer => {
+        if (timer.isActive) {
+            return setInterval(() => {
+                const newRemaining = timer.remaining - 1;
+                if (newRemaining >= 0) {
+                    handleTimerTick(timer.taskId, newRemaining);
+                }
+            }, 1000);
+        }
+        return null;
+    }).filter(Boolean);
+
+    return () => {
+        intervals.forEach(interval => clearInterval(interval!));
+    };
+}, [activeTimers, handleTimerTick]);
 
   return (
     <TasksContext.Provider value={tasksHook}>
@@ -107,3 +127,5 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     </TasksContext.Provider>
   );
 }
+
+    

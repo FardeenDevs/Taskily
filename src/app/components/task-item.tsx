@@ -9,12 +9,14 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, Timer } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PriorityBadge } from "./priority-badge";
 import { EffortBadge } from "./effort-badge";
 import { TaskTimer } from "./task-timer";
+import { RunningTimer } from "./running-timer";
+import type { ActiveTimer } from "@/lib/hooks/use-tasks";
 
 interface TaskItemProps {
   task: Task;
@@ -23,14 +25,32 @@ interface TaskItemProps {
   onEditTask: (id: string, newText: string, newPriority: Priority | null, newEffort: Effort | null, newDuration: number | null) => void;
   showPriority: boolean;
   showEffort: boolean;
+  activeTimer: ActiveTimer | undefined;
+  onTimerStart: (taskId: string, duration: number) => void;
+  onTimerPause: (taskId: string) => void;
+  onTimerStop: (taskId: string) => void;
+  onTimerTick: (taskId: string, remaining: number) => void;
 }
 
-export const TaskItem = memo(function TaskItem({ task, onToggleTask, onDeleteTask, onEditTask, showPriority, showEffort }: TaskItemProps) {
+export const TaskItem = memo(function TaskItem({ 
+    task, 
+    onToggleTask, 
+    onDeleteTask, 
+    onEditTask, 
+    showPriority, 
+    showEffort,
+    activeTimer,
+    onTimerStart,
+    onTimerPause,
+    onTimerStop,
+    onTimerTick,
+}: TaskItemProps) {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editText, setEditText] = useState(task.text);
   const [editPriority, setEditPriority] = useState<Priority | null>(task.priority ?? null);
   const [editEffort, setEditEffort] = useState<Effort | null>(task.effort ?? null);
   const [editDuration, setEditDuration] = useState<string>(task.duration ? String(task.duration) : "");
+  const [isTimerDialogOpen, setIsTimerDialogOpen] = useState(false);
 
 
   const handleSave = useCallback(() => {
@@ -94,8 +114,7 @@ export const TaskItem = memo(function TaskItem({ task, onToggleTask, onDeleteTas
                 {task.text}
                 </label>
             </div>
-            <div className="flex items-center gap-3 relative z-10 ml-auto">
-                {task.duration && !task.completed && <TaskTimer task={task} />}
+            <div className={cn("flex items-center gap-3 relative z-10 ml-auto", task.completed && 'opacity-40')}>
                 <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
                     <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
                     <DialogTrigger asChild>
@@ -187,7 +206,31 @@ export const TaskItem = memo(function TaskItem({ task, onToggleTask, onDeleteTas
                     <Trash2 />
                     </Button>
                 </div>
-                 <div className={cn("flex items-center gap-2 transition-opacity", task.completed && "opacity-40")}>
+                 <Dialog open={isTimerDialogOpen} onOpenChange={setIsTimerDialogOpen}>
+                    {activeTimer ? (
+                        <DialogTrigger asChild>
+                            <RunningTimer remainingTime={activeTimer.remaining} />
+                        </DialogTrigger>
+                    ) : task.duration ? (
+                        <DialogTrigger asChild>
+                             <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary">
+                                <Timer />
+                                <span className="sr-only">Start Timer</span>
+                            </Button>
+                        </DialogTrigger>
+                    ) : null}
+
+                    <TaskTimer 
+                        task={task}
+                        activeTimer={activeTimer}
+                        onTimerStart={onTimerStart}
+                        onTimerPause={onTimerPause}
+                        onTimerStop={onTimerStop}
+                        onTimerTick={onTimerTick}
+                        setIsOpen={setIsTimerDialogOpen}
+                    />
+                </Dialog>
+                 <div className="flex items-center gap-2">
                     {showPriority && task.priority && <PriorityBadge priority={task.priority} />}
                     {showEffort && task.effort && <EffortBadge effort={task.effort} />}
                 </div>
@@ -196,3 +239,5 @@ export const TaskItem = memo(function TaskItem({ task, onToggleTask, onDeleteTas
     </div>
   );
 });
+
+    
