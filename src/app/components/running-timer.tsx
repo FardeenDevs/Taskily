@@ -16,7 +16,7 @@ const formatTime = (seconds: number) => {
 
 export function RunningTimer({ remainingTime }: RunningTimerProps) {
   return (
-    <Button variant="ghost" className="h-8 px-2 text-primary hover:text-primary hover:bg-transparent font-mono tabular-nums">
+    <Button variant="ghost" className="h-8 px-2 text-primary hover:text-primary font-mono tabular-nums">
         <Timer className="mr-2 h-4 w-4" />
         {formatTime(remainingTime)}
     </Button>
