@@ -10,6 +10,9 @@ export const metadata: Metadata = {
   title: 'Listily',
   description: 'Get things done, one task at a time.',
   manifest: '/manifest.json',
+  icons: {
+    icon: '/favicon.ico',
+  },
 };
 
 export default function RootLayout({
