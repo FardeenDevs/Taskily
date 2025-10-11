@@ -161,8 +161,10 @@ export function NoteDialog({ open, onOpenChange, note, onSave }: NoteDialogProps
             </div>
         </div>
         
-        <div className="flex-grow overflow-y-auto p-6 pb-24">
-           <RichTextEditor editor={editor} />
+        <div className="relative flex-1 overflow-hidden">
+            <div className="h-full overflow-y-auto p-6 pb-24">
+                <RichTextEditor editor={editor} />
+            </div>
         </div>
 
         <RichTextToolbar editor={editor} />
