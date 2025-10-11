@@ -58,7 +58,7 @@ export const TaskItem = memo(function TaskItem({ task, onToggleTask, onDeleteTas
 
   return (
     <div className="group relative">
-        <div className="flex items-center gap-3 p-2 transition-colors">
+        <div className="flex items-center gap-3 p-3 transition-colors">
             <AnimatePresence>
                 {task.completed && (
                 <motion.div
@@ -89,10 +89,6 @@ export const TaskItem = memo(function TaskItem({ task, onToggleTask, onDeleteTas
                 </label>
             </div>
             <div className="flex items-center gap-3 relative z-10">
-                 <div className="flex items-center gap-2">
-                    {showPriority && task.priority && <PriorityBadge priority={task.priority} />}
-                    {showEffort && task.effort && <EffortBadge effort={task.effort} />}
-                </div>
                 <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
                     <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
                     <DialogTrigger asChild>
@@ -166,6 +162,10 @@ export const TaskItem = memo(function TaskItem({ task, onToggleTask, onDeleteTas
                     >
                     <Trash2 />
                     </Button>
+                </div>
+                 <div className="flex items-center gap-2">
+                    {showPriority && task.priority && <PriorityBadge priority={task.priority} />}
+                    {showEffort && task.effort && <EffortBadge effort={task.effort} />}
                 </div>
             </div>
         </div>
