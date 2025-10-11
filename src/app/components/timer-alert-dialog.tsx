@@ -12,7 +12,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import type { Task } from '@/lib/types';
-import { Button } from '../ui/button';
+import { Button } from '@/components/ui/button';
 
 interface TimerAlertDialogProps {
   task: Task;
