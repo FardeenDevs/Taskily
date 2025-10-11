@@ -83,7 +83,9 @@ export default function AppPage() {
             case 'priority_effort_desc':
                  const prioA = a.priority ? priorityMap[a.priority].value : 0;
                  const prioB = b.priority ? priorityMap[b.priority].value : 0;
-                 if (prioB !== prioA) return prioB - prioA;
+                 if (prioB !== prioA) {
+                    return prioB - prioA;
+                 }
                  const effA = a.effort ? effortMap[a.effort].value : 0;
                  const effB = b.effort ? effortMap[b.effort].value : 0;
                  return effB - effA;
@@ -193,5 +195,7 @@ export default function AppPage() {
       </div>
   );
 }
+
+    
 
     
