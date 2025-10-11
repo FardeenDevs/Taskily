@@ -121,7 +121,7 @@ export function NoteDialog({ open, onOpenChange, note, onSave }: NoteDialogProps
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent 
         className={cn(
-          "flex h-full w-full max-w-full flex-col gap-0 p-0 sm:h-[90vh] sm:max-w-[90vw] sm:rounded-lg"
+          "flex h-[100dvh] w-full max-w-full flex-col gap-0 p-0 sm:h-[90vh] sm:max-w-[90vw] sm:rounded-lg"
         )}
         showCloseButton={false}
       >
@@ -162,7 +162,7 @@ export function NoteDialog({ open, onOpenChange, note, onSave }: NoteDialogProps
         </div>
         
         <div className="relative flex-1 overflow-hidden">
-            <div className="h-full overflow-y-auto p-6 pb-24">
+            <div className="absolute inset-0 overflow-y-auto p-6 pb-24">
                 <RichTextEditor editor={editor} />
             </div>
         </div>
@@ -172,3 +172,5 @@ export function NoteDialog({ open, onOpenChange, note, onSave }: NoteDialogProps
     </Dialog>
   );
 }
+
+    
