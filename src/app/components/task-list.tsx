@@ -6,6 +6,7 @@ import { TaskItem } from "@/app/components/task-item";
 import { AnimatePresence, motion } from "framer-motion";
 import { memo } from "react";
 import type { ActiveTimer } from "@/lib/hooks/use-tasks";
+import { cn } from "@/lib/utils";
 
 interface TaskListProps {
   tasks: Task[];
