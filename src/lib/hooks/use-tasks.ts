@@ -49,7 +49,12 @@ export function useTasks() {
   const [isUnlocking, setIsUnlocking] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  
+
+  // State for dialogs, moved up from page.tsx
+  const [isNoteDialogOpen, setIsNoteDialogOpen] = useState(false);
+  const [editingNote, setEditingNote] = useState<Note | null>(null);
+  const [isPasswordPromptOpen, setIsPasswordPromptOpen] = useState(false);
+
   const { setOpen: setSidebarOpen } = useSidebar();
   
   // Load settings from localStorage
@@ -111,6 +116,16 @@ export function useTasks() {
       setIsUnlocking(false);
     }
   }, [notesLoading, isUnlocking]);
+  
+  // Logic from page.tsx to handle password prompt dialog
+  useEffect(() => {
+    if (activeWorkspace && activeWorkspace.notesPassword && isNotesLocked) {
+      setIsPasswordPromptOpen(true);
+    } else {
+      setIsPasswordPromptOpen(false);
+    }
+  }, [activeWorkspace, isNotesLocked]);
+
 
   // Handle user profile creation for new sign-ups
   useEffect(() => {
@@ -401,6 +416,9 @@ export function useTasks() {
 
   const deleteNote = useCallback((id: string, isLocal?: boolean) => {
     if (isLocal) {
+        // This is a special case for deleting a new, empty, unsaved note.
+        // It doesn't exist in Firestore, so we just close the dialog.
+        // The logic in handleCloseNoteDialog handles the cleanup.
         return;
     }
     if (!notesRef) return;
@@ -414,6 +432,51 @@ export function useTasks() {
         errorEmitter.emit('permission-error', permissionError);
     });
   }, [notesRef]);
+
+    // Dialog handlers, moved up from page.tsx
+    const handleOpenEditDialog = useCallback((note: Note) => {
+        if (isUnlocking) return; // Prevent opening dialog while unlocking
+        setEditingNote(note);
+        setIsNoteDialogOpen(true);
+    }, [isUnlocking]);
+    
+    const handleOpenNewNoteDialog = useCallback(() => {
+        if (!activeWorkspace) return;
+        const newNote = addNote();
+        if (newNote) {
+            setEditingNote(newNote);
+            setIsNoteDialogOpen(true);
+        }
+    }, [activeWorkspace, addNote]);
+    
+    const handleSaveNote = useCallback(async (id: string, newTitle: string, newContent: string, isNew?: boolean): Promise<void> => {
+        // If it's a new note and it's completely empty, delete it locally.
+        if (isNew && !newTitle.trim() && (!newContent.trim() || newContent === '<p></p>')) {
+            deleteNote(id, true); // `true` indicates a local-only deletion
+            return;
+        }
+        // Otherwise, save to Firestore. `editNote` handles both create and update.
+        await editNote(id, newTitle, newContent, isNew);
+    }, [editNote, deleteNote]);
+    
+    const handleCloseNoteDialog = useCallback((open: boolean) => {
+        setIsNoteDialogOpen(open);
+        if (!open) {
+            // When dialog closes, check if the note being edited was a new, empty note.
+            if (editingNote?.isNew && !editingNote.title.trim() && (!editingNote.content.trim() || editingNote.content === '<p></p>')) {
+                deleteNote(editingNote.id, true);
+            }
+            setEditingNote(null);
+        }
+    }, [editingNote, deleteNote]);
+
+    const handleUnlock = async (password: string) => {
+        if (activeWorkspace) {
+            const success = await unlockNotes(activeWorkspace.id, password);
+            return success;
+        }
+        return false;
+    }
 
   const resetApp = useCallback(async () => {
     if (!user || !firestore) return;
@@ -799,5 +862,15 @@ export function useTasks() {
     unlockNotes,
     setNotesPassword,
     removeNotesPassword,
+    // Dialog state and handlers
+    isNoteDialogOpen,
+    editingNote,
+    isPasswordPromptOpen,
+    setIsPasswordPromptOpen,
+    handleOpenEditDialog,
+    handleOpenNewNoteDialog,
+    handleSaveNote,
+    handleCloseNoteDialog,
+    handleUnlock,
   };
 }
