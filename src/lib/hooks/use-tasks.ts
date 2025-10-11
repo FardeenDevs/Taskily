@@ -20,8 +20,6 @@ const DEFAULT_SETTINGS: AppSettings = {
   defaultPriority: "P3",
   defaultEffort: "E3",
   defaultWorkspaceId: null,
-  showPriority: true,
-  showEffort: true,
 };
 
 // Helper function to generate backup codes
@@ -207,10 +205,12 @@ export function useTasks() {
       // This should ONLY run when the initial loading is complete and we confirm there are no workspaces.
       if (!workspacesLoading && initialCheckDone && user && firestore && workspaces && workspaces.length === 0) {
           const defaultWorkspaceName = "My List";
-          const workspaceData = {
+          const workspaceData: Partial<Workspace> = {
               name: defaultWorkspaceName,
-              createdAt: serverTimestamp(),
-              ownerId: user.uid
+              createdAt: serverTimestamp() as any,
+              ownerId: user.uid,
+              showPriority: true,
+              showEffort: true,
           };
   
           const workspacesCollectionRef = collection(firestore, 'users', user.uid, 'workspaces');
@@ -400,7 +400,11 @@ export function useTasks() {
   }, [notesRef]);
 
   const deleteNote = useCallback((id: string, isLocal?: boolean) => {
-    if (isLocal) return; // Just a local deletion, no DB call needed
+    if (isLocal) {
+        // Find the note in the local state and remove it if it's new and unsaved
+        // This part is handled by the component logic now.
+        return;
+    }
     if (!notesRef) return;
     const noteDocRef = doc(notesRef, id);
     deleteDoc(noteDocRef)
@@ -470,10 +474,12 @@ export function useTasks() {
     
     const workspacesCollectionRef = collection(firestore, 'users', user.uid, 'workspaces');
 
-    const workspaceData = {
+    const workspaceData: Partial<Workspace> = {
         name: name.trim(),
-        createdAt: serverTimestamp(),
+        createdAt: serverTimestamp() as any,
         ownerId: user.uid,
+        showPriority: true,
+        showEffort: true,
     };
 
     addDoc(workspacesCollectionRef, workspaceData)
@@ -545,14 +551,18 @@ export function useTasks() {
 
   }, [firestore, user, workspaces, activeWorkspaceId, switchWorkspace, toast, appSettings.defaultWorkspaceId, setAppSettings]);
 
-  const editWorkspace = useCallback((id: string, newName: string) => {
+  const editWorkspace = useCallback((id: string, newName: string, showPriority: boolean, showEffort: boolean) => {
     if (newName.trim() === "" || !user || !workspaces) return;
 
     const workspace = workspaces.find(ws => ws.id === id);
     if (!workspace) return;
     
     const workspaceDocRef = doc(firestore, 'users', user.uid, 'workspaces', id);
-    const updatedData: Partial<Workspace> = { name: newName.trim() };
+    const updatedData: Partial<Workspace> = { 
+        name: newName.trim(),
+        showPriority: showPriority,
+        showEffort: showEffort,
+    };
     
     setDoc(workspaceDocRef, updatedData, { merge: true })
     .catch(async (serverError) => {

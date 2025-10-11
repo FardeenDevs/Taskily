@@ -65,6 +65,14 @@
             "items": {
                 "type": "string"
             }
+        },
+        "showPriority": {
+            "type": "boolean",
+            "description": "Whether to show the priority field for tasks in this workspace."
+        },
+        "showEffort": {
+            "type": "boolean",
+            "description": "Whether to show the effort field for tasks in this workspace."
         }
       },
       "required": ["name", "createdAt", "ownerId"]

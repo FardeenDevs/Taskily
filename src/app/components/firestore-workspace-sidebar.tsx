@@ -38,6 +38,7 @@ import { Workspace } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { Switch } from "@/components/ui/switch";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Separator } from "../ui/separator";
 
 type WorkspaceSidebarProps = {
   tasksHook: ReturnType<typeof useTasks>;
@@ -72,6 +73,9 @@ export function FirestoreWorkspaceSidebar({ tasksHook }: WorkspaceSidebarProps) 
   const [confirmPassword, setConfirmPassword] = useState("");
   const [oldPassword, setOldPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+
+  const [showPriority, setShowPriority] = useState(true);
+  const [showEffort, setShowEffort] = useState(true);
   
   const protectNotesSwitchRef = useRef<HTMLButtonElement>(null);
 
@@ -83,12 +87,11 @@ export function FirestoreWorkspaceSidebar({ tasksHook }: WorkspaceSidebarProps) 
 
   const handleSaveChanges = async () => {
     if (selectedWorkspace) {
-      // Handle name change
-      if (editName !== selectedWorkspace.name) {
-        editWorkspace(selectedWorkspace.id, editName);
-      }
+      // Handle name change and visibility settings
+      editWorkspace(selectedWorkspace.id, editName, showPriority, showEffort);
 
       // Handle password protection
+      let passwordActionSuccess = true;
       if (isPasswordProtected) {
          if (password) { // Only try to set/change password if a new one is entered
             if (password !== confirmPassword) {
@@ -99,23 +102,23 @@ export function FirestoreWorkspaceSidebar({ tasksHook }: WorkspaceSidebarProps) 
                 toast({ variant: "destructive", title: "Password too short.", description: "Password must be at least 4 characters." });
                 return;
             }
-            const success = await setNotesPassword(selectedWorkspace.id, password, selectedWorkspace.notesPassword ? oldPassword : null);
-            if (!success) {
+            passwordActionSuccess = await setNotesPassword(selectedWorkspace.id, password, selectedWorkspace.notesPassword ? oldPassword : null);
+            if (!passwordActionSuccess) {
                 toast({ variant: "destructive", title: "Incorrect Password", description: "The 'Current Password' you entered is incorrect." });
-                return; // Stop if password change failed
             }
          }
       } else if (selectedWorkspace.notesPassword) {
         // If the toggle is off but a password exists, it means we are removing it.
-        const success = await removeNotesPassword(selectedWorkspace.id, oldPassword);
-        if (!success) {
+        passwordActionSuccess = await removeNotesPassword(selectedWorkspace.id, oldPassword);
+        if (!passwordActionSuccess) {
             toast({ variant: "destructive", title: "Incorrect Password", description: "The 'Current Password' you entered is incorrect." });
-            return; // Stop if password removal failed
         }
       }
       
-      setEditDialogOpen(false);
-      toast({ title: "Listspace updated!" });
+      if (passwordActionSuccess) {
+        setEditDialogOpen(false);
+        toast({ title: "Listspace updated!" });
+      }
     }
   };
   
@@ -139,6 +142,8 @@ export function FirestoreWorkspaceSidebar({ tasksHook }: WorkspaceSidebarProps) 
     setSelectedWorkspace(workspace);
     setEditName(workspace.name);
     setIsPasswordProtected(!!workspace.notesPassword || !!focusPassword);
+    setShowPriority(workspace.showPriority ?? true);
+    setShowEffort(workspace.showEffort ?? true);
     setPassword("");
     setConfirmPassword("");
     setOldPassword("");
@@ -225,13 +230,37 @@ export function FirestoreWorkspaceSidebar({ tasksHook }: WorkspaceSidebarProps) 
             <DialogHeader>
                 <DialogTitle>Edit Listspace</DialogTitle>
                 <DialogDescription>
-                    Manage the listspace name and notes protection.
+                    Manage the listspace name and other settings.
                 </DialogDescription>
             </DialogHeader>
             <div className="py-4 space-y-6 max-h-[60vh] overflow-y-auto pr-4">
                 <div className="space-y-2">
                     <Label htmlFor="workspace-name">Name</Label>
                     <Input id="workspace-name" value={editName} onChange={(e) => setEditName(e.target.value)} />
+                </div>
+                 <div className="space-y-4 rounded-lg border p-4">
+                    <div className="space-y-0.5">
+                        <Label className="text-base">Visibility</Label>
+                        <p className="text-sm text-muted-foreground">
+                        Choose which fields are visible for tasks.
+                        </p>
+                    </div>
+                     <div className="flex items-center justify-between">
+                        <Label htmlFor="show-priority">Show Priority Field</Label>
+                        <Switch
+                            id="show-priority"
+                            checked={showPriority}
+                            onCheckedChange={setShowPriority}
+                        />
+                    </div>
+                    <div className="flex items-center justify-between">
+                        <Label htmlFor="show-effort">Show Effort Field</Label>
+                        <Switch
+                            id="show-effort"
+                            checked={showEffort}
+                            onCheckedChange={setShowEffort}
+                        />
+                    </div>
                 </div>
                 <div className="space-y-4 rounded-lg border p-4">
                     <div className="flex items-center justify-between">

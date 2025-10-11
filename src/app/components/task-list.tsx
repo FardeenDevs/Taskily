@@ -1,7 +1,7 @@
 
 "use client";
 
-import { type Task, type Priority, type Effort, AppSettings } from "@/lib/types";
+import { type Task, type Priority, type Effort } from "@/lib/types";
 import { TaskItem } from "@/app/components/task-item";
 import { AnimatePresence, motion } from "framer-motion";
 import { memo } from "react";
@@ -11,10 +11,11 @@ interface TaskListProps {
   onToggleTask: (id: string) => void;
   onDeleteTask: (id: string) => void;
   onEditTask: (id: string, newText: string, newPriority: Priority | null, newEffort: Effort | null) => void;
-  appSettings: AppSettings;
+  showPriority: boolean;
+  showEffort: boolean;
 }
 
-export const TaskList = memo(function TaskList({ tasks, onToggleTask, onDeleteTask, onEditTask, appSettings }: TaskListProps) {
+export const TaskList = memo(function TaskList({ tasks, onToggleTask, onDeleteTask, onEditTask, showPriority, showEffort }: TaskListProps) {
   if (tasks.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/30 bg-muted/50 p-12 text-center">
@@ -41,7 +42,8 @@ export const TaskList = memo(function TaskList({ tasks, onToggleTask, onDeleteTa
               onToggleTask={onToggleTask}
               onDeleteTask={onDeleteTask}
               onEditTask={onEditTask}
-              appSettings={appSettings}
+              showPriority={showPriority}
+              showEffort={showEffort}
             />
           </motion.div>
         ))}

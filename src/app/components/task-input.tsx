@@ -25,9 +25,11 @@ const formSchema = z.object({
 interface TaskInputProps {
   onAddTask: (text: string, priority: Priority | null, effort: Effort | null) => void;
   appSettings: AppSettings;
+  showPriority: boolean;
+  showEffort: boolean;
 }
 
-export const TaskInput = memo(function TaskInput({ onAddTask, appSettings }: TaskInputProps) {
+export const TaskInput = memo(function TaskInput({ onAddTask, appSettings, showPriority, showEffort }: TaskInputProps) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -57,8 +59,8 @@ export const TaskInput = memo(function TaskInput({ onAddTask, appSettings }: Tas
   function onSubmit(values: z.infer<typeof formSchema>) {
     onAddTask(
       values.task,
-      appSettings.showPriority ? (values.priority as Priority || null) : null,
-      appSettings.showEffort ? (values.effort as Effort || null) : null
+      showPriority ? (values.priority as Priority || null) : null,
+      showEffort ? (values.effort as Effort || null) : null
     );
     form.reset({ task: "", priority: appSettings.defaultPriority, effort: appSettings.defaultEffort });
   }
@@ -94,9 +96,9 @@ export const TaskInput = memo(function TaskInput({ onAddTask, appSettings }: Tas
             <Plus />
           </Button>
         </div>
-        {(appSettings.showPriority || appSettings.showEffort) && (
+        {(showPriority || showEffort) && (
             <div className="grid grid-cols-2 gap-2 w-full">
-            {appSettings.showPriority && (
+            {showPriority && (
                 <FormField
                 control={form.control}
                 name="priority"
@@ -120,7 +122,7 @@ export const TaskInput = memo(function TaskInput({ onAddTask, appSettings }: Tas
                 )}
                 />
             )}
-            {appSettings.showEffort && (
+            {showEffort && (
                 <FormField
                 control={form.control}
                 name="effort"

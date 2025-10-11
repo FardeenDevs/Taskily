@@ -22,7 +22,6 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { type Priority, type Effort, type Workspace, type AppSettings } from "@/lib/types"
-import { Separator } from "../ui/separator"
 
 interface SettingsDialogProps {
   open: boolean
@@ -124,42 +123,17 @@ export const SettingsDialog = memo(function SettingsDialog({
                     <Moon className="h-5 w-5 text-blue-500"/>
                 </div>
             </div>
-            
-            <div className="rounded-lg border p-4 space-y-4">
-                 <div className="space-y-0.5">
-                    <Label className="text-base">Interface</Label>
-                    <p className="text-sm text-muted-foreground">
-                       Customize what is shown in the app.
-                    </p>
-                </div>
-                <div className="flex items-center justify-between">
-                    <Label htmlFor="show-priority">Show Priority Field</Label>
-                    <Switch
-                        id="show-priority"
-                        checked={appSettings.showPriority}
-                        onCheckedChange={(checked) => onSettingsChange({ showPriority: checked })}
-                    />
-                </div>
-                 <div className="flex items-center justify-between">
-                    <Label htmlFor="show-effort">Show Effort Field</Label>
-                    <Switch
-                        id="show-effort"
-                        checked={appSettings.showEffort}
-                        onCheckedChange={(checked) => onSettingsChange({ showEffort: checked })}
-                    />
-                </div>
-            </div>
 
             <div className="rounded-lg border p-4 space-y-4">
                  <div className="space-y-0.5">
                     <Label className="text-base">Defaults</Label>
                     <p className="text-sm text-muted-foreground">
-                       Set default values for new tasks and startup.
+                       Set default values for new tasks and startup. These can be overridden by listspace-specific settings.
                     </p>
                 </div>
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
                     <Label htmlFor="default-priority">Default Priority</Label>
-                     <Select onValueChange={(value) => onSettingsChange({ defaultPriority: value as Priority })} value={appSettings.defaultPriority} disabled={!appSettings.showPriority}>
+                     <Select onValueChange={(value) => onSettingsChange({ defaultPriority: value as Priority })} value={appSettings.defaultPriority}>
                       <SelectTrigger className="w-full sm:w-[220px]">
                         <SelectValue placeholder="Set priority" />
                       </SelectTrigger>
@@ -174,7 +148,7 @@ export const SettingsDialog = memo(function SettingsDialog({
                 </div>
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
                     <Label htmlFor="default-effort">Default Effort</Label>
-                     <Select onValueChange={(value) => onSettingsChange({ defaultEffort: value as Effort })} value={appSettings.defaultEffort} disabled={!appSettings.showEffort}>
+                     <Select onValueChange={(value) => onSettingsChange({ defaultEffort: value as Effort })} value={appSettings.defaultEffort}>
                       <SelectTrigger className="w-full sm:w-[220px]">
                         <SelectValue placeholder="Set effort" />
                       </SelectTrigger>

@@ -46,6 +46,9 @@ export default function AppPage() {
 
   const showPlaceholder = !activeWorkspaceId || !activeWorkspace;
 
+  const showPriority = activeWorkspace?.showPriority ?? false;
+  const showEffort = activeWorkspace?.showEffort ?? false;
+
   const sortedTasks = useMemo(() => {
     if (!tasks) return [];
     
@@ -56,14 +59,14 @@ export default function AppPage() {
 
         switch (sortOrder) {
             case 'priority':
-                if (appSettings.showPriority) {
+                if (showPriority) {
                     const priorityA = a.priority ? priorityMap[a.priority].value : 0;
                     const priorityB = b.priority ? priorityMap[b.priority].value : 0;
                     return priorityB - priorityA; // Higher value (P5) comes first
                 }
                 // Fallthrough to default if priority is hidden
             case 'effort':
-                if (appSettings.showEffort) {
+                if (showEffort) {
                     const effortA = a.effort ? effortMap[a.effort].value : 0;
                     const effortB = b.effort ? effortMap[b.effort].value : 0;
                     return effortB - effortA; // Higher value (E5) comes first
@@ -78,7 +81,7 @@ export default function AppPage() {
 
     return sorted;
 
-  }, [tasks, sortOrder, appSettings.showPriority, appSettings.showEffort]);
+  }, [tasks, sortOrder, showPriority, showEffort]);
 
   return (
       <div className="mx-auto max-w-5xl w-full h-full p-4 sm:p-8">
@@ -104,12 +107,12 @@ export default function AppPage() {
                     <ToggleGroupItem value="default" aria-label="Sort by date">
                       Default
                     </ToggleGroupItem>
-                    {appSettings.showPriority && (
+                    {showPriority && (
                         <ToggleGroupItem value="priority" aria-label="Sort by priority">
                         Priority
                         </ToggleGroupItem>
                     )}
-                    {appSettings.showEffort && (
+                    {showEffort && (
                         <ToggleGroupItem value="effort" aria-label="Sort by effort">
                         Effort
                         </ToggleGroupItem>
@@ -130,13 +133,16 @@ export default function AppPage() {
                 <TaskInput 
                   onAddTask={handleAddTask} 
                   appSettings={appSettings}
+                  showPriority={showPriority}
+                  showEffort={showEffort}
                 />
                 <TaskList
                   tasks={sortedTasks}
                   onToggleTask={toggleTask}
                   onDeleteTask={deleteTask}
                   onEditTask={editTask}
-                  appSettings={appSettings}
+                  showPriority={showPriority}
+                  showEffort={showEffort}
                 />
               </div>
             )}

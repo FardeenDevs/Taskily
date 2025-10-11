@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, memo, useCallback } from "react";
-import { type Task, type Priority, type Effort, AppSettings } from "@/lib/types";
+import { type Task, type Priority, type Effort } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -20,10 +20,11 @@ interface TaskItemProps {
   onToggleTask: (id: string) => void;
   onDeleteTask: (id: string) => void;
   onEditTask: (id: string, newText: string, newPriority: Priority | null, newEffort: Effort | null) => void;
-  appSettings: AppSettings;
+  showPriority: boolean;
+  showEffort: boolean;
 }
 
-export const TaskItem = memo(function TaskItem({ task, onToggleTask, onDeleteTask, onEditTask, appSettings }: TaskItemProps) {
+export const TaskItem = memo(function TaskItem({ task, onToggleTask, onDeleteTask, onEditTask, showPriority, showEffort }: TaskItemProps) {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editText, setEditText] = useState(task.text);
   const [editPriority, setEditPriority] = useState<Priority | null>(task.priority ?? null);
@@ -33,11 +34,11 @@ export const TaskItem = memo(function TaskItem({ task, onToggleTask, onDeleteTas
     onEditTask(
         task.id, 
         editText,
-        appSettings.showPriority ? editPriority : null,
-        appSettings.showEffort ? editEffort : null
+        showPriority ? editPriority : null,
+        showEffort ? editEffort : null
     );
     setIsEditDialogOpen(false);
-  }, [task.id, editText, editPriority, editEffort, onEditTask, appSettings]);
+  }, [task.id, editText, editPriority, editEffort, onEditTask, showPriority, showEffort]);
   
   const openEditDialog = useCallback(() => {
     setEditText(task.text);
@@ -86,8 +87,8 @@ export const TaskItem = memo(function TaskItem({ task, onToggleTask, onDeleteTas
           {task.text}
         </label>
         <div className="flex items-center gap-1">
-            {appSettings.showPriority && task.priority && <PriorityBadge priority={task.priority} />}
-            {appSettings.showEffort && task.effort && <EffortBadge effort={task.effort} />}
+            {showPriority && task.priority && <PriorityBadge priority={task.priority} />}
+            {showEffort && task.effort && <EffortBadge effort={task.effort} />}
         </div>
       </div>
       <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100 relative z-10">
@@ -114,7 +115,7 @@ export const TaskItem = memo(function TaskItem({ task, onToggleTask, onDeleteTas
                   onKeyDown={(e) => e.key === 'Enter' && handleSave()}
                 />
               </div>
-              {appSettings.showPriority && (
+              {showPriority && (
                 <div className="grid grid-cols-4 items-center gap-4">
                     <Label className="text-right">Priority</Label>
                     <Select onValueChange={(value) => setEditPriority(value as Priority)} value={editPriority ?? undefined}>
@@ -131,7 +132,7 @@ export const TaskItem = memo(function TaskItem({ task, onToggleTask, onDeleteTas
                     </Select>
                 </div>
               )}
-               {appSettings.showEffort && (
+               {showEffort && (
                 <div className="grid grid-cols-4 items-center gap-4">
                     <Label className="text-right">Effort</Label>
                     <Select onValueChange={(value) => setEditEffort(value as Effort)} value={editEffort ?? undefined}>

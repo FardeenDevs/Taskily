@@ -21,6 +21,8 @@ export interface Workspace {
     ownerId: string;
     notesPassword?: string | null;
     notesBackupCodes?: string[] | null;
+    showPriority?: boolean;
+    showEffort?: boolean;
 }
 
 export interface Note {
@@ -36,8 +38,6 @@ export interface AppSettings {
   defaultPriority: Priority;
   defaultEffort: Effort;
   defaultWorkspaceId: string | null;
-  showPriority: boolean;
-  showEffort: boolean;
 }
 
 export const priorityMap: Record<Priority, { value: number }> = {
