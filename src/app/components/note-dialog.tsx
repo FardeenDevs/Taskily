@@ -29,9 +29,10 @@ export function NoteDialog({ open, onOpenChange, note, onSave }: NoteDialogProps
   const noteRef = useRef(note);
   const [isSaving, setIsSaving] = useState(false);
 
-  const handleAutoSave = useCallback(async () => {
+  const handleAutoSave = useCallback(async (isFinalSave = false) => {
     if (noteRef.current) {
-      if (noteRef.current.isNew && !title.trim() && (!contentRef.current.trim() || contentRef.current === '<p></p>')) {
+       // Don't save if it's a brand new, completely empty note unless it's the final save on close
+      if (noteRef.current.isNew && !title.trim() && (!contentRef.current.trim() || contentRef.current === '<p></p>') && !isFinalSave) {
         return;
       }
       setIsSaving(true);
@@ -71,7 +72,7 @@ export function NoteDialog({ open, onOpenChange, note, onSave }: NoteDialogProps
       if (autosaveTimer.current) {
         clearTimeout(autosaveTimer.current);
       }
-      autosaveTimer.current = setTimeout(handleAutoSave, 1000);
+      autosaveTimer.current = setTimeout(() => handleAutoSave(false), 300);
     },
   });
 
@@ -91,11 +92,11 @@ export function NoteDialog({ open, onOpenChange, note, onSave }: NoteDialogProps
   }, [note, open, editor]);
 
   useEffect(() => {
-    if (!open) return; // Only trigger autosave when dialog is open
+    if (!open) return; 
     if (autosaveTimer.current) {
       clearTimeout(autosaveTimer.current);
     }
-    autosaveTimer.current = setTimeout(handleAutoSave, 1000);
+    autosaveTimer.current = setTimeout(() => handleAutoSave(false), 300);
     
     return () => {
         if (autosaveTimer.current) {
@@ -104,20 +105,14 @@ export function NoteDialog({ open, onOpenChange, note, onSave }: NoteDialogProps
     }
   }, [title, handleAutoSave, open]);
 
-  const handleManualSave = async () => {
-    if (autosaveTimer.current) {
-      clearTimeout(autosaveTimer.current);
-    }
-    if (note) {
-        setIsSaving(true);
-        await onSave(note.id, title, contentRef.current, note.isNew);
-        setIsSaving(false);
-    }
-  };
 
   const handleOpenChange = (isOpen: boolean) => {
     if (!isOpen) {
-      handleManualSave();
+      // Perform a final save when the dialog is being closed
+      if (autosaveTimer.current) {
+        clearTimeout(autosaveTimer.current);
+      }
+      handleAutoSave(true);
     }
     onOpenChange(isOpen);
   };
