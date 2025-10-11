@@ -14,7 +14,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PriorityBadge } from "./priority-badge";
 import { EffortBadge } from "./effort-badge";
-import { Separator } from "@/components/ui/separator";
 
 interface TaskItemProps {
   task: Task;
@@ -23,10 +22,9 @@ interface TaskItemProps {
   onEditTask: (id: string, newText: string, newPriority: Priority | null, newEffort: Effort | null) => void;
   showPriority: boolean;
   showEffort: boolean;
-  isLast: boolean;
 }
 
-export const TaskItem = memo(function TaskItem({ task, onToggleTask, onDeleteTask, onEditTask, showPriority, showEffort, isLast }: TaskItemProps) {
+export const TaskItem = memo(function TaskItem({ task, onToggleTask, onDeleteTask, onEditTask, showPriority, showEffort }: TaskItemProps) {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editText, setEditText] = useState(task.text);
   const [editPriority, setEditPriority] = useState<Priority | null>(task.priority ?? null);
@@ -59,7 +57,7 @@ export const TaskItem = memo(function TaskItem({ task, onToggleTask, onDeleteTas
 
 
   return (
-    <div className="group relative">
+    <div className="group relative border-b">
         <div className="flex items-center gap-3 p-2 transition-colors">
             <AnimatePresence>
                 {task.completed && (
@@ -68,7 +66,7 @@ export const TaskItem = memo(function TaskItem({ task, onToggleTask, onDeleteTas
                     animate={{ scaleX: 1, opacity: 0.2 }}
                     exit={{ scaleX: 0, opacity: 0 }}
                     transition={{ duration: 0.3, ease: "easeOut" }}
-                    className="absolute inset-0 bg-primary origin-left rounded-lg"
+                    className="absolute inset-0 bg-primary origin-left"
                 />
                 )}
             </AnimatePresence>
@@ -90,11 +88,7 @@ export const TaskItem = memo(function TaskItem({ task, onToggleTask, onDeleteTas
                 {task.text}
                 </label>
             </div>
-            <div className="flex items-center gap-3 relative z-10">
-                <div className="flex items-center gap-2">
-                    {showPriority && task.priority && <PriorityBadge priority={task.priority} />}
-                    {showEffort && task.effort && <EffortBadge effort={task.effort} />}
-                </div>
+            <div className="flex items-center gap-3 relative z-10 ml-auto">
                 <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
                     <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
                     <DialogTrigger asChild>
@@ -169,9 +163,12 @@ export const TaskItem = memo(function TaskItem({ task, onToggleTask, onDeleteTas
                     <Trash2 />
                     </Button>
                 </div>
+                 <div className={cn("flex items-center gap-2 transition-opacity", task.completed && "opacity-40")}>
+                    {showPriority && task.priority && <PriorityBadge priority={task.priority} />}
+                    {showEffort && task.effort && <EffortBadge effort={task.effort} />}
+                </div>
             </div>
         </div>
-        {!isLast && <Separator className={cn(task.completed && 'bg-border/50 dark:bg-border/20')} />}
     </div>
   );
 });
