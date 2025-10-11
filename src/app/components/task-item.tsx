@@ -26,7 +26,7 @@ interface TaskItemProps {
   showPriority: boolean;
   showEffort: boolean;
   activeTimer: ActiveTimer | undefined;
-  onTimerStart: (taskId: string, duration: number) => void;
+  onTimerStart: (taskId: string, duration: number, taskName: string) => void;
   onTimerPause: (taskId: string) => void;
   onTimerStop: (taskId: string) => void;
   onTimerTick: (taskId: string, remaining: number) => void;

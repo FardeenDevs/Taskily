@@ -4,6 +4,7 @@ const withPWA = require("@ducanh2912/next-pwa").default({
   disable: process.env.NODE_ENV === "development",
   register: true,
   skipWaiting: true,
+  sw: 'sw.js', // Point to our custom service worker
   runtimeCaching: [
     // Cache pages with a network-first strategy.
     {

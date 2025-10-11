@@ -11,6 +11,8 @@ import { BackupCodesDialog } from "@/components/ui/backup-codes-dialog";
 import { NotesBackupCodesDialog } from "@/components/ui/notes-backup-codes-dialog";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { AuthGate } from "./components/auth-gate";
+import { TimerAlertDialog } from "@/app/components/timer-alert-dialog";
+import type { Task } from "@/lib/types";
 
 type useTasksType = ReturnType<typeof useTasksClient>;
 const TasksContext = React.createContext<useTasksType | null>(null);
@@ -69,6 +71,8 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
       isDeleting,
       activeTimers,
       handleTimerTick,
+      finishedTimerTask,
+      clearFinishedTimer,
     } = tasksHook;
 
   const [currentView, setCurrentView] = useState<'progress' | 'notes'>('progress');
@@ -122,10 +126,16 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
               appSettings={appSettings}
               onSettingsChange={setAppSettings}
           />}
+          
+          {finishedTimerTask && (
+            <TimerAlertDialog
+                task={finishedTimerTask}
+                onClose={clearFinishedTimer}
+            />
+          )}
+
         </AuthGate>
       </ViewContext.Provider>
     </TasksContext.Provider>
   );
 }
-
-    

@@ -37,6 +37,13 @@ export type ActiveTimer = {
   isActive: boolean;
 };
 
+// Helper function to communicate with the service worker
+const postToServiceWorker = (message: any) => {
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage(message);
+    }
+};
+
 export function useTasks() {
   const auth = useAuth();
   const { user, loading: userLoading } = useUser();
@@ -62,6 +69,8 @@ export function useTasks() {
 
   // Timer State
   const [activeTimers, setActiveTimers] = useState<ActiveTimer[]>([]);
+  const [finishedTimerTask, setFinishedTimerTask] = useState<Task | null>(null);
+
 
   const { setOpen: setSidebarOpen } = useSidebar();
   
@@ -797,8 +806,37 @@ export function useTasks() {
     return (tasks || []).filter(task => task.completed).length;
   }, [tasks]);
 
+  const clearFinishedTimer = useCallback(() => {
+    setFinishedTimerTask(null);
+  }, []);
+
+  // Check for finished timers
+  useEffect(() => {
+    const finishedTimer = activeTimers.find(t => t.isActive && t.remaining <= 0);
+    if (finishedTimer) {
+        const task = tasks.find(t => t.id === finishedTimer.taskId);
+        if (task) {
+            setFinishedTimerTask(task);
+            postToServiceWorker({ command: 'STOP_TIMER', data: { taskId: task.id } });
+            setActiveTimers(prev => prev.filter(t => t.taskId !== finishedTimer.taskId));
+        }
+    }
+  }, [activeTimers, tasks]);
+
+
   // Timer handlers
-  const handleTimerStart = useCallback((taskId: string, duration?: number) => {
+  const handleTimerStart = useCallback(async (taskId: string, duration: number, taskName: string) => {
+    if ('Notification' in window && Notification.permission !== 'granted') {
+        const permission = await Notification.requestPermission();
+        if (permission !== 'granted') {
+            toast({
+                variant: 'destructive',
+                title: 'Notifications Denied',
+                description: 'Background timer alerts will not be shown.',
+            });
+        }
+    }
+    
     setActiveTimers(prev => {
       const existing = prev.find(t => t.taskId === taskId);
       const task = tasks?.find(t => t.id === taskId);
@@ -809,14 +847,20 @@ export function useTasks() {
       }
       return [...prev, { taskId, remaining: newDuration, isActive: true }];
     });
-  }, [tasks]);
+
+    const endTime = Date.now() + (duration * 1000);
+    postToServiceWorker({ command: 'START_TIMER', data: { taskId, taskName, endTime } });
+
+  }, [tasks, toast]);
 
   const handleTimerPause = useCallback((taskId: string) => {
     setActiveTimers(prev => prev.map(t => t.taskId === taskId ? { ...t, isActive: false } : t));
+    postToServiceWorker({ command: 'STOP_TIMER', data: { taskId } });
   }, []);
 
   const handleTimerStop = useCallback((taskId: string) => {
     setActiveTimers(prev => prev.filter(t => t.taskId !== taskId));
+    postToServiceWorker({ command: 'STOP_TIMER', data: { taskId } });
   }, []);
   
   const handleTimerTick = useCallback((taskId: string, remaining: number) => {
@@ -881,7 +925,7 @@ export function useTasks() {
     handleTimerPause,
     handleTimerStop,
     handleTimerTick,
+    finishedTimerTask,
+    clearFinishedTimer,
   };
 }
-
-    
