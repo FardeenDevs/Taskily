@@ -26,7 +26,7 @@ export const TaskList = memo(function TaskList({ tasks, onToggleTask, onDeleteTa
   }
 
   return (
-    <div className="space-y-2">
+    <div className="divide-y divide-border rounded-lg border">
       <AnimatePresence>
         {tasks.map((task) => (
           <motion.div
