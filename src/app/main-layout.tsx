@@ -79,16 +79,12 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         <AuthGate>
           {showLoadingSpinner && <LoadingSpinner />}
           
-          {pathname.startsWith('/app') ? (
-            <MainLayoutComponent 
-                tasksHook={tasksHook} 
-                setIsSettingsOpen={setIsSettingsOpen}
-            >
-              {children}
-            </MainLayoutComponent>
-          ) : (
-            children
-          )}
+          <MainLayoutComponent 
+              tasksHook={tasksHook} 
+              setIsSettingsOpen={setIsSettingsOpen}
+          >
+            {children}
+          </MainLayoutComponent>
 
           {isFirstTime && <WelcomeDialog open={isFirstTime} onOpenChange={setIsFirstTime} />}
           

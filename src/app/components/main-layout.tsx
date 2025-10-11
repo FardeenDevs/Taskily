@@ -23,7 +23,7 @@ export function MainLayout({ children, tasksHook, setIsSettingsOpen }: MainLayou
     const { toggleSidebar } = useSidebar();
     const pathname = usePathname();
     const { currentView, setCurrentView } = useView();
-    const isProfilePage = pathname === '/app/profile';
+    const isMainAppPage = pathname === '/app';
 
     return (
         <>
@@ -38,7 +38,7 @@ export function MainLayout({ children, tasksHook, setIsSettingsOpen }: MainLayou
                         </div>
 
                         <AnimatePresence>
-                        {!isProfilePage && (
+                        {isMainAppPage && (
                             <motion.div
                                 initial={{ opacity: 0, scale: 0.95 }}
                                 animate={{ opacity: 1, scale: 1 }}
