@@ -14,7 +14,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PriorityBadge } from "./priority-badge";
 import { EffortBadge } from "./effort-badge";
-import { Separator } from "../ui/separator";
+import { Separator } from "@/components/ui/separator";
 
 interface TaskItemProps {
   task: Task;
