@@ -121,11 +121,11 @@ export function NoteDialog({ open, onOpenChange, note, onSave }: NoteDialogProps
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent 
         className={cn(
-          "flex h-full w-full max-w-full flex-col gap-0 p-0 rounded-none border-none"
+          "flex h-full w-full max-w-full flex-col gap-0 p-0 sm:h-[90vh] sm:max-w-[90vw] sm:rounded-lg"
         )}
         showCloseButton={false}
       >
-        <div className="flex items-center justify-between border-b p-4">
+        <div className="flex items-center justify-between border-b p-4 flex-shrink-0">
             <DialogTitle className="sr-only">{title || 'Edit Note'}</DialogTitle>
              <Input
               id="note-title"
