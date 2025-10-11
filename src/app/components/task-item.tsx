@@ -170,7 +170,7 @@ export const TaskItem = memo(function TaskItem({ task, onToggleTask, onDeleteTas
                 </div>
             </div>
         </div>
-        <Separator className="group-last-of-type:hidden"/>
+        
     </div>
   );
 });
