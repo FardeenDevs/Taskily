@@ -12,10 +12,19 @@ import { useCallback, useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Priority, Effort, effortMap, priorityMap } from "@/lib/types";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { ListFilter } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
-type SortOption = 'default' | 'priority' | 'effort';
+type SortOption = 'createdAt_asc' | 'priority_desc' | 'effort_desc' | 'priority_effort_desc' | 'text_asc' | 'text_desc';
+
+const sortOptions: { value: SortOption, label: string, requires?: 'priority' | 'effort' }[] = [
+    { value: 'createdAt_asc', label: 'Default' },
+    { value: 'priority_desc', label: 'Priority', requires: 'priority' },
+    { value: 'effort_desc', label: 'Effort', requires: 'effort' },
+    { value: 'priority_effort_desc', label: 'Priority & Effort', requires: 'priority' },
+    { value: 'text_asc', label: 'A-Z' },
+    { value: 'text_desc', label: 'Z-A' },
+];
 
 export default function AppPage() {
   const {
@@ -32,7 +41,7 @@ export default function AppPage() {
     appSettings,
   } = useTasks();
 
-  const [sortOrder, setSortOrder] = useState<SortOption>('default');
+  const [sortOrder, setSortOrder] = useState<SortOption>('createdAt_asc');
 
   const handleClearWorkspace = useCallback(() => {
     if (activeWorkspaceId) {
@@ -48,30 +57,41 @@ export default function AppPage() {
 
   const showPriority = activeWorkspace?.showPriority ?? false;
   const showEffort = activeWorkspace?.showEffort ?? false;
+  
+  const activeSortLabel = useMemo(() => {
+    return sortOptions.find(opt => opt.value === sortOrder)?.label || 'Default';
+  }, [sortOrder]);
+
 
   const sortedTasks = useMemo(() => {
     if (!tasks) return [];
     
-    const sorted = [...tasks].sort((a, b) => {
+    return [...tasks].sort((a, b) => {
         // Completed tasks always go to the bottom
         if (a.completed && !b.completed) return 1;
         if (!a.completed && b.completed) return -1;
 
         switch (sortOrder) {
-            case 'priority':
-                if (showPriority) {
-                    const priorityA = a.priority ? priorityMap[a.priority].value : 0;
-                    const priorityB = b.priority ? priorityMap[b.priority].value : 0;
-                    return priorityB - priorityA; // Higher value (P5) comes first
-                }
-                // Fallthrough to default if priority is hidden
-            case 'effort':
-                if (showEffort) {
-                    const effortA = a.effort ? effortMap[a.effort].value : 0;
-                    const effortB = b.effort ? effortMap[b.effort].value : 0;
-                    return effortB - effortA; // Higher value (E5) comes first
-                }
-                // Fallthrough to default if effort is hidden
+            case 'priority_desc':
+                const priorityA = a.priority ? priorityMap[a.priority].value : 0;
+                const priorityB = b.priority ? priorityMap[b.priority].value : 0;
+                return priorityB - priorityA;
+            case 'effort_desc':
+                const effortA = a.effort ? effortMap[a.effort].value : 0;
+                const effortB = b.effort ? effortMap[b.effort].value : 0;
+                return effortB - effortA;
+            case 'priority_effort_desc':
+                 const prioA = a.priority ? priorityMap[a.priority].value : 0;
+                 const prioB = b.priority ? priorityMap[b.priority].value : 0;
+                 if (prioB !== prioA) return prioB - prioA;
+                 const effA = a.effort ? effortMap[a.effort].value : 0;
+                 const effB = b.effort ? effortMap[b.effort].value : 0;
+                 return effB - effA;
+            case 'text_asc':
+                return a.text.localeCompare(b.text);
+            case 'text_desc':
+                return b.text.localeCompare(a.text);
+            case 'createdAt_asc':
             default:
                  const dateA = a.createdAt ? (typeof (a.createdAt as any).toDate === 'function' ? (a.createdAt as any).toDate() : new Date(a.createdAt as string)) : new Date(0);
                  const dateB = b.createdAt ? (typeof (b.createdAt as any).toDate === 'function' ? (b.createdAt as any).toDate() : new Date(b.createdAt as string)) : new Date(0);
@@ -79,9 +99,7 @@ export default function AppPage() {
         }
     });
 
-    return sorted;
-
-  }, [tasks, sortOrder, showPriority, showEffort]);
+  }, [tasks, sortOrder]);
 
   return (
       <div className="mx-auto max-w-5xl w-full h-full p-4 sm:p-8">
@@ -93,32 +111,27 @@ export default function AppPage() {
               </CardTitle>
             </div>
              {!showPlaceholder && (
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
-                  <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                    <ListFilter className="h-4 w-4" />
-                    <span>Sort by</span>
-                  </div>
-                  <ToggleGroup
-                    type="single"
-                    value={sortOrder}
-                    onValueChange={(value: SortOption) => value && setSortOrder(value)}
-                    className="justify-center"
-                  >
-                    <ToggleGroupItem value="default" aria-label="Sort by date">
-                      Default
-                    </ToggleGroupItem>
-                    {showPriority && (
-                        <ToggleGroupItem value="priority" aria-label="Sort by priority">
-                        Priority
-                        </ToggleGroupItem>
-                    )}
-                    {showEffort && (
-                        <ToggleGroupItem value="effort" aria-label="Sort by effort">
-                        Effort
-                        </ToggleGroupItem>
-                    )}
-                  </ToggleGroup>
-              </div>
+                <div className="flex items-center justify-center gap-2">
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="outline">
+                                <ListFilter className="mr-2 h-4 w-4" />
+                                Sort by: {activeSortLabel}
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent>
+                            {sortOptions.map(option => {
+                                const isDisabled = (option.requires === 'priority' && !showPriority) || (option.requires === 'effort' && !showEffort);
+                                if (isDisabled) return null;
+                                return (
+                                    <DropdownMenuItem key={option.value} onSelect={() => setSortOrder(option.value)}>
+                                        {option.label}
+                                    </DropdownMenuItem>
+                                )
+                            })}
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </div>
             )}
           </CardHeader>
           <CardContent className="space-y-8 flex-grow overflow-y-auto p-6 pt-0">
@@ -180,3 +193,5 @@ export default function AppPage() {
       </div>
   );
 }
+
+    
