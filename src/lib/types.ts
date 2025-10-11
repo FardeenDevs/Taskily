@@ -12,6 +12,7 @@ export interface Task {
   workspaceId: string;
   priority: Priority | null;
   effort: Effort | null;
+  duration?: number | null; // Optional duration in minutes
 }
 
 export interface Workspace {

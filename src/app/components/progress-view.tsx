@@ -183,7 +183,7 @@ export function ProgressView(props: ProgressViewProps) {
                     </AlertDialogFooter>
                 </AlertDialogContent>
                 </AlertDialog>
-                <TaskSuggestions currentTasks={tasks} onAddTask={(text) => addTask(text, null, null)} />
+                <TaskSuggestions currentTasks={tasks} onAddTask={(text) => addTask(text, null, null, null)} />
             </CardFooter>
         </>
     );

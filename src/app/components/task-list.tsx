@@ -10,7 +10,7 @@ interface TaskListProps {
   tasks: Task[];
   onToggleTask: (id: string) => void;
   onDeleteTask: (id: string) => void;
-  onEditTask: (id: string, newText: string, newPriority: Priority | null, newEffort: Effort | null) => void;
+  onEditTask: (id: string, newText: string, newPriority: Priority | null, newEffort: Effort | null, newDuration: number | null) => void;
   showPriority: boolean;
   showEffort: boolean;
 }

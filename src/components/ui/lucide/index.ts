@@ -43,5 +43,9 @@ export {
     Eye,
     EyeOff,
     ShieldCheck,
-    ListFilter
+    ListFilter,
+    Timer,
+    Play,
+    Pause,
+    Square
 } from 'lucide-react';

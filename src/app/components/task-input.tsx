@@ -20,10 +20,11 @@ const formSchema = z.object({
   }),
   priority: z.string().optional(),
   effort: z.string().optional(),
+  duration: z.string().optional(),
 });
 
 interface TaskInputProps {
-  onAddTask: (text: string, priority: Priority | null, effort: Effort | null) => void;
+  onAddTask: (text: string, priority: Priority | null, effort: Effort | null, duration: number | null) => void;
   appSettings: AppSettings;
   showPriority: boolean;
   showEffort: boolean;
@@ -36,6 +37,7 @@ export const TaskInput = memo(function TaskInput({ onAddTask, appSettings, showP
       task: "",
       priority: appSettings.defaultPriority,
       effort: appSettings.defaultEffort,
+      duration: "",
     },
   });
 
@@ -45,7 +47,8 @@ export const TaskInput = memo(function TaskInput({ onAddTask, appSettings, showP
     form.reset({
       task: form.getValues('task'),
       priority: appSettings.defaultPriority,
-      effort: appSettings.defaultEffort
+      effort: appSettings.defaultEffort,
+      duration: "",
     });
   }, [appSettings.defaultPriority, appSettings.defaultEffort, form]);
 
@@ -57,12 +60,14 @@ export const TaskInput = memo(function TaskInput({ onAddTask, appSettings, showP
   }, [form]);
 
   function onSubmit(values: z.infer<typeof formSchema>) {
+    const duration = values.duration ? parseInt(values.duration, 10) : null;
     onAddTask(
       values.task,
       showPriority ? (values.priority as Priority || null) : null,
-      showEffort ? (values.effort as Effort || null) : null
+      showEffort ? (values.effort as Effort || null) : null,
+      (duration && !isNaN(duration)) ? duration : null
     );
-    form.reset({ task: "", priority: appSettings.defaultPriority, effort: appSettings.defaultEffort });
+    form.reset({ task: "", priority: appSettings.defaultPriority, effort: appSettings.defaultEffort, duration: "" });
   }
 
   return (
@@ -96,8 +101,7 @@ export const TaskInput = memo(function TaskInput({ onAddTask, appSettings, showP
             <Plus />
           </Button>
         </div>
-        {(showPriority || showEffort) && (
-            <div className="grid grid-cols-2 gap-2 w-full">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 w-full">
             {showPriority && (
                 <FormField
                 control={form.control}
@@ -146,8 +150,27 @@ export const TaskInput = memo(function TaskInput({ onAddTask, appSettings, showP
                 )}
                 />
             )}
-            </div>
-        )}
+            <FormField
+              control={form.control}
+              name="duration"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      placeholder="Duration (minutes)"
+                      {...field}
+                      onChange={event => {
+                        if (event.target.value === '' || parseInt(event.target.value, 10) >= 0) {
+                            field.onChange(event.target.value);
+                        }
+                      }}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+        </div>
       </form>
     </Form>
   );

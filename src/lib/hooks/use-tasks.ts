@@ -270,7 +270,7 @@ export function useTasks() {
     }
   }, [user, setSidebarOpen]);
 
-  const addTask = useCallback((text: string, priority: Priority | null, effort: Effort | null) => {
+  const addTask = useCallback((text: string, priority: Priority | null, effort: Effort | null, duration: number | null) => {
     if (text.trim() === "" || !activeWorkspaceId || !user || !tasksRef) return;
     
     const taskData = {
@@ -279,6 +279,7 @@ export function useTasks() {
       createdAt: serverTimestamp(),
       priority,
       effort,
+      duration,
     };
 
     addDoc(tasksRef, taskData)
@@ -323,10 +324,10 @@ export function useTasks() {
     });
   }, [tasksRef]);
 
-  const editTask = useCallback((id: string, newText: string, newPriority: Priority | null, newEffort: Effort | null) => {
+  const editTask = useCallback((id: string, newText: string, newPriority: Priority | null, newEffort: Effort | null, newDuration: number | null) => {
     if (newText.trim() === "" || !tasksRef) return;
     const taskDocRef = doc(tasksRef, id);
-    const updatedData = { text: newText.trim(), priority: newPriority, effort: newEffort };
+    const updatedData = { text: newText.trim(), priority: newPriority, effort: newEffort, duration: newDuration };
     setDoc(taskDocRef, updatedData, { merge: true })
     .catch(async (serverError) => {
         const permissionError = new FirestorePermissionError({

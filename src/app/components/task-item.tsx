@@ -14,12 +14,13 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PriorityBadge } from "./priority-badge";
 import { EffortBadge } from "./effort-badge";
+import { TaskTimer } from "./task-timer";
 
 interface TaskItemProps {
   task: Task;
   onToggleTask: (id: string) => void;
   onDeleteTask: (id: string) => void;
-  onEditTask: (id: string, newText: string, newPriority: Priority | null, newEffort: Effort | null) => void;
+  onEditTask: (id: string, newText: string, newPriority: Priority | null, newEffort: Effort | null, newDuration: number | null) => void;
   showPriority: boolean;
   showEffort: boolean;
 }
@@ -29,23 +30,28 @@ export const TaskItem = memo(function TaskItem({ task, onToggleTask, onDeleteTas
   const [editText, setEditText] = useState(task.text);
   const [editPriority, setEditPriority] = useState<Priority | null>(task.priority ?? null);
   const [editEffort, setEditEffort] = useState<Effort | null>(task.effort ?? null);
+  const [editDuration, setEditDuration] = useState<string>(task.duration ? String(task.duration) : "");
+
 
   const handleSave = useCallback(() => {
+    const newDuration = editDuration ? parseInt(editDuration, 10) : null;
     onEditTask(
         task.id, 
         editText,
         showPriority ? editPriority : null,
-        showEffort ? editEffort : null
+        showEffort ? editEffort : null,
+        (newDuration && !isNaN(newDuration)) ? newDuration : null
     );
     setIsEditDialogOpen(false);
-  }, [task.id, editText, editPriority, editEffort, onEditTask, showPriority, showEffort]);
+  }, [task.id, editText, editPriority, editEffort, editDuration, onEditTask, showPriority, showEffort]);
   
   const openEditDialog = useCallback(() => {
     setEditText(task.text);
     setEditPriority(task.priority ?? null);
     setEditEffort(task.effort ?? null);
+    setEditDuration(task.duration ? String(task.duration) : "");
     setIsEditDialogOpen(true);
-  }, [task.text, task.priority, task.effort]);
+  }, [task.text, task.priority, task.effort, task.duration]);
 
   const handleDelete = useCallback(() => {
     onDeleteTask(task.id);
@@ -89,6 +95,7 @@ export const TaskItem = memo(function TaskItem({ task, onToggleTask, onDeleteTas
                 </label>
             </div>
             <div className="flex items-center gap-3 relative z-10 ml-auto">
+                {task.duration && !task.completed && <TaskTimer task={task} />}
                 <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
                     <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
                     <DialogTrigger asChild>
@@ -147,6 +154,23 @@ export const TaskItem = memo(function TaskItem({ task, onToggleTask, onDeleteTas
                                 </Select>
                             </div>
                         )}
+                         <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="task-duration" className="text-right">
+                                Duration
+                            </Label>
+                            <Input
+                                id="task-duration"
+                                type="number"
+                                value={editDuration}
+                                onChange={(e) => {
+                                    if (e.target.value === '' || parseInt(e.target.value, 10) >= 0) {
+                                       setEditDuration(e.target.value);
+                                    }
+                                }}
+                                className="col-span-3"
+                                placeholder="Minutes (optional)"
+                            />
+                        </div>
                         </div>
                         <DialogFooter>
                         <Button type="submit" onClick={handleSave} variant="edit">Save changes</Button>
