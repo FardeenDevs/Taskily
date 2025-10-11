@@ -2,8 +2,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useAuth, useUser } from "@/firebase";
-import { useTasks } from "@/app/main-layout";
+import { useAuth, useUser, useFirestore } from "@/firebase";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
@@ -12,18 +11,20 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { sendPasswordResetEmail } from "firebase/auth";
+import { sendPasswordResetEmail, updateProfile } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
+import { doc, updateDoc } from "firebase/firestore";
 
 const profileFormSchema = z.object({
   displayName: z.string().min(2, { message: "Name must be at least 2 characters." }).max(50, { message: "Name is too long." }),
+  photoURL: z.string().url({ message: "Please enter a valid URL." }).or(z.literal('')),
 });
 
 export default function ProfilePage() {
   const { user } = useUser();
   const auth = useAuth();
-  const { updateUserProfile } = useTasks();
+  const firestore = useFirestore();
   const { toast } = useToast();
   const [isPasswordResetting, setIsPasswordResetting] = useState(false);
 
@@ -31,17 +32,47 @@ export default function ProfilePage() {
     resolver: zodResolver(profileFormSchema),
     defaultValues: {
       displayName: user?.displayName || "",
+      photoURL: user?.photoURL || "",
     },
   });
 
   useEffect(() => {
     if (user) {
-      form.reset({ displayName: user.displayName || "" });
+      form.reset({
+        displayName: user.displayName || "",
+        photoURL: user.photoURL || "",
+      });
     }
   }, [user, form]);
 
-  const onSubmit = (values: z.infer<typeof profileFormSchema>) => {
-    updateUserProfile(values.displayName);
+  const onSubmit = async (values: z.infer<typeof profileFormSchema>) => {
+    if (!user || !auth?.currentUser || !firestore) {
+      toast({ variant: "destructive", title: "Not signed in" });
+      return;
+    }
+    
+    const currentUser = auth.currentUser;
+    const userDocRef = doc(firestore, 'users', currentUser.uid);
+
+    try {
+      const authUpdatePromise = updateProfile(currentUser, { 
+        displayName: values.displayName.trim(),
+        photoURL: values.photoURL.trim(),
+      });
+
+      const firestoreUpdatePromise = updateDoc(userDocRef, {
+        displayName: values.displayName.trim(),
+        photoURL: values.photoURL.trim(),
+      });
+
+      await Promise.all([authUpdatePromise, firestoreUpdatePromise]);
+      
+      toast({ title: "Profile Updated", description: "Your changes have been saved." });
+      form.reset(values, { keepValues: true }); // Resets dirty state but keeps new values
+    } catch (error) {
+      console.error("Error updating profile: ", error);
+      toast({ variant: "destructive", title: "Update Failed", description: "Could not update your profile. Please try again." });
+    }
   };
   
   const handlePasswordReset = async () => {
@@ -113,6 +144,19 @@ export default function ProfilePage() {
                     <FormLabel>Display Name</FormLabel>
                     <FormControl>
                       <Input placeholder="Your Name" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="photoURL"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Photo URL</FormLabel>
+                    <FormControl>
+                      <Input placeholder="https://example.com/your-photo.png" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

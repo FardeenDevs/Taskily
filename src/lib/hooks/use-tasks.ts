@@ -783,38 +783,6 @@ export function useTasks() {
     }
   }, [user, auth, firestore, toast]);
 
-  const updateUserProfile = useCallback(async (newDisplayName: string) => {
-    if (!user || !auth.currentUser || !firestore) {
-      toast({ variant: "destructive", title: "Not signed in" });
-      return;
-    }
-    
-    if (newDisplayName.trim().length < 2) {
-      toast({ variant: "destructive", title: "Invalid Name", description: "Display name must be at least 2 characters." });
-      return;
-    }
-
-    const currentUser = auth.currentUser;
-    const userDocRef = doc(firestore, 'users', currentUser.uid);
-    const updateData = { displayName: newDisplayName.trim() };
-
-    try {
-      // Update Firestore document first
-      await updateDoc(userDocRef, updateData).catch(e => {
-          errorEmitter.emit('permission-error', new FirestorePermissionError({ path: userDocRef.path, operation: 'update', requestResourceData: updateData }));
-          throw e;
-      });
-
-      // Then update Firebase Auth profile
-      await updateProfile(currentUser, { displayName: newDisplayName.trim() });
-      
-      toast({ title: "Profile Updated", description: "Your display name has been changed." });
-    } catch (error) {
-      console.error("Error updating profile: ", error);
-      toast({ variant: "destructive", title: "Update Failed", description: "Could not update your profile. Please try again." });
-    }
-  }, [user, auth, firestore, toast]);
-
   const completedTasks = useMemo(() => {
     return (tasks || []).filter(task => task.completed).length;
   }, [tasks]);
@@ -844,7 +812,6 @@ export function useTasks() {
     deleteNote,
     resetApp,
     deleteAccount,
-    updateUserProfile,
     addWorkspace,
     deleteWorkspace,
     editWorkspace,
