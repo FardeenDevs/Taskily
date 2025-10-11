@@ -8,11 +8,13 @@ import { useState, useMemo, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { NotesSection } from "@/app/components/notes-section";
 import { Note } from "@/lib/types";
-import { PasswordPromptDialog } from "@/app/components/password-prompt-dialog";
 import dynamic from "next/dynamic";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 const NoteDialog = dynamic(() => import('@/app/components/note-dialog').then(mod => mod.NoteDialog), {
+  loading: () => <LoadingSpinner />,
+});
+const PasswordPromptDialog = dynamic(() => import('@/app/components/password-prompt-dialog').then(mod => mod.PasswordPromptDialog), {
   loading: () => <LoadingSpinner />,
 });
 
@@ -55,12 +57,12 @@ export default function NotesPage() {
     }
   }, [activeWorkspace, addNote]);
   
- const handleSaveNote = useCallback((id: string, newTitle: string, newContent: string, isNew?: boolean) => {
+ const handleSaveNote = useCallback(async (id: string, newTitle: string, newContent: string, isNew?: boolean) => {
     if (isNew && !newTitle.trim() && (!newContent.trim() || newContent === '<p></p>')) {
         deleteNote(id, true);
         return;
     }
-    editNote(id, newTitle, newContent, isNew);
+    await editNote(id, newTitle, newContent, isNew);
   }, [editNote, deleteNote]);
 
   const handleDeleteNote = useCallback((id: string) => {
