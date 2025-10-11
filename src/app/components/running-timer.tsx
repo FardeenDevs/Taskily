@@ -3,6 +3,7 @@
 
 import { Timer } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 interface RunningTimerProps {
   remainingTime: number;
@@ -16,7 +17,10 @@ const formatTime = (seconds: number) => {
 
 export function RunningTimer({ remainingTime }: RunningTimerProps) {
   return (
-    <Button variant="ghost" className="h-8 px-2 text-primary hover:text-primary font-mono tabular-nums">
+    <Button variant="ghost" className={cn(
+        "h-8 px-2 font-mono tabular-nums",
+        "text-primary hover:text-white hover:bg-primary/90"
+    )}>
         <Timer className="mr-2 h-4 w-4" />
         {formatTime(remainingTime)}
     </Button>

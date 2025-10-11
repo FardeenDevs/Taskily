@@ -46,7 +46,7 @@ export const TaskList = memo(function TaskList({
   return (
     <div className="rounded-lg border">
       <AnimatePresence>
-        {tasks.map((task) => (
+        {tasks.map((task, index) => (
           <motion.div
             key={task.id}
             layout
@@ -54,7 +54,7 @@ export const TaskList = memo(function TaskList({
             animate={{ opacity: 1, x: 0, scale: 1 }}
             exit={{ opacity: 0, scale: 0.9, x: 50, transition: { duration: 0.2 } }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            className="last:border-b-0"
+            className={cn(index < tasks.length - 1 && "border-b")}
           >
             <TaskItem
               task={task}
@@ -75,5 +75,3 @@ export const TaskList = memo(function TaskList({
     </div>
   );
 });
-
-    
